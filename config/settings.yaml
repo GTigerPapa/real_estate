@@ -1,0 +1,29 @@
+# 수집 대상 시군구 (응답 sggCd로 확인)
+lawd_codes:
+  "11740": 서울 강동구
+  "41133": 성남시 중원구
+  "41450": 하남시
+
+backfill_start: "202310"      # 백필 시작월 (YYYYMM)
+refetch_recent_months: 3      # 현재월 포함 최근 N개월은 완료 여부와 무관하게 매번 재수집
+
+api:
+  num_of_rows: 1000
+  request_interval_sec: 0.3   # 호출 간 최소 간격
+  timeout_sec: 30
+  max_retries: 4              # 지수 백오프: 1, 2, 4, 8초 (+지터)
+  backoff_base_sec: 1.0
+
+buy_cap_manwon: 140000        # 매수 상한 (만원) = 14억
+
+# 평형 구간 (전용면적 ㎡, [min, max)). 확정: 2023-10~2026-09 관심 단지 실거래 분포 기준
+#   59: 실제 59.71~59.99 / 74: 73.03~74.99 / 84: 84.04~84.99
+size_bands:
+  - {band: "59", min: 57.0, max: 62.0}
+  - {band: "74", min: 72.0, max: 77.0}
+  - {band: "84", min: 82.0, max: 87.0}
+
+# 검증: 이상치 = 같은 단지·평형 ±1개월(3개월 창) 중앙값 대비 편차가 기준 이상
+validate:
+  outlier_pct: 15
+  outlier_min_n: 3
