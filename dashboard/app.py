@@ -19,6 +19,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from realestate import config, db, metrics  # noqa: E402
 
 st.set_page_config(page_title="관심 단지 실거래", layout="wide")
+PAGE_MAX_W = 980  # 본문 최대 폭(px): 넓은 화면에서도 차트가 과하게 늘어나지 않게
+st.markdown(f"""<style>
+.block-container, [data-testid="stMainBlockContainer"] {{ max-width: {PAGE_MAX_W}px; padding-left: 1rem; padding-right: 1rem; }}
+</style>""", unsafe_allow_html=True)
 
 # ───── 색 (dataviz 기본 팔레트, 라이트/다크 각각 검증) ─────
 DARK = getattr(getattr(st.context, "theme", None), "type", None) == "dark"
@@ -39,21 +43,40 @@ def eok(v):  # 만원 → '14.5억'
     return "" if pd.isna(v) else f"{v / 10000:.2f}억".replace(".00억", "억")
 
 
-def style(fig: go.Figure, height: int) -> go.Figure:
-    fig.update_layout(height=height, font=FONT, margin=dict(l=8, r=8, t=72, b=8),
+X_RANGE: list = []  # 모든 차트 공통 x 범위 (필터 적용 후 설정) → 같은 시점이 같은 세로선에
+
+
+def style(fig: go.Figure, height: int, hovermode: str = "closest") -> go.Figure:
+    # 좌우 여백 고정(automargin 끔) → 차트마다 플롯 영역 폭이 같아 세로선이 페이지 전체에서 맞음
+    fig.update_layout(height=height, font=FONT, margin=dict(l=64, r=16, t=64, b=36, autoexpand=False),
                       legend=dict(orientation="h", yref="container", yanchor="top", y=1, x=0),
-                      hoverlabel=dict(font=FONT), plot_bgcolor="rgba(0,0,0,0)")
-    fig.update_xaxes(showgrid=False, linecolor=C["grid"], ticks="outside", tickcolor=C["grid"],
-                     tickformat="%Y-%m")
-    fig.update_yaxes(gridcolor=C["grid"], gridwidth=1, zeroline=False, tickformat=",")
+                      hoverlabel=dict(font=FONT), plot_bgcolor="rgba(0,0,0,0)", hovermode=hovermode)
+    fig.update_xaxes(range=X_RANGE, showgrid=True, gridcolor=C["grid"], gridwidth=1,
+                     dtick="M6", tick0="2024-01-01", tickformat="%Y-%m",
+                     linecolor=C["grid"], ticks="outside", tickcolor=C["grid"],
+                     showspikes=True, spikemode="across", spikesnap="cursor", spikethickness=1,
+                     spikedash="solid", spikecolor=C["muted"])
+    fig.update_yaxes(gridcolor=C["grid"], gridwidth=1, zeroline=False, tickformat=",", automargin=False,
+                     title_standoff=8)
     return fig
+
+
+def stacked(titles: list[str], row_px: int, gap_px: int = 48) -> tuple[go.Figure, int]:
+    """단지별 패널을 위아래로 쌓고 x축 공유. (fig, 전체 높이)"""
+    n = len(titles)
+    height = row_px * n + gap_px * (n - 1) + 100
+    fig = make_subplots(rows=n, cols=1, shared_xaxes=True, subplot_titles=titles,
+                        vertical_spacing=gap_px / (height - 100))
+    for a in fig.layout.annotations:  # 패널 제목 왼쪽 정렬
+        a.update(x=0, xanchor="left", font=dict(size=13, color=C["ink2"]))
+    return fig, height
 
 
 def cap_line(fig, cap, row=None, col=None):
     kw = dict(row=row, col=col) if row else {}
     fig.add_hline(y=cap / 10000, line=dict(color=C["muted"], width=1),
-                  annotation=dict(text=f"매수 상한 {eok(cap)}", font=dict(color=C["ink2"], size=11),
-                                  xanchor="left", x=0), **kw)
+                  annotation=dict(text=f"상한 {eok(cap)}", font=dict(color=C["ink2"], size=10),
+                                  x=1, xanchor="right", yanchor="bottom"), **kw)
 
 
 # ───── 데이터 ─────
@@ -85,18 +108,18 @@ st.title("관심 단지 실거래 동향")
 
 # ───── 필터 (한 줄) ─────
 all_months = metrics.month_range(trades_all["deal_ym"].min(), trades_all["deal_ym"].max())
-f1, f2, f3, f4 = st.columns([1, 3, 3, 2])
+f1, f2, f3 = st.columns([1.3, 3, 2.7])
 BANDS = ["59", "74", "84"]
 q_band = st.query_params.get("band", "84")
 band = f1.radio("평형", BANDS, index=BANDS.index(q_band) if q_band in BANDS else 2, horizontal=True)
 avail = [c for c in order if band in bands_of[c]]
 sel = f2.multiselect("단지", avail, default=avail, format_func=names.get)
 start, end = f3.select_slider("기간", options=all_months, value=(all_months[0], all_months[-1]))
-with f4:
-    incl_direct = st.toggle("직거래를 중앙값에 포함", value=False)
-    incl_renew = st.toggle("갱신 계약을 전세 중앙값에 포함", value=False,
-                           help="갱신은 인상률 5% 상한이 있어 시세보다 낮음. 기본은 신규(+유형 미상)만")
-    show_cancel = st.toggle("해제 건 표시(산점도)", value=True)
+t1, t2, t3 = st.columns(3)
+incl_direct = t1.toggle("직거래를 매매 중앙값에 포함", value=False)
+incl_renew = t2.toggle("갱신 계약을 전세 중앙값에 포함", value=False,
+                       help="갱신은 인상률 5% 상한이 있어 시세보다 낮음. 기본은 신규(+유형 미상)만")
+show_cancel = t3.toggle("해제 건 표시(산점도)", value=True)
 
 if not sel:
     st.info("단지를 하나 이상 선택하세요.")
@@ -124,20 +147,20 @@ roll_t = roll_t[roll_t["deal_ym"].isin(months)]
 roll_j = metrics.window_median(J_ext, "deposit", 3, months=ext_months)
 roll_j = roll_j[roll_j["deal_ym"].isin(months)]
 x_of = lambda ym: pd.Period(ym).to_timestamp() + pd.Timedelta(days=14)  # noqa: E731 (월 중순에 점)
+X_RANGE[:] = [pd.Period(months[0]).to_timestamp() - pd.Timedelta(days=10),
+              pd.Period(months[-1]).to_timestamp() + pd.Timedelta(days=75)]  # 오른쪽 여유: 끝점 라벨
 
 st.caption(f"{band}형 · {start} ~ {end} · 매매 중앙값: 해제 제외, 직거래 {'포함' if incl_direct else '제외'} · "
            f"전세 중앙값: 갱신 {'포함' if incl_renew else '제외'} · "
            f"3개월 이동중앙값 = 해당 월 포함 직전 3개월 거래를 모아 계산 · 금액 단위 억원")
 
-n_rows = (len(sel) + 1) // 2
 facet_titles = lambda: [names[c] for c in sel]  # noqa: E731
 
 # ① 매매 산점도 + 3개월 이동중앙값
 st.subheader("① 매매 실거래 + 3개월 이동중앙값")
-fig = make_subplots(rows=n_rows, cols=2, subplot_titles=facet_titles(), shared_yaxes=True,
-                    vertical_spacing=0.12, horizontal_spacing=0.04)
+fig, h = stacked(facet_titles(), 230)
 for i, cid in enumerate(sel):
-    r, c = i // 2 + 1, i % 2 + 1
+    r, c = i + 1, 1
     d = T[T["complex_id"] == cid]
     groups = [("중개거래", d[(d["is_canceled"] == 0) & (d["dealing_gbn"] != "직거래")], C["broker"], "circle"),
               ("직거래", d[(d["is_canceled"] == 0) & (d["dealing_gbn"] == "직거래")], C["direct"], "diamond")]
@@ -162,19 +185,18 @@ for i, cid in enumerate(sel):
     cap_line(fig, cap, r, c)
     n_ok = len(d[d["is_canceled"] == 0])
     fig.layout.annotations[i].text = f"{names[cid]} <span style='font-size:11px'>n={n_ok}</span>"
-fig.update_yaxes(title_text="억원", col=1)
-st.plotly_chart(style(fig, 360 * n_rows), use_container_width=True)
+fig.update_yaxes(title_text="억원")
+st.plotly_chart(style(fig, h), use_container_width=True)
 with st.expander("표로 보기 — 월별 3개월 이동중앙값"):
     tbl = roll_t.pivot_table(index="deal_ym", columns="complex_name", values=["median", "n"], aggfunc="first")
     st.dataframe(tbl, use_container_width=True)
 
 # ② 월별 거래량 (해제 별도 색)
 st.subheader("② 월별 거래량")
-fig = make_subplots(rows=n_rows, cols=2, subplot_titles=facet_titles(), shared_yaxes="all",
-                    vertical_spacing=0.2, horizontal_spacing=0.04)
+fig, h = stacked(facet_titles(), 130)
 vol_rows = []
 for i, cid in enumerate(sel):
-    r, c = i // 2 + 1, i % 2 + 1
+    r, c = i + 1, 1
     d = T[T["complex_id"] == cid]
     kinds = {"중개거래": (d["is_canceled"] == 0) & (d["dealing_gbn"] != "직거래"),
              "직거래": (d["is_canceled"] == 0) & (d["dealing_gbn"] == "직거래"),
@@ -187,11 +209,13 @@ for i, cid in enumerate(sel):
                              hovertemplate="<b>%{y}건</b> %{x|%Y-%m}<extra>" + label + "</extra>"),
                       row=r, col=c)
 fig.update_layout(barmode="stack", bargap=0.25)
-fig.update_yaxes(title_text="건", col=1, tickformat="d")
-st.plotly_chart(style(fig, 280 * n_rows), use_container_width=True)
+style(fig, h, hovermode="x unified")
+vol = pd.DataFrame(vol_rows, columns=["단지", "월", "유형", "건수"])
+vmax = int(vol.groupby(["단지", "월"])["건수"].sum().max()) if not vol.empty else 1
+fig.update_yaxes(title_text="건", tickformat="d", range=[0, max(vmax, 1) * 1.1])  # 모든 패널 같은 y축 (건수 비교)
+st.plotly_chart(fig, use_container_width=True)
 with st.expander("표로 보기 — 월별 거래량"):
-    v = pd.DataFrame(vol_rows, columns=["단지", "월", "유형", "건수"])
-    st.dataframe(v.pivot_table(index="월", columns=["단지", "유형"], values="건수", aggfunc="sum"),
+    st.dataframe(vol.pivot_table(index="월", columns=["단지", "유형"], values="건수", aggfunc="sum"),
                  use_container_width=True)
 
 # ③ 전세·매매 추이 (같은 축)
@@ -199,10 +223,9 @@ st.subheader("③ 매매 vs 전세 (3개월 이동중앙값, 같은 축)")
 if J.empty and J_ext.empty:
     st.info("전월세 데이터가 아직 없습니다 (전월세 API 활용신청 승인 후 `python -m realestate.ingest --api rent`).")
 else:
-    fig = make_subplots(rows=n_rows, cols=2, subplot_titles=facet_titles(), shared_yaxes=True,
-                        vertical_spacing=0.12, horizontal_spacing=0.04)
+    fig, h = stacked(facet_titles(), 200)
     for i, cid in enumerate(sel):
-        r, c = i // 2 + 1, i % 2 + 1
+        r, c = i + 1, 1
         for label, df, col in (("매매", roll_t, C["ink"]), ("전세", roll_j, C["jeonse"])):
             m = df[df["complex_id"] == cid]
             fig.add_trace(go.Scatter(
@@ -211,8 +234,8 @@ else:
                 hovertemplate="<b>%{y:.2f}억</b> (n=%{customdata[0]})<br>%{x|%Y-%m}<extra>" + label + "</extra>",
             ), row=r, col=c)
         cap_line(fig, cap, r, c)
-    fig.update_yaxes(title_text="억원", col=1)
-    st.plotly_chart(style(fig, 320 * n_rows), use_container_width=True)
+    fig.update_yaxes(title_text="억원")
+    st.plotly_chart(style(fig, h, hovermode="x unified"), use_container_width=True)
 
 # ④ 전세가율
 st.subheader("④ 전세가율 (전세 보증금 중앙값 ÷ 매매 중앙값, 같은 단지·평형)")
@@ -233,7 +256,7 @@ else:
             hovertemplate="<b>%{y:.1f}%</b> %{x|%Y-%m}<br>매매 %{customdata[0]:,.0f}만 (n=%{customdata[1]})"
                           "<br>전세 %{customdata[2]:,.0f}만 (n=%{customdata[3]})<extra>" + names[cid] + "</extra>"))
     fig.update_yaxes(title_text="%", tickformat=".0f")
-    st.plotly_chart(style(fig, 380), use_container_width=True)
+    st.plotly_chart(style(fig, 380, hovermode="x unified"), use_container_width=True)
     with st.expander("표로 보기 — 전세가율"):
         st.dataframe(jr, use_container_width=True)
 
@@ -263,8 +286,7 @@ for val, cid, last in sorted(ends, key=lambda e: e[0]):
                            xanchor="left", xshift=8, font=dict(color=C["ink2"], size=12))
 cap_line(fig, cap)
 fig.update_yaxes(title_text="억원")
-fig.update_xaxes(range=[x_of(months[0]) - pd.Timedelta(days=20), x_of(months[-1]) + pd.Timedelta(days=75)])
-st.plotly_chart(style(fig, 420), use_container_width=True)
+st.plotly_chart(style(fig, 420, hovermode="x unified"), use_container_width=True)
 
 
 def trailing3(cid: str, ym: str) -> tuple[float, int]:
