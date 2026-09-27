@@ -1,0 +1,444 @@
+<html lang="ko">
+  <head>
+    <title>네이버페이</title>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, viewport-fit=cover"
+    />
+    <meta property="og:title" content="네이버페이" />
+    <meta
+      property="og:image"
+      content="https://financial.pstatic.net/static/public/image/npay_og_260x260.png"
+    />
+    <meta
+      property="og:description"
+      content="네이버 ID로 간편구매, 네이버페이"
+    />
+    <link
+      rel="shortcut icon"
+      href="https://financial.pstatic.net/static/public/favicon-1.0.0.ico"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="icon"
+      href="https://financial.pstatic.net/static/public/image/shortcut-icon/npay_192x192.png"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="apple-touch-icon-precomposed"
+      href="https://financial.pstatic.net/static/public/image/shortcut-icon/pay_180x180.png"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://financial.pstatic.net/static/public/favicon-1.0.0.png"
+    />
+    <style>
+      /* design-system-base.scss */
+      body,
+      p,
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6,
+      ul,
+      ol,
+      li,
+      dl,
+      dt,
+      dd,
+      table,
+      th,
+      td,
+      form,
+      fieldset,
+      legend,
+      input,
+      textarea,
+      button,
+      select {
+        margin: 0;
+        padding: 0;
+      }
+      body,
+      input,
+      textarea,
+      select,
+      button,
+      table {
+        font-family: -apple-system, BlinkMacSystemFont, helvetica,
+          "Apple SD Gothic Neo", "나눔고딕", NanumGothic, "맑은 고딕",
+          MalgunGothic, sans-serif;
+        font-size: 14px;
+      }
+      body {
+        position: relative;
+        -webkit-text-size-adjust: none;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      img,
+      fieldset {
+        border: 0;
+      }
+      ul,
+      ol {
+        list-style: none;
+      }
+      em,
+      address {
+        font-style: normal;
+      }
+      table {
+        border-collapse: collapse;
+      }
+      mark {
+        background: transparent;
+      }
+      a {
+        text-decoration: none;
+      }
+      a,
+      button,
+      select {
+        color: inherit;
+      }
+      img,
+      svg,
+      video {
+        vertical-align: top;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:disabled {
+        cursor: default;
+      }
+      button,
+      select,
+      input {
+        appearance: none;
+        -moz-appearance: none;
+        -webkit-appearance: none;
+        border: 0 none;
+        background-color: transparent;
+      }
+
+      input::-webkit-inner-spin-button,
+      input::-webkit-outer-spin-button,
+      input::-webkit-search-cancel-button {
+        display: none;
+      }
+
+      input[type="number"] {
+        appearance: textfield;
+        -moz-appearance: textfield;
+      }
+      #u_skip,
+      .blind {
+        overflow: hidden;
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        clip: rect(0 0 0 0);
+      }
+      .hidden {
+        position: absolute;
+        z-index: -1;
+        opacity: 0;
+      }
+    </style>
+    <style>
+      #wrap {
+        display: table;
+        table-layout: fixed;
+        width: 100%;
+        height: 100%;
+        background-color: #f6f8fa;
+      }
+      #header {
+        display: table-row;
+      }
+      #container {
+        display: table-row;
+        height: 100%;
+      }
+      #content {
+        max-width: 568px;
+        height: 100%;
+        margin: 0 auto;
+        background-color: #fff;
+      }
+      .gnb {
+        background-color: #fff;
+      }
+      .gnb .inner {
+        position: relative;
+        max-width: 1120px;
+        margin: 0 auto;
+        min-height: 56px;
+        padding: 16px 92px 14px;
+        box-sizing: border-box;
+        line-height: 1px;
+      }
+      .gnb .logo {
+        position: absolute;
+        top: 16px;
+        left: 20px;
+        line-height: 1px;
+      }
+      .gnb .aside-right {
+        position: absolute;
+        top: 0;
+        right: 14px;
+        display: flex;
+        align-items: center;
+        height: 100%;
+        max-height: 56px;
+      }
+      .gnb .link-logo {
+        display: inline-block;
+        vertical-align: top;
+      }
+      .gnb .button-close {
+        display: inline-block;
+        padding: 6px;
+        vertical-align: top;
+      }
+      .section-error {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: center;
+        min-height: 100%;
+        text-align: center;
+      }
+      .section-error .area-icon {
+        margin-bottom: 20px;
+      }
+      .section-error .icon {
+        display: inline-block;
+        line-height: 1px;
+        vertical-align: top;
+      }
+      .section-error .title {
+        font-size: 20px;
+        line-height: 26px;
+        letter-spacing: -0.5px;
+        color: #1e1e23;
+      }
+      .section-error .title + .description {
+        margin-top: 10px;
+      }
+      .section-error .description {
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 21px;
+        letter-spacing: -0.3px;
+        color: #767678;
+      }
+      .section-error .area-link-back {
+        margin-top: 20px;
+      }
+      .section-error .link-back {
+        display: inline-block;
+        padding: 11px 14px;
+        border-radius: 6px;
+        background-color: #f3f5f7;
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 22px;
+        letter-spacing: -0.3px;
+        vertical-align: top;
+        color: #1e1e23;
+      }
+      @media screen and (min-width: 1152px) {
+        #content {
+          max-width: 681px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="u_skip">
+      <a href="#content" class="blind">본문 바로가기</a>
+    </div>
+    <div id="wrap">
+      <header id="header">
+        <div class="gnb">
+          <div class="inner">
+            <h1 class="logo">
+              <button onclick="goPayHome()" class="link-logo">
+                <span class="blind">네이버페이</span>
+                <svg width="66" height="22" viewBox="0 0 66 22" fill="none">
+                  <path
+                    d="M22 11C22 13.1756 21.3549 15.3023 20.1462 17.1113C18.9375 18.9202 17.2195 20.3301 15.2095 21.1627C13.1995 21.9952 10.9878 22.2131 8.85401 21.7886C6.72022 21.3642 4.76021 20.3166 3.22183 18.7782C1.68345 17.2398 0.635805 15.2798 0.211368 13.146C-0.213069 11.0122 0.00476301 8.80047 0.837327 6.79048C1.66989 4.78049 3.07979 3.06253 4.88873 1.85383C6.69767 0.645137 8.82441 0 11 0C13.9174 0 16.7153 1.15892 18.7782 3.22183C20.8411 5.28473 22 8.08262 22 11ZM12.8398 5.83V11.3602L8.98976 5.83H5.83V16.1838H9.1575V10.637L13.0075 16.17H16.1783V5.83H12.8398Z"
+                    fill="black"
+                  />
+                  <path
+                    d="M61.4319 5.21944L58.3913 12.1478L54.9518 5.21944H52.3072L57.1783 14.8317L55.1703 19.3358H57.7384L64 5.2331L61.4319 5.21944ZM50.6171 15.9331H48.1037V14.9328C47.1894 15.7342 46.0108 16.1685 44.7953 16.1518C41.7901 16.1518 39.4379 13.692 39.4379 10.5763C39.4379 7.46057 41.7874 5.00079 44.7953 5.00079C46.0104 4.9833 47.189 5.41657 48.1037 6.21701V5.21944H50.6171V15.9331ZM48.3987 10.5899C48.3987 8.57019 46.9891 7.03694 45.1204 7.03694C43.2517 7.03694 41.842 8.57019 41.842 10.5899C41.842 12.6097 43.249 14.1429 45.1204 14.1429C46.9918 14.1429 48.3987 12.596 48.3987 10.5899ZM27.0082 19.3358H29.6309V15.023C30.5282 15.7695 31.6631 16.1699 32.83 16.1518C35.8352 16.1518 38.1901 13.692 38.1901 10.5763C38.1901 7.46057 35.8379 5.00079 32.83 5.00079C31.6117 4.9789 30.429 5.4126 29.5134 6.21701V5.21944H27L27.0082 19.3358ZM32.5186 7.03694C34.3872 7.03694 35.7969 8.57019 35.7969 10.5899C35.7969 12.6097 34.3872 14.1429 32.5186 14.1429C30.6499 14.1429 29.2402 12.6097 29.2402 10.5899C29.2402 8.57019 30.6335 7.03694 32.5186 7.03694Z"
+                    fill="black"
+                  />
+                </svg>
+              </button>
+            </h1>
+            <div class="aside-right">
+              <button type="button" class="button-close" onclick="goBack(true)">
+                <span class="blind">창닫기</span>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    d="M3.36375 3.3637C3.01228 3.71517 3.01228 4.28502 3.36375 4.63649L19.3638 20.6365C19.7152 20.988 20.2851 20.988 20.6365 20.6365C20.988 20.285 20.988 19.7152 20.6365 19.3637L4.63654 3.3637C4.28507 3.01223 3.71522 3.01223 3.36375 3.3637Z"
+                    fill="#1e1e23"
+                  />
+                  <path
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    d="M20.6365 3.3637C20.988 3.71517 20.988 4.28502 20.6365 4.63649L4.63649 20.6365C4.28502 20.988 3.71517 20.988 3.3637 20.6365C3.01223 20.285 3.01223 19.7152 3.3637 19.3637L19.3637 3.3637C19.7152 3.01223 20.285 3.01223 20.6365 3.3637Z"
+                    fill="#1e1e23"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div id="container">
+        <main id="content">
+          <div class="section-error">
+            <div class="area-icon">
+              <span class="icon">
+                <svg width="47" height="54" viewBox="0 0 47 54" fill="none">
+                  <path
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    d="M27.0806 48.7977C27.9306 47.3255 29.3797 46.3223 30.991 45.7808C40.2967 42.6534 47 33.8595 47 23.5C47 10.5213 36.4787 0 23.5 0C10.5213 0 0 10.5213 0 23.5C0 33.8593 6.70304 42.6531 16.0085 45.7807C17.6198 46.3222 19.0688 47.3254 19.9187 48.7975L22.6337 53.5C23.0186 54.1667 23.9809 54.1667 24.3658 53.5L27.0806 48.7977Z"
+                    fill="#EDEFF2"
+                  />
+                  <path
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    d="M21.4095 32.3432C21.4095 33.4638 22.3148 34.3692 23.4355 34.3692C24.5561 34.3692 25.4614 33.4638 25.4614 32.3432C25.4614 31.2226 24.5497 30.3172 23.4355 30.3172C22.3148 30.3172 21.4095 31.2226 21.4095 32.3432ZM23.4974 13C21.795 13 20.4118 14.193 20.4224 15.6613L20.4331 15.9275L21.6247 26.2241C21.7099 27.1143 22.6249 27.775 23.657 27.7016C24.572 27.6374 25.2956 27.0133 25.37 26.2241L26.5617 15.9275C26.732 14.4683 25.4977 13.1652 23.806 13.0184L23.4974 13Z"
+                    fill="black"
+                  />
+                </svg>
+              </span>
+            </div>
+            <h2 class="title">페이지를 찾을 수 없습니다</h2>
+            <p class="description">
+              잘못된 주소이거나 변경 혹은 삭제되어<br />요청하신 페이지를 찾을
+              수 없습니다.
+            </p>
+            <div class="area-link-back">
+              <button id="prev_button" onclick="goBack(true)" class="link-back">
+                이전 페이지로
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script>
+      var $ogUrlMeta = document.createElement("meta");
+
+      $ogUrlMeta.setAttribute("property", "og:url");
+      $ogUrlMeta.setAttribute("content", window.location.href);
+
+      document.head.appendChild($ogUrlMeta);
+
+      var urlParams = new URLSearchParams(window.location.search);
+
+      var matched =
+        /NAVER\([inapp|higgs]+;[^0-9]*(search|pay);[^0-9]*(\d+);[^0-9]*(\d+.\d+.\d+).*\)/im.exec(
+          navigator.userAgent
+        );
+      var isPayApp = matched ? matched[1] === "pay" : false;
+      var buttonText = urlParams.get("text");
+
+      function isSafeUrl(inputUrl, base) {
+        var allowedProtocols = [
+          "naverpayapp:",
+          "http:",
+          "https:",
+          "intent:",
+          "naverapp:",
+          "navercafe:",
+          "naversearchapp:",
+          "navershopping:",
+          "bandapp:",
+        ];
+
+        if (!inputUrl || !inputUrl.trim()) {
+          return false;
+        }
+
+        var urlLike;
+        try {
+          urlLike = new URL(inputUrl, base);
+        } catch (e) {
+          return false;
+        }
+
+        if (allowedProtocols.indexOf(urlLike.protocol) === -1) {
+          return false;
+        }
+        if (urlLike.protocol === "http:" || urlLike.protocol === "https:") {
+          return /(\.(naver|navercorp)\.com|\/naver\.me)$/.test(
+            urlLike.origin.replace(/:\d+$/, "")
+          );
+        }
+        return true;
+      }
+
+      if (window.history.length === 1) {
+        document.getElementById("prev_button").textContent = buttonText
+          ? decodeURIComponent(buttonText)
+          : "홈으로 이동";
+      }
+
+      function goPayHome() {
+        if (
+          isPayApp &&
+          window.payInAppBrowser &&
+          typeof window.payInAppBrowser.showServiceMenu === "function"
+        ) {
+          window.payInAppBrowser.showServiceMenu?.(
+            '{"menuName": "payment", "subMenuName": "pay"}'
+          );
+        } else {
+          location.replace("https://home.pay.naver.com/");
+        }
+      }
+
+      function goBack(custom) {
+        if (window.history.length > 1) {
+          window.history.back();
+        } else {
+          if (custom) {
+            var url = urlParams.get("url");
+
+            if (url) {
+              var decodedUrl = decodeURIComponent(url);
+
+              if (isSafeUrl(decodedUrl)) {
+                location.replace(decodedUrl);
+                return;
+              }
+            }
+          }
+
+          goPayHome();
+        }
+      }
+    </script>
+  </body>
+</html>
