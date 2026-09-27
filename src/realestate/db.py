@@ -30,9 +30,18 @@ def init_db(conn: sqlite3.Connection) -> None:
     version = zlib.crc32(sql.encode("utf-8")) & 0x7FFFFFFF
     if conn.execute("PRAGMA user_version").fetchone()[0] == version:
         return
+    _migrate(conn)
     conn.executescript(sql)
     conn.execute(f"PRAGMA user_version = {version}")
     conn.commit()
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """CREATE TABLE IF NOT EXISTS 로는 못 바꾸는 기존 테이블의 컬럼 추가."""
+    def has_col(table, col):
+        return any(r[1] == col for r in conn.execute(f"PRAGMA table_info({table})"))
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE name='complex'").fetchone() and not has_col("complex", "naver_id"):
+        conn.execute("ALTER TABLE complex ADD COLUMN naver_id INTEGER")
 
 
 # ───── raw / fetch_log ─────
@@ -132,8 +141,9 @@ def sync_complexes(conn, complexes: list[dict]) -> None:
     conn.execute("DELETE FROM complex")
     for c in complexes:
         conn.execute(
-            "INSERT INTO complex (complex_id, name, sgg_cd, umd_nm, target_bands) VALUES (?,?,?,?,?)",
-            (c["id"], c["name"], str(c["sgg_cd"]), c["umd_nm"], ",".join(str(b) for b in c.get("bands", []))),
+            "INSERT INTO complex (complex_id, name, sgg_cd, umd_nm, target_bands, naver_id) VALUES (?,?,?,?,?,?)",
+            (c["id"], c["name"], str(c["sgg_cd"]), c["umd_nm"], ",".join(str(b) for b in c.get("bands", [])),
+             c.get("naver_id")),
         )
         for seq in c.get("apt_seq", []) or []:
             conn.execute("INSERT INTO complex_key (complex_id, apt_seq) VALUES (?,?)", (c["id"], str(seq)))
