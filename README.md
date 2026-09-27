@@ -41,6 +41,13 @@ python scripts/list_complex_names.py --umd 상일동 여수동
 python scripts/list_complex_names.py --sgg 41450 --like 더샵
 ```
 
+## 검증
+
+```bash
+python -m realestate.validate               # 단지·평형·월별 건수, 이상치, 공개시스템 대조 샘플
+python scripts/area_distribution.py         # 관심 단지 전용면적 분포
+```
+
 ## 테스트
 
 ```bash
