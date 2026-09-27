@@ -28,10 +28,14 @@ validate:
   outlier_pct: 15
   outlier_min_n: 3
 
-# 네이버 매물 스냅샷 지표: 북마클릿 덤프의 JSON 경로에서 값을 고른다 (첫 실제 덤프를 보고 경로 확정).
-# 각 지표는 endpoint 키와, 평탄화한 JSON 경로에 대한 정규식 후보 목록(먼저 맞는 것 사용).
+# 네이버 매물 스냅샷 지표 (2026-09-28 첫 실제 덤프로 확정). endpoint = 북마클릿 응답 키,
+# paths = 평탄화한 JSON 경로 정규식 후보(먼저 맞는 것). 값 단위: 건수 / 원.
 listing_metrics:
-  sale_count:  {endpoint: article_stats, trade: A1, paths: ['(?i)(deal|sale|a1).*count$', '(?i)count.*(deal|sale|a1)', '(?i)^result\.?.*count$']}
-  lease_count: {endpoint: article_stats, trade: B1, paths: ['(?i)(lease|jeonse|b1).*count$', '(?i)count.*(lease|jeonse|b1)']}
-  sale_min_ask:  {endpoint: asking_price, trade: A1, paths: ['(?i)min.*price', '(?i)price.*min', '(?i)lowest']}
-  lease_min_ask: {endpoint: asking_price, trade: B1, paths: ['(?i)min.*price', '(?i)price.*min', '(?i)lowest']}
+  sale_count:    {endpoint: article_stats, paths: ['^result\.count\.dealCount$']}            # 매매 매물 수
+  lease_count:   {endpoint: article_stats, paths: ['^result\.count\.leaseDepositCount$']}    # 전세 매물 수
+  wolse_count:   {endpoint: article_stats, paths: ['^result\.count\.leaseMonthlyCount$']}    # 월세 매물 수
+  sale_min_ask:  {endpoint: article_stats, paths: ['^result\.price\.dealMinPrice$']}         # 매매 최저 호가(원)
+  sale_max_ask:  {endpoint: article_stats, paths: ['^result\.price\.dealMaxPrice$']}
+  lease_min_ask: {endpoint: article_stats, paths: ['^result\.price\.rentMinPrice$']}         # 전세 최저 호가(원)
+  lease_max_ask: {endpoint: article_stats, paths: ['^result\.price\.rentMaxPrice$']}
+  # 평형별 호가(asking_price, pyeongTypeNumber별)는 2차 덤프에서 구조 확인 후 추가

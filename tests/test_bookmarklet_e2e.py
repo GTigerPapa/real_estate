@@ -30,9 +30,10 @@ def _fake_api(route):
     q = dict(p.split("=") for p in url.split("?")[1].split("&")) if "?" in url else {}
     body = None
     if path == "complex/pyeongList":
-        body = {"result": [{"pyeongTypeNumber": 3, "exclusiveArea": 84.97}, {"pyeongTypeNumber": 5, "exclusiveArea": 59.9}]}
+        body = {"result": [{"number": 3, "name": "84A", "exclusiveArea": 84.97}, {"number": 5, "name": "59", "exclusiveArea": 59.9}]}
     elif path == "complex/article/stats":
-        body = {"result": {"dealCount": 31, "leaseCount": 9}}
+        body = {"result": {"count": {"dealCount": 31, "leaseDepositCount": 9, "leaseMonthlyCount": 2},
+                           "price": {"dealMinPrice": 2_000_000_000, "rentMinPrice": 900_000_000}}}
     elif path == "complex/asking-price":
         base = 2_000_000_000 if q.get("tradeType") == "A1" else 900_000_000
         body = {"result": {"minPrice": base + int(q.get("pyeongTypeNumber", 0)) * 1000, "maxPrice": base * 1.1}}
@@ -69,15 +70,15 @@ def test_bookmarklet_runs_in_real_chromium(tmp_path, conn):
     d = listings.load_dump(path)
     assert [c["naver_id"] for c in d["complexes"]] == [121977, 118210, 102283, 111028]
     keys = [r["key"] for r in d["complexes"][0]["responses"]]
-    # pyeongList, stats, asking-price × (A1,B1) × (0,3,5), marketPrice
-    assert keys.count("asking_price") == 6 and {"pyeong_list", "article_stats", "market_price_recent"} <= set(keys)
-    assert len(d["discovery"]) == 4 and all(not r["ok"] for r in d["discovery"])
-    assert sum(1 for u in calls if "front-api" in u) == 4 * 9 + 4
+    # pyeongList, stats, asking-price × (A1,B1) × (3,5), marketPrice × (3,5)
+    assert keys.count("asking_price") == 4 and keys.count("market_price_recent") == 2
+    assert {"pyeong_list", "article_stats"} <= set(keys)
+    assert len(d["discovery"]) == 5 and all(not r["ok"] for r in d["discovery"])
+    assert sum(1 for u in calls if "front-api" in u) == 4 * 8 + 5
 
     r = listings.ingest_file(conn, path)
     assert r["loaded"] and r["metrics"] > 0
     snap = listings.snapshot(conn, config.load_settings())
-    got = snap[(snap["complex_id"] == "godeok_xi") & (snap["pyeong_type"].isin([0, None]) | snap["pyeong_type"].isna())]
-    vals = got.groupby("metric")["value"].first()
+    vals = snap[snap["complex_id"] == "godeok_xi"].groupby("metric")["value"].first()
     assert vals["sale_count"] == 31 and vals["lease_count"] == 9
     assert vals["sale_min_ask"] == 2_000_000_000 and vals["lease_min_ask"] == 900_000_000

@@ -59,15 +59,11 @@
   };
   var pyeongNumbers = function (json) {
     var nums = [];
-    var walk = function (o) {
-      if (!o || typeof o !== "object") { return; }
-      if (Array.isArray(o)) { o.forEach(walk); return; }
-      if (typeof o.pyeongTypeNumber === "number" && nums.indexOf(o.pyeongTypeNumber) < 0) {
-        nums.push(o.pyeongTypeNumber);
-      }
-      Object.keys(o).forEach(function (k) { walk(o[k]); });
-    };
-    walk(json);
+    var list = json && Array.isArray(json.result) ? json.result : [];
+    list.forEach(function (o) {
+      var n = typeof o.number === "number" ? o.number : o.pyeongTypeNumber;
+      if (typeof n === "number" && n > 0 && nums.indexOf(n) < 0) { nums.push(n); }
+    });
     return nums;
   };
   var dump = { format: 1, captured_at: nowKst(), page: location.href, complexes: [], discovery: [] };
@@ -80,7 +76,7 @@
     var pl = await api("pyeong_list", "complex/pyeongList", { complexNumber: n });
     out.responses.push(pl);
     out.responses.push(await api("article_stats", "complex/article/stats", { complexNumber: n }));
-    var types = [0].concat(pyeongNumbers(pl.json || {}).filter(function (x) { return x !== 0; }));
+    var types = pyeongNumbers(pl.json || {});
     var trades = ["A1", "B1"];
     for (var t = 0; t < trades.length; t++) {
       for (var k = 0; k < types.length; k++) {
@@ -88,18 +84,22 @@
           { complexNumber: n, pyeongTypeNumber: types[k], realEstateType: "A01", tradeType: trades[t] }));
       }
     }
-    out.responses.push(await api("market_price_recent", "complex/marketPrice/recent",
-      { complexNumber: n, pyeongTypeNumber: 0, realEstateType: "A01", cpList: ["kab", "kbstar", "neonet"] }));
+    for (var m = 0; m < types.length; m++) {
+      out.responses.push(await api("market_price_recent", "complex/marketPrice/recent",
+        { complexNumber: n, pyeongTypeNumber: types[m], realEstateType: "A01", cpList: ["kab", "kbstar", "neonet"] }));
+    }
     if (i === 0) {
       say("매물 목록 엔드포인트 확인 중 (첫 단지)");
-      dump.discovery.push(await api("cand_article_list_get", "complex/article/list",
-        { complexNumber: n, tradeTypes: ["A1", "B1"], realEstateType: "A01", page: 0, size: 50 }));
-      dump.discovery.push(await api("cand_article_list_post", "complex/article/list", null, "POST",
-        { complexNumber: n, tradeTypes: ["A1", "B1"], realEstateTypes: ["A01"], page: 0, size: 50 }));
-      dump.discovery.push(await api("cand_articles", "complex/articles",
-        { complexNumber: n, tradeTypes: ["A1", "B1"], page: 0, size: 50 }));
-      dump.discovery.push(await api("cand_article_search", "article/list",
-        { complexNumber: n, tradeTypes: ["A1", "B1"], page: 0, size: 50 }));
+      var bodies = [
+        { complexNumber: n, tradeTypes: ["A1"], pyeongTypes: [], dongNumbers: [], page: 0, size: 20, userChannelType: "PC" },
+        { complexNumber: n, tradeType: "A1", page: 0, size: 20 },
+        { complexNumber: n, tradeTypes: ["A1"], realEstateType: "A01", page: 0, size: 20, orderType: "RECENT" },
+        { complexNumber: n, tradeTypes: ["A1"], pyeongTypeNumbers: [], page: 0, size: 20, sortType: "RANKING" },
+        { complexNumber: String(n), tradeTypes: ["A1"], page: 0, size: 20 }
+      ];
+      for (var b = 0; b < bodies.length; b++) {
+        dump.discovery.push(await api("cand_article_list_post_" + (b + 1), "complex/article/list", null, "POST", bodies[b]));
+      }
     }
     dump.complexes.push(out);
   }

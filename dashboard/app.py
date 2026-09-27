@@ -404,10 +404,11 @@ else:
             m = LS_all[LS_all["metric"] == metric]
             return m.pivot_table(index="snap_date", columns="complex_id", values="value", aggfunc="last")
 
-        cnt_sale, cnt_lease = _series("sale_count"), _series("lease_count")
+        cnt_sale, cnt_lease, cnt_wolse = _series("sale_count"), _series("lease_count"), _series("wolse_count")
         fig, h = stacked(facet_titles(), 150)
         for i, cid in enumerate(sel):
-            for label, tbl, col in (("매매 매물", cnt_sale, C["ink"]), ("전세 매물", cnt_lease, C["jeonse"])):
+            for label, tbl, col in (("매매 매물", cnt_sale, C["ink"]), ("전세 매물", cnt_lease, C["jeonse"]),
+                                    ("월세 매물", cnt_wolse, C["wolse"])):
                 if cid not in tbl.columns:
                     continue
                 s_ = tbl[cid].dropna()
