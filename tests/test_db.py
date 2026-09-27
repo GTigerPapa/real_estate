@@ -42,3 +42,14 @@ def test_views_match_and_band(conn, fixture_text):
     db.sync_complexes(conn, [{"id": "x", "name": "테스트", "sgg_cd": "11740", "umd_nm": "상일동",
                               "apt_seq": ["11740-9999"], "fallback": [{"jibun": "100", "apt_nm": "테스트자이"}]}])
     assert conn.execute("SELECT COUNT(*) FROM v_trade").fetchone()[0] == 3
+
+
+def test_sync_config_noop_when_unchanged(conn):
+    cfg = ({"size_bands": [{"band": "84", "min": 82, "max": 87}]},
+           [{"id": "x", "name": "X", "sgg_cd": "11740", "umd_nm": "상일동", "apt_seq": ["s"],
+             "fallback": [{"jibun": "1", "apt_nm": "X"}], "bands": [84]}])
+    assert db.sync_config(conn, *cfg) is True
+    assert db.sync_config(conn, *cfg) is False
+    assert conn.execute("SELECT COUNT(*) FROM complex_key").fetchone()[0] == 2
+    cfg[0]["size_bands"][0]["max"] = 88
+    assert db.sync_config(conn, *cfg) is True
