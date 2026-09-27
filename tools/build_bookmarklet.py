@@ -16,13 +16,17 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "tools" / "bookmarklet_src.js"
 
 
-def build_js() -> str:
+def build_source() -> str:
+    """단지 목록을 끼워 넣은 읽기 쉬운 여러 줄 소스 (DevTools 콘솔에 붙여넣기용)."""
     complexes = yaml.safe_load((ROOT / "config" / "complexes.yaml").read_text(encoding="utf-8"))["complexes"]
     embed = [{"id": c["id"], "naver_id": int(c["naver_id"]), "name": c["name"]} for c in complexes]
     src = SRC.read_text(encoding="utf-8")
     src = re.sub(r"/\*.*?\*/", "", src, flags=re.S)  # 머리말 블록 주석 제거
-    src = src.replace("__COMPLEXES__", json.dumps(embed, ensure_ascii=False, separators=(",", ":")))
-    lines = [ln.strip() for ln in src.splitlines()]
+    return src.replace("__COMPLEXES__", json.dumps(embed, ensure_ascii=False, separators=(",", ":"))).strip() + "\n"
+
+
+def build_js() -> str:
+    lines = [ln.strip() for ln in build_source().splitlines()]
     return "javascript:" + " ".join(ln for ln in lines if ln)
 
 
@@ -48,7 +52,10 @@ HTML = """<!doctype html>
  <li>터미널: <code>cd ~/real_estate</code> → <code>python3 scripts/save_listings.py</code> (다운로드 폴더에서 파일을 찾아 저장소에 넣고 push).</li>
 </ol>
 <p>대상 단지: {names}</p>
-<details><summary>드래그가 안 되면: 북마크를 직접 만들고 URL에 아래를 붙여넣기</summary><textarea readonly>{js}</textarea></details>
+<details><summary>드래그가 안 되면 (방법 2): 즐겨찾기 대신 콘솔에 붙여넣기</summary>
+<ol><li>fin.land.naver.com 탭에서 <code>⌥⌘J</code> (개발자 도구 Console)</li>
+<li><code>tools/console_snippet.js</code> 내용 전체를 붙여넣고 Enter. 처음엔 <code>allow pasting</code> 을 입력하라고 하면 그대로 입력 후 다시 붙여넣기</li></ol>
+북마크를 직접 만들 때 URL 칸에 붙여넣을 한 줄:<textarea readonly>{js}</textarea></details>
 <p style="color:#777;font-size:13px">생성: tools/build_bookmarklet.py · 단지 목록(config/complexes.yaml)이 바뀌면 다시 빌드</p>
 </body></html>
 """
@@ -58,10 +65,11 @@ def main() -> int:
     js = build_js()
     complexes = yaml.safe_load((ROOT / "config" / "complexes.yaml").read_text(encoding="utf-8"))["complexes"]
     (ROOT / "tools" / "bookmarklet.txt").write_text(js, encoding="utf-8")
+    (ROOT / "tools" / "console_snippet.js").write_text(build_source(), encoding="utf-8")
     (ROOT / "tools" / "bookmarklet.html").write_text(
         HTML.format(href=build_href(js), js=js.replace("&", "&amp;").replace("<", "&lt;"),
                     names=", ".join(c["name"] for c in complexes)), encoding="utf-8")
-    print(f"bookmarklet: {len(js):,}자 → tools/bookmarklet.html, tools/bookmarklet.txt")
+    print(f"bookmarklet: {len(js):,}자 → tools/bookmarklet.html, tools/bookmarklet.txt, tools/console_snippet.js")
     return 0
 
 
