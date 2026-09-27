@@ -4,6 +4,7 @@
 complexes:
   - id: godeok_xi
     name: 고덕자이
+    short: 고덕자이
     naver_id: 121977
     sgg_cd: "11740"
     umd_nm: 상일동
@@ -13,6 +14,7 @@ complexes:
 
   - id: godeok_central_ipark
     name: 고덕센트럴아이파크
+    short: 고덕아이파크
     naver_id: 118210
     sgg_cd: "11740"
     umd_nm: 상일동
@@ -22,6 +24,7 @@ complexes:
 
   - id: yeosu_central_town
     name: 센트럴타운
+    short: 센트럴타운
     naver_id: 102283
     sgg_cd: "41133"
     umd_nm: 여수동
@@ -31,6 +34,7 @@ complexes:
 
   - id: misa_thesharp_central_forest
     name: 미사강변더샵센트럴포레스트
+    short: 미사더샵
     naver_id: 111028
     sgg_cd: "41450"
     umd_nm: 풍산동

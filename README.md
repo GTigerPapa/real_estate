@@ -79,6 +79,18 @@ streamlit run dashboard/app.py          # http://localhost:8501  (?band=74 처�
 첫 실제 덤프를 보고 확정하며, 규칙만 고치면 이미 쌓인 덤프에 소급 적용된다.
 단지 목록(`config/complexes.yaml` 의 `naver_id`)이 바뀌면 `python3 tools/build_bookmarklet.py` 로 다시 빌드.
 
+## 모바일 웹앱 (휴대폰 홈 화면용)
+
+`web/` 은 설치형 웹앱(PWA): 단지 카드(3개월 중앙값·1년 대비·상한 대비·전세가율·네이버 매물),
+단지 상세 차트, 단지 비교, 오프라인 보기, 라이트/다크.
+데이터 `web/data/app.json` 은 `scripts/export_web.py` 가 만들고, GitHub Actions `데이터 갱신`이 매일 06:30 KST에
+실거래 수집 → 데이터 갱신 → 커밋한다(네이버 덤프 push 때도 실행). Cloudflare Pages가 커밋마다 배포하고,
+Cloudflare Access로 본인 이메일만 열리게 잠근다. 설정 방법: **[docs/DEPLOY.md](docs/DEPLOY.md)**
+
+```bash
+python3 scripts/export_web.py && python3 -m http.server -d web 8000   # 로컬 미리보기
+```
+
 ## 테스트
 
 ```bash

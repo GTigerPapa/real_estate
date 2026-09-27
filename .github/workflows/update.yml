@@ -1,0 +1,76 @@
+# 매일 06:30 KST 실거래 증분 수집 + 모바일 웹앱 데이터(web/data/app.json) 갱신.
+# 네이버 매물 덤프(data/listings/raw/)가 push 될 때도 실행 → Cloudflare Pages가 커밋마다 자동 배포.
+name: 데이터 갱신
+
+on:
+  schedule:
+    - cron: "30 21 * * *"          # UTC 21:30 = KST 06:30
+  push:
+    branches: [main]
+    paths:
+      - "data/listings/raw/**"
+      - "config/**"
+      - "src/realestate/**"
+      - "scripts/export_web.py"
+  workflow_dispatch:
+    inputs:
+      commit_db:
+        description: "DB 파일도 커밋 (평소엔 매월 1일에만)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 패키지 설치
+        run: |
+          pip install -q requests PyYAML python-dotenv pandas
+          pip install -q --no-deps -e .
+
+      - name: 실거래 증분 수집 (최근 3개월 재수집)
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+        run: |
+          if [ -z "$DATA_GO_KR_KEY" ]; then
+            echo "::warning::DATA_GO_KR_KEY 시크릿이 없어 실거래 수집을 건너뜁니다 (Settings → Secrets and variables → Actions)"
+            exit 0
+          fi
+          python -m realestate.ingest || echo "::warning::일부 월 수집 실패 — 다음 실행에서 자동 재시도"
+
+      - name: 웹앱 데이터 생성
+        run: python scripts/export_web.py
+
+      - name: 커밋·push
+        env:
+          COMMIT_DB: ${{ inputs.commit_db }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/data/app.json
+          # DB(45MB)는 매월 1일(KST) 또는 수동 요청 때만 커밋해 저장소 용량을 관리한다.
+          # 매 실행이 최근 3개월을 재수집하므로 그 사이 데이터가 빠지지 않는다.
+          if [ "$(TZ=Asia/Seoul date +%d)" = "01" ] || [ "$COMMIT_DB" = "true" ]; then
+            git add data/realestate.db
+          fi
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git commit -q -m "데이터 갱신 $(TZ=Asia/Seoul date +'%Y-%m-%d %H:%M') KST"
+          for i in 1 2 3; do
+            git pull -q --rebase && git push -q && exit 0
+            sleep 5
+          done
+          exit 1

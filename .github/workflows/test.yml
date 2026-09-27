@@ -1,0 +1,31 @@
+name: 테스트
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths: ["src/**", "scripts/**", "tests/**", "web/**", "tools/**", "config/**", "dashboard/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 패키지 설치
+        run: |
+          pip install -q requests PyYAML python-dotenv pandas pytest
+          pip install -q --no-deps -e .
+      - name: 웹앱 JS 구문 검사
+        run: node --check web/app.js && node --check web/sw.js && node --check tools/console_snippet.js
+      - name: pytest (브라우저 종단 테스트는 Chromium 없는 환경에서 자동 건너뜀)
+        run: python -m pytest -q
