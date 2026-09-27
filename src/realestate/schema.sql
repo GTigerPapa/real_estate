@@ -95,7 +95,8 @@ CREATE TABLE IF NOT EXISTS complex (
     name         TEXT NOT NULL,                -- 표시명
     sgg_cd       TEXT NOT NULL,
     umd_nm       TEXT NOT NULL,
-    target_bands TEXT                          -- 쉼표 구분, 예: '59,74,84'
+    target_bands TEXT,                         -- 쉼표 구분, 예: '59,74,84'
+    naver_id     INTEGER                       -- 네이버페이 부동산 단지번호
 );
 -- 매칭 키: apt_seq 우선, 보조로 (umd_nm, jibun, apt_nm)
 CREATE TABLE IF NOT EXISTS complex_key (
@@ -150,9 +151,31 @@ JOIN v_rent_match m  ON m.rent_id = r.id
 JOIN complex c       ON c.complex_id = m.complex_id
 LEFT JOIN size_band b ON r.exclu_use_ar >= b.min_ar AND r.exclu_use_ar < b.max_ar;
 
+-- ───── 네이버 매물 (북마클릿 덤프 → data/listings/raw/*.json → 아래 두 테이블) ─────
+-- 덤프 파일 단위 원문 (zlib 압축). 파일명이 키라 재적재해도 중복 없음.
+CREATE TABLE IF NOT EXISTS listing_raw (
+    file_name    TEXT PRIMARY KEY,
+    captured_at  TEXT NOT NULL,           -- 덤프 시각 (KST ISO8601)
+    snap_date    TEXT NOT NULL,           -- YYYY-MM-DD (KST)
+    format       INTEGER,
+    body         BLOB NOT NULL,
+    loaded_at    TEXT NOT NULL
+);
+-- 덤프 안 모든 JSON 응답의 숫자 값을 경로별로 평탄화. 응답 구조를 몰라도 전부 보존되고,
+-- 어떤 경로가 "매물 수"인지는 settings.yaml listing_metrics 로 나중에 지정한다.
+CREATE TABLE IF NOT EXISTS listing_metric (
+    snap_date    TEXT NOT NULL,
+    complex_id   TEXT NOT NULL,
+    endpoint     TEXT NOT NULL,           -- 북마클릿의 응답 키 (article_stats, asking_price, ...)
+    params       TEXT NOT NULL DEFAULT '',-- 요청 파라미터 JSON (tradeType, pyeongTypeNumber 등)
+    path         TEXT NOT NULL,           -- 평탄화한 JSON 경로 (a.b[0].c)
+    value        REAL NOT NULL,
+    captured_at  TEXT NOT NULL,
+    PRIMARY KEY (snap_date, complex_id, endpoint, params, path)
+);
+CREATE INDEX IF NOT EXISTS ix_listing_metric_lookup ON listing_metric (complex_id, endpoint, snap_date);
+
 -- ───── 2~4단계 설계 (아직 미사용) ─────
--- listing_snapshot(snap_date, complex_id, size_band, listing_count, min_ask, jeonse_listing_count, source,
---                  PRIMARY KEY(snap_date, complex_id, size_band, source))
 -- interest_rate(date, series_code, value, PRIMARY KEY(date, series_code))
 -- news_summary(url UNIQUE, published_at, title, summary, complex_id NULL, tags, model)
 -- report_log(report_date, kind, channel, status, sent_at, content_hash, payload)

@@ -23,8 +23,11 @@ from realestate import config, db, metrics  # noqa: E402
 
 # src/는 Streamlit 자동 재로드 범위(dashboard/) 밖이라, 서버가 켜진 채 git pull 하면 옛 모듈이 메모리에 남는다.
 # 매 실행마다 다시 읽어 app.py와 항상 같은 버전을 쓰게 한다 (의존 순서대로).
-for _mod in (realestate.api.parse, config, db, metrics):
+from realestate import listings  # noqa: E402
+
+for _mod in (realestate.api.parse, config, db, metrics, listings):
     importlib.reload(_mod)
+LISTING_RAW_DIR = config.DATA_DIR / "listings" / "raw"
 
 st.set_page_config(page_title="관심 단지 실거래", layout="wide")
 PAGE_MAX_W = 980  # 본문 최대 폭(px): 넓은 화면에서도 차트가 과하게 늘어나지 않게
@@ -92,23 +95,28 @@ def cap_line(fig, cap, row=None, col=None, label_left=False):
 
 # ───── 데이터 ─────
 @st.cache_data(show_spinner=False)
-def load(db_file: str, mtime: float):
+def load(db_file: str, mtime: float, raw_sig: tuple):
     settings = config.load_settings()
     conn = db.connect(db_file)
     db.init_db(conn)
     db.sync_config(conn, settings, config.load_complexes())
+    listings.ingest_dir(conn, LISTING_RAW_DIR)  # 새 매물 덤프 파일이 있으면 적재 (멱등)
     trades = metrics.load_trades(conn, include_canceled=True)
     rents = metrics.load_rents(conn, rent_type=None)
     cx = pd.read_sql_query("SELECT complex_id, name, target_bands FROM complex", conn)
+    snap = listings.snapshot(conn, settings)
+    n_dumps = conn.execute("SELECT COUNT(*), MAX(snap_date) FROM listing_raw").fetchone()
+    paths = listings.available_paths(conn) if n_dumps[0] else None
     conn.close()
-    return settings, trades, rents, cx
+    return settings, trades, rents, cx, snap, tuple(n_dumps), paths
 
 
 db_file = str(config.db_path())
 if not Path(db_file).exists():
     st.error(f"DB가 없습니다: {db_file} — 먼저 `python -m realestate.ingest` 실행")
     st.stop()
-settings, trades_all, rents_all, cx = load(db_file, Path(db_file).stat().st_mtime)
+settings, trades_all, rents_all, cx, listing_snap, (n_dumps, last_dump), listing_paths = load(
+    db_file, Path(db_file).stat().st_mtime, listings.raw_dir_signature(LISTING_RAW_DIR))
 order = list(cx["complex_id"])                      # complexes.yaml 순서 = 색 슬롯
 names = dict(zip(cx["complex_id"], cx["name"]))
 color_of = {cid: C["complex"][i % 4] for i, cid in enumerate(order)}
@@ -376,3 +384,63 @@ def summary_row(cid: str) -> dict:
 st.dataframe(pd.DataFrame([summary_row(c) for c in sel]), hide_index=True, use_container_width=True)
 st.caption("기준월 = 거래가 있는 가장 최근 3개월 창의 마지막 월. n = 중앙값 계산에 쓰인 거래 수. "
            "최근 1~2개월은 신고 기한(30일)이 남아 건수가 늘어날 수 있음.")
+
+# ⑦ 네이버 매물 추이 (북마클릿 덤프)
+st.subheader("⑦ 네이버 매물 추이")
+if not n_dumps:
+    st.info("아직 매물 덤프가 없습니다. 크롬에서 fin.land.naver.com 을 연 뒤 북마클릿(📥 네이버 매물 덤프)을 누르고 "
+            "`python3 scripts/save_listings.py` 를 실행하면 여기에 쌓입니다. (설치: tools/bookmarklet.html)")
+else:
+    LS = listing_snap[listing_snap["complex_id"].isin(sel)] if not listing_snap.empty else listing_snap
+    # 단지 전체(pyeongTypeNumber 0 또는 없음) 기준. 평형별은 경로 확정 후 추가
+    LS_all = LS[LS["pyeong_type"].isna() | (LS["pyeong_type"] == 0)] if not LS.empty else LS
+    st.caption(f"덤프 {n_dumps}회 · 최근 {last_dump} · 값은 네이버페이 부동산 화면 기준(단지 전체). "
+               "매물 수 증감이 실거래가에 앞서는지 보는 용도.")
+    if LS_all.empty:
+        st.warning("덤프는 있지만 settings.yaml `listing_metrics` 경로 규칙에 맞는 값이 없습니다. "
+                   "아래 '수집된 경로 보기'에서 경로를 확인해 규칙을 고치면 표시됩니다.")
+    else:
+        def _series(metric):
+            m = LS_all[LS_all["metric"] == metric]
+            return m.pivot_table(index="snap_date", columns="complex_id", values="value", aggfunc="last")
+
+        cnt_sale, cnt_lease = _series("sale_count"), _series("lease_count")
+        fig, h = stacked(facet_titles(), 150)
+        for i, cid in enumerate(sel):
+            for label, tbl, col in (("매매 매물", cnt_sale, C["ink"]), ("전세 매물", cnt_lease, C["jeonse"])):
+                if cid not in tbl.columns:
+                    continue
+                s_ = tbl[cid].dropna()
+                fig.add_trace(go.Scatter(x=pd.to_datetime(s_.index), y=s_.values, mode="lines+markers", name=label,
+                                         legendgroup=label, showlegend=i == 0, connectgaps=True,
+                                         line=dict(color=col, width=2), marker=dict(size=7),
+                                         hovertemplate="<b>%{y:.0f}건</b> %{x|%Y-%m-%d}<extra>" + label + "</extra>"),
+                              row=i + 1, col=1)
+        style(fig, h, hovermode="x unified")
+        lo = pd.to_datetime(LS_all["snap_date"].min()) - pd.Timedelta(days=3)
+        hi = pd.to_datetime(LS_all["snap_date"].max()) + pd.Timedelta(days=3)
+        fig.update_xaxes(range=[lo, hi], dtick=None, tickformat="%m-%d")
+        fig.update_yaxes(title_text="건", tickformat="d", rangemode="tozero")
+        st.plotly_chart(fig, use_container_width=True)
+
+        ask = _series("sale_min_ask")
+        if not ask.empty:
+            fig = go.Figure()
+            for cid in sel:
+                if cid in ask.columns:
+                    s_ = ask[cid].dropna() / 1e8  # 원 → 억
+                    fig.add_trace(go.Scatter(x=pd.to_datetime(s_.index), y=s_.values, mode="lines+markers",
+                                             name=names[cid], line=dict(color=color_of[cid], width=2),
+                                             marker=dict(size=7), connectgaps=True,
+                                             hovertemplate="<b>%{y:.2f}억</b> %{x|%Y-%m-%d}<extra>" + names[cid] + "</extra>"))
+            cap_line(fig, cap, label_left=True)
+            style(fig, 320, hovermode="x unified")
+            fig.update_xaxes(range=[lo, hi], dtick=None, tickformat="%m-%d")
+            fig.update_yaxes(title_text="매매 최저 호가 (억원)")
+            st.markdown("**매매 최저 호가**")
+            st.plotly_chart(fig, use_container_width=True)
+    with st.expander("표로 보기 — 매물 스냅샷"):
+        st.dataframe(LS_all.pivot_table(index=["snap_date", "complex_id"], columns="metric", values="value",
+                                        aggfunc="last") if not LS_all.empty else LS_all, use_container_width=True)
+    with st.expander("수집된 경로 보기 (경로 규칙 확정용)"):
+        st.dataframe(listing_paths, use_container_width=True, hide_index=True)
