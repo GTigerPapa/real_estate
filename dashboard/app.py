@@ -215,12 +215,12 @@ else:
     st.plotly_chart(style(fig, 320 * n_rows), use_container_width=True)
 
 # ④ 전세가율
-st.subheader("④ 전세가율 (전세 보증금 중앙값 ÷ 매매 중앙값)")
+st.subheader("④ 전세가율 (전세 보증금 중앙값 ÷ 매매 중앙값, 같은 단지·평형)")
 if J.empty and J_ext.empty:
     st.info("전월세 데이터가 들어오면 표시됩니다.")
 else:
-    win = st.radio("집계 창", [1, 3], horizontal=True, format_func=lambda w: "같은 월" if w == 1 else "3개월",
-                   help="거래가 적은 평형은 3개월 창이 안정적")
+    win = st.radio("집계 창", [3, 1], horizontal=True, format_func=lambda w: "같은 월" if w == 1 else "3개월",
+                   help="기본 3개월: 직전 3개월 거래를 모아 중앙값 (월별 표본이 적어 같은 월은 변동이 큼)")
     jr = metrics.jeonse_ratio(base_ext, J_ext, window=win, months=ext_months)
     jr = jr[jr["deal_ym"].isin(months)]
     fig = go.Figure()
