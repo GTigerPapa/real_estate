@@ -1,12 +1,6 @@
-/* 네이버페이 부동산 매물 덤프 북마클릿 (원본). tools/build_bookmarklet.py 가 단지 목록을 끼워 넣고
-   한 줄 javascript: 링크와 설치 페이지(tools/bookmarklet.html)를 만든다.
-   - fin.land.naver.com 탭에서 실행해야 한다 (그 페이지의 세션으로 같은 출처 API를 호출).
-   - 단지마다 평형 목록·매물 통계·거래유형/평형별 호가·시세를 받고, 매물 목록 엔드포인트 후보는
-     첫 단지에서만 시도한다. 결과 전체를 naver_listings_YYYYMMDD_HHMM.json 으로 내려받는다.
-   - 요청 사이 400ms. 이 파일 안에서는 //, 문자열 안 '\n' 을 쓰지 않는다 (빌드 시 줄 단위로 합침). */
 (async function () {
   try {
-  var COMPLEXES = __COMPLEXES__;
+  var COMPLEXES = [{"id":"godeok_xi","naver_id":121977,"name":"고덕자이"},{"id":"godeok_central_ipark","naver_id":118210,"name":"고덕센트럴아이파크"},{"id":"yeosu_central_town","naver_id":102283,"name":"센트럴타운"},{"id":"misa_thesharp_central_forest","naver_id":111028,"name":"미사강변더샵센트럴포레스트"}];
   var GAP = 400;
   var host = "fin.land.naver.com";
   if (location.hostname !== host) {
