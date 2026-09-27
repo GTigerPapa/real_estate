@@ -42,3 +42,14 @@ def test_rent_type():
     assert normalize_rent({**base, "monthlyRent": "0"})["rent_type"] == "전세"
     r = normalize_rent({**base, "monthlyRent": "120", "contractTerm": "25.01~27.01"})
     assert r["rent_type"] == "월세" and r["monthly_rent"] == 120 and r["contract_term"] == "25.01~27.01"
+
+
+def test_parse_rent_real_layout(fixture_text):
+    # 실응답 구조: aptDong·umdCd 없음, 빈 값은 공백
+    rows = [normalize_rent(i) for i in parse_response(fixture_text("rent_sample.xml")).items]
+    new, renew, monthly = rows
+    assert new["rent_type"] == "전세" and new["deposit"] == 90000 and new["contract_type"] == "신규"
+    assert new["contract_term"] == "26.03~28.03" and new["pre_deposit"] is None and new["umd_cd"] is None
+    assert renew["contract_type"] == "갱신" and renew["use_rr_right"] == "사용" and renew["pre_deposit"] == 70000
+    assert monthly["rent_type"] == "월세" and monthly["monthly_rent"] == 250
+    assert monthly["contract_type"] is None and monthly["contract_term"] == ""

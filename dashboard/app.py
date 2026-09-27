@@ -94,6 +94,8 @@ sel = f2.multiselect("단지", avail, default=avail, format_func=names.get)
 start, end = f3.select_slider("기간", options=all_months, value=(all_months[0], all_months[-1]))
 with f4:
     incl_direct = st.toggle("직거래를 중앙값에 포함", value=False)
+    incl_renew = st.toggle("갱신 계약을 전세 중앙값에 포함", value=False,
+                           help="갱신은 인상률 5% 상한이 있어 시세보다 낮음. 기본은 신규(+유형 미상)만")
     show_cancel = st.toggle("해제 건 표시(산점도)", value=True)
 
 if not sel:
@@ -105,7 +107,8 @@ in_scope = lambda df: df[df["complex_id"].isin(sel) & (df["size_band"] == band) 
 T = in_scope(trades_all)
 R = in_scope(rents_all)
 base = T[(T["is_canceled"] == 0) & (incl_direct | (T["dealing_gbn"] != "직거래"))]
-J = R[R["rent_type"] == "전세"]
+renew_ok = lambda df: incl_renew | (df["contract_type"] != "갱신")  # noqa: E731 (미상은 포함)
+J = R[(R["rent_type"] == "전세") & renew_ok(R)]
 
 # 3개월 이동중앙값은 기간 시작 전 2개월 거래도 사용해야 첫 달부터 정확
 lead = [p.strftime("%Y-%m") for p in pd.period_range(end=pd.Period(start), periods=3, freq="M")]
@@ -113,7 +116,8 @@ base_ext = trades_all[trades_all["complex_id"].isin(sel) & (trades_all["size_ban
                       & trades_all["deal_ym"].between(lead[0], end) & (trades_all["is_canceled"] == 0)
                       & (incl_direct | (trades_all["dealing_gbn"] != "직거래"))]
 J_ext = rents_all[rents_all["complex_id"].isin(sel) & (rents_all["size_band"] == band)
-                  & rents_all["deal_ym"].between(lead[0], end) & (rents_all["rent_type"] == "전세")]
+                  & rents_all["deal_ym"].between(lead[0], end) & (rents_all["rent_type"] == "전세")
+                  & renew_ok(rents_all)]
 ext_months = lead[:-1] + months
 roll_t = metrics.window_median(base_ext, "deal_amount", 3, months=ext_months)
 roll_t = roll_t[roll_t["deal_ym"].isin(months)]
@@ -121,7 +125,8 @@ roll_j = metrics.window_median(J_ext, "deposit", 3, months=ext_months)
 roll_j = roll_j[roll_j["deal_ym"].isin(months)]
 x_of = lambda ym: pd.Period(ym).to_timestamp() + pd.Timedelta(days=14)  # noqa: E731 (월 중순에 점)
 
-st.caption(f"{band}형 · {start} ~ {end} · 중앙값: 해제 제외, 직거래 {'포함' if incl_direct else '제외'} · "
+st.caption(f"{band}형 · {start} ~ {end} · 매매 중앙값: 해제 제외, 직거래 {'포함' if incl_direct else '제외'} · "
+           f"전세 중앙값: 갱신 {'포함' if incl_renew else '제외'} · "
            f"3개월 이동중앙값 = 해당 월 포함 직전 3개월 거래를 모아 계산 · 금액 단위 억원")
 
 n_rows = (len(sel) + 1) // 2
