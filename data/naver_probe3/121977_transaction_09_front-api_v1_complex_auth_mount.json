@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/complex/auth/mount",
+ "method": "PUT",
+ "status": 200,
+ "post_data": "{\"complexNumber\":121977,\"legalDivisionNumber\":\"1174010300\",\"userChannelType\":\"PC\"}",
+ "body": ""
+}

@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/realtor/existsInComplex?complexNumber=102283",
+ "method": "GET",
+ "status": 200,
+ "post_data": null,
+ "body": ""
+}

@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/user/recentView?size=10&userChannelType=PC&page=0",
+ "method": "GET",
+ "status": 401,
+ "post_data": null,
+ "body": ""
+}

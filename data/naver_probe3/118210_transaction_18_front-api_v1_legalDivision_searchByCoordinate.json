@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/legalDivision/searchByCoordinate?longitude=126.9779692&latitude=37.566535&type=EUP",
+ "method": "GET",
+ "status": 200,
+ "post_data": null,
+ "body": ""
+}

@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/complex/interior/portfolios/exists?complexNumber=121977",
+ "method": "GET",
+ "status": 200,
+ "post_data": null,
+ "body": ""
+}

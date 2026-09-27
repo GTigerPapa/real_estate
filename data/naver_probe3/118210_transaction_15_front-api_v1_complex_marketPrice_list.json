@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/complex/marketPrice/list?complexNumber=118210&pyeongTypeNumber=0&startDate=2025-09-27&endDate=2026-09-27&realEstateType=A01&cpList%5B%5D=kab&cpList%5B%5D=kbstar&cpList%5B%5D=neonet",
+ "method": "GET",
+ "status": 200,
+ "post_data": null,
+ "body": ""
+}

@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/user/recentView",
+ "method": "POST",
+ "status": 200,
+ "post_data": "{\"recentViewType\":\"complex\",\"viewId\":\"121977\"}",
+ "body": ""
+}

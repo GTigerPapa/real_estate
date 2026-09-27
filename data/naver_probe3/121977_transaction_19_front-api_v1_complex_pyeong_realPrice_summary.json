@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/complex/pyeong/realPrice/summary?complexNumber=121977&pyeongTypeNumber=0&tradeType=A1&startDate=2026-06-27",
+ "method": "GET",
+ "status": 200,
+ "post_data": null,
+ "body": ""
+}

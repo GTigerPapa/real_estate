@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/user/legalDivisionView",
+ "method": "POST",
+ "status": 200,
+ "post_data": "{\"recentViewType\":\"complex\",\"legalDivisionNumber\":\"4113310600\",\"userChannelType\":\"PC\"}",
+ "body": ""
+}

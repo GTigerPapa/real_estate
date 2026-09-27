@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/complex/myHouseAuthInfo?complexNumber=111028&count=2&needHoMarketPrice=true",
+ "method": "GET",
+ "status": 200,
+ "post_data": null,
+ "body": ""
+}

@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/loan/mortgage/ltvInfo?loanPurpose=BUY&consumerCategory=ZERO_WITHOUT_FIRST_PURCHASE&legalDivisionNumber=4113310600&realEstateType=APT",
+ "method": "GET",
+ "status": 200,
+ "post_data": null,
+ "body": ""
+}

@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/complex/asking-price?complexNumber=118210&pyeongTypeNumber=0&realEstateType=A01&tradeType=A1",
+ "method": "GET",
+ "status": 200,
+ "post_data": null,
+ "body": ""
+}

@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/loan/mortgage/partnerProduct?productTypes%5B%5D=LOAN-MORTGAGE",
+ "method": "GET",
+ "status": 200,
+ "post_data": null,
+ "body": ""
+}

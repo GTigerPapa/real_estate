@@ -1,0 +1,7 @@
+{
+ "url": "https://fin.land.naver.com/front-api/v1/complex/marketPrice/recent?complexNumber=121977&pyeongTypeNumber=0&realEstateType=A01&cpList%5B%5D=kab&cpList%5B%5D=kbstar&cpList%5B%5D=neonet",
+ "method": "GET",
+ "status": 200,
+ "post_data": null,
+ "body": ""
+}
