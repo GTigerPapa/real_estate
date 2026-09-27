@@ -54,3 +54,18 @@ def test_loaders_keep_columns_when_empty(conn):
                    [{"id": "x", "name": "X", "sgg_cd": "11740", "umd_nm": "상일동", "apt_seq": ["s"], "bands": [84]}])
     r = metrics.load_rents(conn, rent_type=None)
     assert r.empty and {"complex_id", "size_band", "deal_ym", "deposit"} <= set(r.columns)
+
+
+def test_rent_composition():
+    df = pd.DataFrame({
+        "deal_ym": ["2025-01", "2025-01", "2025-02", "2025-02", "2025-03"],
+        "rent_type": ["전세", "전세", "전세", "월세", "월세"],
+        "contract_type": ["신규", "갱신", None, "신규", "갱신"],
+    })
+    df["complex_id"], df["complex_name"], df["size_band"] = "x", "X", "84"
+    rc = metrics.rent_composition(df, ["2025-01", "2025-02", "2025-03"]).set_index("deal_ym")
+    assert rc.loc["2025-01", ["new_jeonse", "renew_jeonse", "wolse"]].tolist() == [1, 1, 0]
+    assert rc.loc["2025-02", "new_jeonse"] == 1  # 유형 미상은 신규로
+    # 3개월 풀링: 전세 3건 중 갱신 1건, 전월세 5건 중 월세 2건
+    assert abs(rc.loc["2025-03", "renew_ratio"] - 1 / 3) < 1e-9 and rc.loc["2025-03", "renew_n"] == 3
+    assert abs(rc.loc["2025-03", "wolse_share"] - 2 / 5) < 1e-9

@@ -91,3 +91,34 @@ def outliers(trades: pd.DataFrame, pct: float = 15, min_n: int = 3) -> pd.DataFr
     df["dev_pct"] = (df["deal_amount"] / df["ref_median"] - 1) * 100
     hit = df[(df["ref_n"] >= min_n) & (df["dev_pct"].abs() >= pct)]
     return hit.sort_values("dev_pct")
+
+
+def rent_composition(rents: pd.DataFrame, months: list[str], window: int = 3) -> pd.DataFrame:
+    """전월세 거래 구성 (전세 공급 대리지표). 단지·평형·월별.
+
+    - 건수: 신규 전세(유형 미상 포함) / 갱신 전세 / 월세
+    - 갱신 비율 = 갱신 전세 ÷ 전세 전체, 월세 비중 = 월세 ÷ 전월세 전체 (window개월 풀링, 후행)
+      갱신 비율↑ → 기존 세입자 잔류로 신규 전세 매물 감소 신호
+    """
+    cols = GROUP + ["deal_ym", "new_jeonse", "renew_jeonse", "wolse", "renew_ratio", "renew_n",
+                    "wolse_share", "total_n"]
+    if rents.empty:
+        return pd.DataFrame(columns=cols)
+    r = rents.assign(
+        new_jeonse=(rents["rent_type"] == "전세") & (rents["contract_type"] != "갱신"),
+        renew_jeonse=(rents["rent_type"] == "전세") & (rents["contract_type"] == "갱신"),
+        wolse=rents["rent_type"] == "월세",
+    )
+    idx = {m: i for i, m in enumerate(months)}
+    out = []
+    for key, g in r.groupby(GROUP):
+        monthly = g.groupby("deal_ym")[["new_jeonse", "renew_jeonse", "wolse"]].sum().reindex(months, fill_value=0)
+        for m, i in idx.items():
+            win = monthly.iloc[max(0, i - window + 1): i + 1].sum()
+            jeonse = win["new_jeonse"] + win["renew_jeonse"]
+            total = jeonse + win["wolse"]
+            out.append((*key, m, int(monthly.loc[m, "new_jeonse"]), int(monthly.loc[m, "renew_jeonse"]),
+                        int(monthly.loc[m, "wolse"]),
+                        win["renew_jeonse"] / jeonse if jeonse else float("nan"), int(jeonse),
+                        win["wolse"] / total if total else float("nan"), int(total)))
+    return pd.DataFrame(out, columns=cols)

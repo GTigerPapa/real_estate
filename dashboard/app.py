@@ -30,7 +30,9 @@ C = {
     "complex": ["#3987e5", "#d95926", "#199e70", "#c98500"] if DARK else ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"],
     "broker": "#9085e9" if DARK else "#4a3aa7",     # 중개거래 (violet)
     "direct": "#d55181" if DARK else "#e87ba4",     # 직거래 (magenta)
-    "jeonse": "#008300",                            # 전세 (green)
+    "jeonse": "#008300",                            # 전세·신규 전세 (green)
+    "renew": "#9085e9" if DARK else "#4a3aa7",      # 갱신 전세 (violet)
+    "wolse": "#c98500" if DARK else "#eda100",      # 월세 (yellow)
     "ink": "#ffffff" if DARK else "#0b0b0b",        # 매매 중앙값 선
     "ink2": "#c3c2b7" if DARK else "#52514e",
     "muted": "#898781",                             # 해제, 보조선
@@ -261,8 +263,53 @@ else:
     with st.expander("표로 보기 — 전세가율"):
         st.dataframe(jr, use_container_width=True)
 
-# ⑤ 같은 평형 단지 간 비교
-st.subheader(f"⑤ {band}형 단지 간 비교 (3개월 이동중앙값)")
+# ⑤ 전세 공급 대리지표 (전월세 거래 구성)
+st.subheader("⑤ 전세 공급 지표 (전월세 거래 구성)")
+R_ext = rents_all[rents_all["complex_id"].isin(sel) & (rents_all["size_band"] == band)
+                  & rents_all["deal_ym"].between(lead[0], end)]
+if R_ext.empty:
+    st.info("전월세 데이터가 들어오면 표시됩니다.")
+else:
+    st.caption("갱신 비율↑ = 기존 세입자 잔류로 새로 나오는 전세가 줄어듦(공급 감소 신호). "
+               "월세 비중↑ = 전세가 월세로 전환되는 흐름. 비율은 직전 3개월 거래를 모아 계산.")
+    rc = metrics.rent_composition(R_ext, ext_months)
+    rc = rc[rc["deal_ym"].isin(months)]
+    fig, h = stacked(facet_titles(), 130)
+    for i, cid in enumerate(sel):
+        m = rc[rc["complex_id"] == cid]
+        for col_name, label, color in (("new_jeonse", "신규 전세", C["jeonse"]), ("renew_jeonse", "갱신 전세", C["renew"]),
+                                       ("wolse", "월세", C["wolse"])):
+            fig.add_trace(go.Bar(x=m["deal_ym"].map(x_of), y=m[col_name], name=label, legendgroup=label,
+                                 showlegend=i == 0, marker=dict(color=color, line=dict(width=0)),
+                                 hovertemplate="<b>%{y}건</b> %{x|%Y-%m}<extra>" + label + "</extra>"),
+                          row=i + 1, col=1)
+    rmax = int((rc["new_jeonse"] + rc["renew_jeonse"] + rc["wolse"]).max() or 1)
+    fig.update_layout(barmode="stack", bargap=0.25)
+    style(fig, h, hovermode="x unified")
+    fig.update_yaxes(title_text="건", tickformat="d", range=[0, rmax * 1.1])
+    st.plotly_chart(fig, use_container_width=True)
+
+    RATIO_MIN_N = 5  # 3개월 창 표본이 이보다 적으면 비율 생략 (0%/100% 튐 방지, 선은 앞뒤 연결)
+    for col_name, n_col, title in (("renew_ratio", "renew_n", "갱신 비율 (갱신 전세 ÷ 전세 전체, 3개월)"),
+                                   ("wolse_share", "total_n", "월세 비중 (월세 ÷ 전월세 전체, 3개월)")):
+        st.markdown(f"**{title}** <span style='font-size:12px;opacity:.7'>· 3개월 표본 {RATIO_MIN_N}건 미만은 생략</span>",
+                    unsafe_allow_html=True)
+        fig = go.Figure()
+        for cid in sel:
+            m = rc[rc["complex_id"] == cid]
+            m = m.assign(**{col_name: m[col_name].where(m[n_col] >= RATIO_MIN_N)})
+            fig.add_trace(go.Scatter(
+                x=m["deal_ym"].map(x_of), y=m[col_name] * 100, mode="lines", name=names[cid], connectgaps=True,
+                line=dict(color=color_of[cid], width=2), customdata=m[[n_col]],
+                hovertemplate="<b>%{y:.0f}%</b> (n=%{customdata[0]})<br>%{x|%Y-%m}<extra>" + names[cid] + "</extra>"))
+        style(fig, 300, hovermode="x unified")
+        fig.update_yaxes(title_text="%", tickformat=".0f", range=[0, 100])
+        st.plotly_chart(fig, use_container_width=True)
+    with st.expander("표로 보기 — 전월세 거래 구성"):
+        st.dataframe(rc.drop(columns=["complex_id", "size_band"]), use_container_width=True, hide_index=True)
+
+# ⑥ 같은 평형 단지 간 비교
+st.subheader(f"⑥ {band}형 단지 간 비교 (3개월 이동중앙값)")
 fig = go.Figure()
 for cid in sel:
     m = roll_t[roll_t["complex_id"] == cid]
