@@ -25,8 +25,13 @@ def connect(path: str | Path) -> sqlite3.Connection:
 
 
 def init_db(conn: sqlite3.Connection) -> None:
+    """schema.sql 적용. 해시를 user_version에 저장해 스키마가 같으면 건너뛴다 (읽기 전용 실행 시 파일 불변)."""
     sql = resources.files("realestate").joinpath("schema.sql").read_text(encoding="utf-8")
+    version = zlib.crc32(sql.encode("utf-8")) & 0x7FFFFFFF
+    if conn.execute("PRAGMA user_version").fetchone()[0] == version:
+        return
     conn.executescript(sql)
+    conn.execute(f"PRAGMA user_version = {version}")
     conn.commit()
 
 
@@ -139,7 +144,21 @@ def sync_complexes(conn, complexes: list[dict]) -> None:
             )
 
 
-def sync_config(conn, settings: dict, complexes: list[dict]) -> None:
+def _config_snapshot(conn) -> tuple:
+    q = lambda sql: tuple(tuple(r) for r in conn.execute(sql).fetchall())  # noqa: E731
+    return (q("SELECT * FROM size_band ORDER BY band"),
+            q("SELECT * FROM complex ORDER BY complex_id"),
+            q("SELECT complex_id, apt_seq, umd_nm, jibun, apt_nm FROM complex_key "
+              "ORDER BY complex_id, apt_seq, jibun, apt_nm"))
+
+
+def sync_config(conn, settings: dict, complexes: list[dict]) -> bool:
+    """설정 → DB. 내용이 같으면 롤백해 파일을 건드리지 않는다 (대시보드 실행마다 DB가 바뀌지 않게). 변경 시 True."""
+    before = _config_snapshot(conn)
     sync_size_bands(conn, settings.get("size_bands", []))
     sync_complexes(conn, complexes)
+    if _config_snapshot(conn) == before:
+        conn.rollback()
+        return False
     conn.commit()
+    return True
