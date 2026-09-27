@@ -16,7 +16,15 @@ import streamlit as st
 from plotly.subplots import make_subplots
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+import importlib  # noqa: E402
+
+import realestate.api.parse  # noqa: E402
 from realestate import config, db, metrics  # noqa: E402
+
+# src/는 Streamlit 자동 재로드 범위(dashboard/) 밖이라, 서버가 켜진 채 git pull 하면 옛 모듈이 메모리에 남는다.
+# 매 실행마다 다시 읽어 app.py와 항상 같은 버전을 쓰게 한다 (의존 순서대로).
+for _mod in (realestate.api.parse, config, db, metrics):
+    importlib.reload(_mod)
 
 st.set_page_config(page_title="관심 단지 실거래", layout="wide")
 PAGE_MAX_W = 980  # 본문 최대 폭(px): 넓은 화면에서도 차트가 과하게 늘어나지 않게
