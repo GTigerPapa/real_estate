@@ -1,0 +1,34 @@
+# 관심 단지 매칭 (확정: 실거래 데이터 확인 후 사용자 승인)
+# 매칭: apt_seq 우선, 보조로 (umd_nm, jibun, apt_nm) — 전월세 등 aptSeq 누락 대비
+complexes:
+  - id: godeok_xi
+    name: 고덕자이
+    sgg_cd: "11740"
+    umd_nm: 상일동
+    apt_seq: ["11740-4799"]
+    fallback: [{jibun: "521", apt_nm: 고덕자이}]
+    bands: [59, 74, 84]
+
+  - id: godeok_central_ipark
+    name: 고덕센트럴아이파크
+    sgg_cd: "11740"
+    umd_nm: 상일동
+    apt_seq: ["11740-4675"]
+    fallback: [{jibun: "513", apt_nm: 고덕센트럴IPARK}]
+    bands: [59, 74, 84]
+
+  - id: yeosu_central_town
+    name: 센트럴타운
+    sgg_cd: "41133"
+    umd_nm: 여수동
+    apt_seq: ["41133-2813"]
+    fallback: [{jibun: "600", apt_nm: 센트럴타운(3단지)}]
+    bands: [74, 84]
+
+  - id: misa_thesharp_central_forest
+    name: 미사강변더샵센트럴포레스트
+    sgg_cd: "41450"
+    umd_nm: 풍산동
+    apt_seq: ["41450-360"]
+    fallback: [{jibun: "486", apt_nm: 미사강변더샵센트럴포레}]
+    bands: [74, 84]
