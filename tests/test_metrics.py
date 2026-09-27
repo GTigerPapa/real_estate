@@ -47,3 +47,10 @@ def test_report_smoke(conn, fixture_text):
                      "apt_seq": ["11740-9999"], "bands": [59, 84]}])
     text = validate.build_report(conn, {})
     assert "매매 3건 (해제 1)" in text and "테스트 59" in text
+
+
+def test_loaders_keep_columns_when_empty(conn):
+    db.sync_config(conn, {"size_bands": [{"band": "84", "min": 82, "max": 87}]},
+                   [{"id": "x", "name": "X", "sgg_cd": "11740", "umd_nm": "상일동", "apt_seq": ["s"], "bands": [84]}])
+    r = metrics.load_rents(conn, rent_type=None)
+    assert r.empty and {"complex_id", "size_band", "deal_ym", "deposit"} <= set(r.columns)

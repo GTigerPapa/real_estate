@@ -12,7 +12,8 @@ def _in_target_bands(df: pd.DataFrame, conn: sqlite3.Connection) -> pd.DataFrame
     """complex.target_bands에 포함된 평형만 (예: 센트럴타운 59형 제외)."""
     tb = pd.read_sql_query("SELECT complex_id, target_bands FROM complex", conn)
     allowed = {(r.complex_id, b) for r in tb.itertuples() for b in (r.target_bands or "").split(",") if b}
-    keep = [(c, b) in allowed for c, b in zip(df["complex_id"], df["size_band"])]
+    keep = pd.Series([(c, b) in allowed for c, b in zip(df["complex_id"], df["size_band"])],
+                     index=df.index, dtype=bool)
     return df[keep]
 
 
