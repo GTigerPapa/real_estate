@@ -1,0 +1,23 @@
+# 수집 대상 시군구 (응답 sggCd로 확인)
+lawd_codes:
+  "11740": 서울 강동구
+  "41133": 성남시 중원구
+  "41450": 하남시
+
+backfill_start: "202310"      # 백필 시작월 (YYYYMM)
+refetch_recent_months: 3      # 현재월 포함 최근 N개월은 완료 여부와 무관하게 매번 재수집
+
+api:
+  num_of_rows: 1000
+  request_interval_sec: 0.3   # 호출 간 최소 간격
+  timeout_sec: 30
+  max_retries: 4              # 지수 백오프: 1, 2, 4, 8초 (+지터)
+  backoff_base_sec: 1.0
+
+buy_cap_manwon: 140000        # 매수 상한 (만원) = 14억
+
+# 평형 구간 (전용면적 ㎡, [min, max)). ⚠ 잠정안 — 실제 분포 확인 후 확정 (4단계)
+size_bands:
+  - {band: "59", min: 55.0, max: 65.0}
+  - {band: "74", min: 70.0, max: 80.0}
+  - {band: "84", min: 80.0, max: 90.0}
