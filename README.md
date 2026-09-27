@@ -62,6 +62,16 @@ streamlit run dashboard/app.py          # http://localhost:8501  (?band=74 처�
 - 전세가율 기본 창은 3개월 (같은 월 선택 가능), 표본 수(n) 표시, 매수 상한선(settings.yaml `buy_cap_manwon`)
 - 3개월 이동중앙값 = 해당 월 포함 직전 3개월 개별 거래를 모아 계산 (월 중앙값의 중앙값 아님)
 
+## 네이버 매물 (준비 중)
+
+네이버 부동산 API는 클라우드 서버 IP(이 작업 환경, GitHub Actions 등)를 차단하므로 **국내 PC에서 실행**한다.
+먼저 응답 구조 확인용 프로브를 한 번 실행해 결과를 커밋한다:
+
+```bash
+python scripts/naver_probe.py      # 결과: data/naver_probe/ (요청 20회 안팎, 2초 간격)
+git add data/naver_probe && git commit -m "네이버 프로브 결과" && git push
+```
+
 ## 테스트
 
 ```bash
