@@ -1,0 +1,905 @@
+<!DOCTYPE HTML>
+<html lang="ko" data-user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Expires" content="-1">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="No-Cache">
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <meta http-equiv="Content-Script-Type" content="text/javascript">
+    <meta http-equiv="Content-Style-Type" content="text/css">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="format-detection" content="address=no">
+    <meta name="robots" content="index,nofollow"/>
+    <meta name="viewport" id="_viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+    <meta name="referrer" contents="always">
+    <title>네이버페이 부동산</title>
+    <link rel="apple-touch-icon" sizes="192x192" href="https://property.pstatic.net/property-web/image/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://property.pstatic.net/property-web/image/apple-touch-icon.png">
+    <link rel="canonical" href="https://m.land.naver.com">
+    <meta name="Referrer" content="origin">
+    <meta property="og:type" content="article"/>
+    <meta property="og:article:author" content="네이버페이 부동산"/>
+    <meta property="og:article:author:url" content="https://m.land.naver.com"/>
+<meta property="og:title" content="네이버페이 부동산"/><meta property="og:url" content="https://m.land.naver.com"/><meta property="og:image" content="https://ssl.pstatic.net/static/m/land/img/og_land.png"/>
+<meta property="og:description" content="네이버페이 부동산"/>
+        <meta name="description" content="네이버페이 부동산">
+    <!-- 아이폰용도 -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="https://ssl.pstatic.net/static.land/static/space/20231122/ico/iOS6_57X57_iphone3.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="66x66" href="https://ssl.pstatic.net/static.land/static/space/20231122/ico/iOS8_66X66_iphone6+.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="https://ssl.pstatic.net/static.land/static/space/20231122/ico/iOS6_72X72_ipad.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="75x75" href="https://ssl.pstatic.net/static.land/static/space/20231122/ico/iOS8_75X75_iPhone6+.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="https://ssl.pstatic.net/static.land/static/space/20231122/ico/iOS7_76X76_ipad.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="https://ssl.pstatic.net/static.land/static/space/20231122/ico/iOS6_114X114_iphone4.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="https://ssl.pstatic.net/static.land/static/space/20231122/ico/iOS7_120X120_iphone.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="https://ssl.pstatic.net/static.land/static/space/20231122/ico/iOS6_144X144_ipad_retina.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="https://ssl.pstatic.net/static.land/static/space/20231122/ico/iOS7_152X152_ipad_retina.png"/>
+<link rel="stylesheet" href="https://ssl.pstatic.net/static.land/static/space/css/deploy/20260914103633/min/space.min.css" type="text/css"><link rel="stylesheet" href="https://ssl.pstatic.net/static.land/static/space/css/deploy/20260914103633/min/jPage.min.css" type="text/css"><link rel="stylesheet" href="https://ssl.pstatic.net/static.land/static/space/css/deploy/20260914103633/min/property_ui_portal.css" type="text/css"><link rel="stylesheet" href="https://ssl.pstatic.net/static.land/static/space/css/deploy/20260914103633/min/mobile-media-viewer.min.css" type="text/css"><script src="https://ssl.pstatic.net/tveta/libs/glad/prod/gfp-core.js"></script>
+    <script>
+        window.gladsdk = window.gladsdk || { cmd: [] };
+    </script>
+</head>
+<body style="width:100%;height:100%;">
+
+<script src="https://ssl.pstatic.net/static.land/static/space/js/deploy/20260914103633/min/header.min.js" type="text/javascript"></script><div id="_root" style="overflow-x:hidden;overflow-y:hidden;width:100%;height:100%;">
+        <div id="_container" style="position:relative;">
+            <div id="main" _show="false" _path="/index" _position="0" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="mapSearch" _show="false" _path="/map" _position="1" _fit="true" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="articleDetail" _show="false" _path="/article/info" _position="2" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="gosiwonDetail" _show="false" _path="/gosiwon/info" _position="3" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="complexDetail" _show="false" _path="/complex/info" _position="4" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="schoolDetail" _show="false" _path="/school/info" _position="5" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="realtorDetail" _show="false" _path="/agency/info" _position="6" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="notificationListV2" _show="false" _path="/notify/list" _position="7" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="notificationArticleList" _show="false" _path="/notify/info" _position="8" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="search" _show="true" _path="/search" _position="9" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                <div class="u_skip">
+		<a href="javascript:void(0);">컨텐츠 바로가기</a>
+	</div>
+	<div class="wrap wrap_sub"  id="_query">
+		<!-- header -->
+	<header class="header_result">
+	<div class="header_result_inner">
+		<h1 class="heading">고덕자이</h1>
+		<a href="javascript:void(0);" class="btn_back" role="button" aria-label="이전" id="_search_back_btn">
+			<i class="icon icon_back" aria-hidden="true"></i>
+		</a>
+	</div>
+	</header>
+		<!-- //header -->
+		<section class="content" id="ct" role="main">
+			<!-- 지역검색 결과 -->
+			<!-- 마을 결과 -->
+			<!-- 스팟 결과 -->
+			<!-- 단지 결과 -->
+			<!-- 결과 없음 -->
+			<div class="layer_result">
+				<div class="center_block">
+					<div class="center_inner">
+						<p class="p_noresult"><strong class="txt_point">"고덕자이"</strong>에 대한 <br>검색결과가 없습니다.</p>
+						<p class="p_search_guide">살고싶은 지역 또는 필터조건을 검색어로 입력해보세요.</p>
+					</div>
+				</div>
+			</div>
+			</section>
+	</div>
+
+<!--#lazy:[search.min.js]<script src="https://ssl.pstatic.net/static.land/static/space/js/deploy/20260914103633/min/search.min.js" type="text/javascript"></script>--><script type="text/javascript">
+    var newServiceUrl  = DOMAINS.NEW_LAND;
+    var imgUrl = "https://ssl.pstatic.net/static.land/static/space/20231122";
+    var pinfra = "https://landthumb-phinf.pstatic.net";
+    var jsonPageData = {};
+    
+    jsonPageData.q = '고덕자이';
+    
+    var _iniFunc = function() {
+        var _id = 'search';
+        if (land.jpage) {
+            if (land.jpage._pages[_id] && !land.jpage._pages[_id].mainobject) {
+                if(land.search==undefined) {
+                    //call lazy loader
+                    land.jpage.scriptLazyLoader(_id);
+                }else {
+                    land.search.jsonPageData = {};
+                    land.search._id = 'query';
+                    land.search.jsonPageData.q = '고덕자이';
+                    
+                    land.jpage.appendOO(land.search, _id);
+                }
+            }
+        }
+        $(document).off("jPageReady", _iniFunc);
+        $(document).off("_pushStateChanged", _iniFunc);
+        $(document).off("_popStateChanged", _iniFunc);
+    };
+    $(document).on("jPageReady", _iniFunc);
+    $(document).on("_pushStateChanged", _iniFunc);
+    $(document).on("_popStateChanged", _iniFunc);
+</script>
+</div>
+            <div id="articleImageViewer" _show="false" _path="/article/image" _position="10" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="complexImageViewer" _show="false" _path="/complex/image" _position="11" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="gosiwonImageViewer" _show="false" _path="/complex/image" _position="12" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="sameArticleBridge" _show="false" _path="/article/bridge" _position="13" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="complexLandPrice" _show="false" _path="/complex/landprice" _position="14" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="articleLandPrice" _show="false" _path="/article/landprice" _position="15" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="developmentPlan" _show="false" _path="/developmentplan/info" _position="16" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="developmentPlanImageViewer" _show="false" _path="/developmentplan/image" _position="17" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+            <div id="notificationArticleListV2" _show="false" _path="/notify/v2/info" _position="18" _fit="false" _firstPosition="[0, 0]" _reload="true" class="_page">
+                </div>
+        </div>
+    </div>
+    <aside class="aside _aside" aria-hidden="true">
+    <div class="aside_inner">
+        <div class="aside_profile">
+            <a href="javascript:void(0);" class="aside_profile_link _aside_header nclk _goLogin" _nclk="mnu.login">
+                <!-- [D] 프로필 썸네일 이미지 aside_profile_thumbnail에 style background-image에 URL 삽입, 프로필 사진 없는 경우 style background-image 제거 -->
+                <div class="aside_profile_thumbnail _profile_photo"></div>
+
+                <strong class="aside_profile_id" aria-label="현재 로그인 하지않은 상태">로그인이 필요합니다</strong>
+                </a>
+        </div>
+        <div class="aside_scroll">
+            <nav class="aside_navigation">
+                <a href="javascript:void(0);" class="aside_navigation_item nclk _goLogin type_place" _nclk="mnu.region">
+                <span class="aside_item_text">관심지역</span>
+                </a>
+                <a href="javascript:void(0);" class="aside_navigation_item nclk _goLogin type_complex" _nclk="mnu.complex">
+                <span class="aside_item_text">관심단지</span>
+                </a>
+                <a href="javascript:void(0);" class="aside_navigation_item nclk _goLogin type_sale" _nclk="mnu.article">
+                <span class="aside_item_text">관심매물</span>
+                </a>
+                <a href="javascript:void(0);" class="aside_navigation_item nclk _goLogin type_isale" _nclk="mnu.mysale">
+                <span class="aside_item_text">관심분양</span>
+                </a>
+            </nav>
+            <nav class="aside_navigation">
+                <a href="javascript:void(0);" class="aside_navigation_item _goLogin type_myhouse nclk" _nclk="mnu.myhouseadd">
+                        <span class="aside_item_text">우리집</span><em class="aside_navigation_text">등록하기</em>
+                    </a>
+                </nav>
+
+            <nav class="aside_navigation">
+                <a href="javascript:void(0);" class="aside_navigation_item _goLogin type_alarm">
+                <span class="aside_item_text">알림</span>
+                </a>
+                <a href="https://talk.naver.com" class="aside_navigation_item nclk type_talk" target="_blank" _nclk="mnu.talktalk">
+                    <span class="aside_item_text">톡톡 대화목록</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <button class="aside_close nclk" _nclk="mnu.close" type="button" style="cursor: pointer">
+        <span class="blind">닫기</span>
+    </button>
+</aside>
+<div class="dimmed _dimmed" aria-hidden="true" style="cursor:pointer;"></div>
+<script>
+    window.onpageshow = function(event) {
+        if (event.persisted) {
+            if(land.jpage._currentPage._id === 'mapSearch'){
+                // bfcache 로 지도검색 페이지 재진입시엔 별도 처리없이
+                // 열려있는 my aside 만 닫는다. (이벤트 리스너들 동작 유지됨)
+                if(land.menu.isOpened){
+                    land.menu.handle_closeDrawerMenu(null, true);
+                }
+            } else if(land.jpage._currentPage._id === 'main' && $('#story_modal').hasClass('show')){
+                // 홈에서 모달이 떠 있는 경우는 화면을 유지하자.
+                
+            } else {
+                try{
+                    // 캐싱된 데이터가 있는 경우 reload 후에도 캐싱 유지되도록 처리
+                    if(land.jpage.persist.get('')){
+                        eg.Persist.StorageManager.keepAtReload();
+                    }
+                } catch(e){}
+
+                document.location.reload();
+            }
+        }
+    };
+</script>
+<div class="wrap wrap_option" id="filterLayer" style="position: fixed;top: 0;left: 0; width: 100%; z-index: 2000; display:none;">
+    <header class="header_sub">
+        <div class="header_sub_inner">
+            <h1 class="heading">옵션</h1>
+            <button class="header_sub_cancel _filterClose" type="button">취소</button>
+        </div>
+    </header>
+    <div class="header_option header_option--filter">
+        <div class="header_option_inner">
+            <div class="scroller" id="scroller1">
+                <div class="scroller_inner" id="option1"><ul class="option_list--my"></ul></div>
+            </div>
+        </div>
+    </div>
+    <section class="content content_option gpu-render" id="ct" role="main">
+        <div class="article_box--option _complexFilterBox _prefix _filter_box_wrap" _prefix='cf_'>
+    <div class="filter_box _multiFilter" filterName="tradTpCd">
+        <div class="heading_option"><h2 class="heading">거래유형</h2></div>
+        <div class="option_box--quarter"><ul class="option_list _trad" title="내 옵션"></ul></div>
+    </div>
+    <div class="filter_box _hscpMultiFilter" filterName="ptpNo">
+        <div class="heading_option">
+            <h3 class="heading">면적
+                <a href="javascript:void(0);" class="btn_space _filter_change_space" role="button">
+                    <span class="blind">단위변환</span>
+                    <i class="icon icon_change" aria-hidden="true"></i>
+                </a>
+            </h3>
+        </div>
+        <div class="option_box--quarter"><ul class="option_list _cf_spc"></ul></div>
+    </div>
+    <div class="filter_box _hscpMultiFilter" filterName="bildNo">
+        <div class="heading_option"><h3 class="heading">동선택</h3></div>
+        <div class="option_box--quarter"><ul class="option_list _cf_bild"></ul></div>
+    </div>
+</div><div class="article_box--option">
+    <div class="filter_box _multiFilter" filterName="tradTpCd">
+        <div class="heading_option">
+            <h2 class="heading">거래유형</h2>
+        </div>
+        <div class="option_box--quarter"><ul class="option_list _trad" title="내 옵션"></ul></div>
+    </div>
+    <div class="filter_box _multiFilter"  filterName="rletTpCd">
+        <div class="heading_option">
+            <h2 class="heading">매물유형</h2>
+        </div>
+        <div class="option_box--multi"><ul class="option_list _rlet" _rlet="fst"></ul></div>
+    </div>
+    <div class="filter_box _rangeFilter" filterName="dprc">
+        <div class="heading_option">
+            <h2 class="heading">매매가</h2><p class="p_current_price _current_price" id="_dprcRangeLabel"></p>
+        </div>
+        <div class="option_box--six">
+            <ul class="option_list" id="_dprcUl"></ul>
+        </div>
+        <div class="adjust_box_wrap">
+            <div class="adjust_box">
+                <div class="adjust_box_inner">
+                    <a href="javascript:void(0);" class="btn_adjust btn_adjust--minus" adjust="dprcMin" title="감소" data-nlog="opt*c.sslider">
+                        <i class="icon icon_map_minus" aria-hidden="true"></i>
+                    </a>
+                    <input type="tel" id="dprcMin" class="price_input _directFilter" title="최소가격 입력" placeholder="최소" data-nlog="opt*c.sslider">
+                    <a href="javascript:void(0);" class="btn_adjust btn_adjust--plus" adjust="dprcMin" title="증가" data-nlog="opt*c.sslider">
+                        <i class="icon icon_map_plus" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+            <span class="price_symbol" role="img" aria-label="에서"><i class="icon icon_dash" aria-hidden="true"></i></span>
+            <div class="adjust_box">
+                <div class="adjust_box_inner">
+                    <a href="javascript:void(0);" class="btn_adjust btn_adjust--minus" adjust="dprcMax" title="감소" data-nlog="opt*c.sslider">
+                        <i class="icon icon_map_minus" aria-hidden="true"></i>
+                    </a>
+                    <input type="tel" id="dprcMax" class="price_input _directFilter" title="최대가격 입력" placeholder="최대" data-nlog="opt*c.sslider">
+                    <a href="javascript:void(0);" class="btn_adjust btn_adjust--plus" adjust="dprcMax" title="증가" data-nlog="opt*c.sslider">
+                        <i class="icon icon_map_plus" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="filter_box _rangeFilter" filterName="wprc">
+        <div class="heading_option">
+            <h2 class="heading">보증금</h2><p class="p_current_price _current_price" id="_wprcRangeLabel"></p>
+        </div>
+        <div class="option_box--six">
+            <ul class="option_list" id="_wprcUl"></ul>
+        </div>
+        <div class="adjust_box_wrap">
+            <div class="adjust_box">
+                <div class="adjust_box_inner">
+                    <a href="javascript:void(0);" class="btn_adjust btn_adjust--minus" adjust="wprcMin" title="감소" data-nlog="opt*c.dslider">
+                        <i class="icon icon_map_minus" aria-hidden="true"></i>
+                    </a>
+                    <input type="tel" id="wprcMin" class="price_input _directFilter" title="최소가격 입력" placeholder="최소" data-nlog="opt*c.dslider">
+                    <a href="javascript:void(0);" class="btn_adjust btn_adjust--plus" adjust="wprcMin" title="증가" data-nlog="opt*c.dslider">
+                        <i class="icon icon_map_plus" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+            <span class="price_symbol" role="img" aria-label="에서"><i class="icon icon_dash" aria-hidden="true"></i></span>
+            <div class="adjust_box">
+                <div class="adjust_box_inner">
+                    <a href="javascript:void(0);" class="btn_adjust btn_adjust--minus" adjust="wprcMax" title="감소" data-nlog="opt*c.dslider">
+                        <i class="icon icon_map_minus" aria-hidden="true"></i>
+                    </a>
+                    <input type="tel" id="wprcMax" class="price_input _directFilter" title="최대가격 입력" placeholder="최대" data-nlog="opt*c.dslider">
+                    <a href="javascript:void(0);" class="btn_adjust btn_adjust--plus" adjust="wprcMax" title="증가" data-nlog="opt*c.dslider">
+                        <i class="icon icon_map_plus" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="filter_box _rangeFilter" filterName="rprc">
+        <div class="heading_option">
+            <h2 class="heading">월세</h2><p class="p_current_price _current_price" id="_rprcRangeLabel"></p>
+        </div>
+        <div class="option_box--six">
+            <ul class="option_list" id="_rprcUl"></ul>
+        </div>
+        <div class="adjust_box_wrap">
+            <div class="adjust_box">
+                <div class="adjust_box_inner">
+                    <a href="javascript:void(0);" class="btn_adjust btn_adjust--minus" adjust="rprcMin" title="감소" data-nlog="opt*c.mslider">
+                        <i class="icon icon_map_minus" aria-hidden="true"></i>
+                    </a>
+                    <input type="tel" id="rprcMin" class="price_input _directFilter" title="최소가격 입력" placeholder="최소" data-nlog="opt*c.mslider">
+                    <a href="javascript:void(0);" class="btn_adjust btn_adjust--plus" adjust="rprcMin" title="증가" data-nlog="opt*c.mslider">
+                        <i class="icon icon_map_plus" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+            <span class="price_symbol" role="img" aria-label="에서"><i class="icon icon_dash" aria-hidden="true"></i></span>
+            <div class="adjust_box">
+                <div class="adjust_box_inner">
+                    <a href="javascript:void(0);" class="btn_adjust btn_adjust--minus" adjust="rprcMax" title="감소" data-nlog="opt*c.mslider">
+                        <i class="icon icon_map_minus" aria-hidden="true"></i>
+                    </a>
+                    <input type="tel" id="rprcMax" class="price_input _directFilter" title="최대가격 입력" placeholder="최대" data-nlog="opt*c.mslider">
+                    <a href="javascript:void(0);" class="btn_adjust btn_adjust--plus" adjust="rprcMax" title="증가" data-nlog="opt*c.mslider">
+                        <i class="icon icon_map_plus" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="filter_box _rangeFilter" filterName="spc">
+        <div class="heading_option">
+            <h3 class="heading">면적
+                <a href="javascript:void(0);" class="btn_space _filter_change_space" role="button">
+                    <span class="blind">단위변환</span>
+                    <i class="icon icon_change" aria-hidden="true"></i>
+                </a>
+            </h3>
+            <p class="p_current_price _current_price" id="_spcRangeLabel"></p>
+        </div>
+        <div class="option_box--quarter">
+            <ul class="option_list _spaceBox" id="_spcUl"></ul>
+        </div>
+    </div>
+
+</div>
+
+<div class="article_box--option">
+    <div class="heading_toggle"><a href="javascript:void(0);" class="heading_toggle_inner" role="button" id="dropdownMenu1" aria-expa nded="false">
+            <h2>매물 특징 <i class="icon icon_arrow_down_bold" aria-hidden="true"></i></h2>
+        </a>
+    </div>
+    <div class="filter_boxs" aria-labelledby="dropdownMenu1">
+        <div class="filter_box _singleFilter" filterName="rmcnt">
+            <div class="heading_option">
+                <h3 class="heading">방개수</h3>
+            </div>
+            <div class="option_box--quarter">
+                <ul class="option_list" _tagUI="RMCNT"></ul>
+            </div>
+        </div>
+        <div class="filter_box _singleFilter" filterName="brcnt">
+            <div class="heading_option">
+                <h3 class="heading">욕실</h3>
+            </div>
+            <div class="option_box--quarter">
+                <ul class="option_list" _tagUI="BRCNT"></ul>
+            </div>
+        </div>
+        <div class="filter_box _singleFilter" filterName="bldyr">
+            <div class="heading_option">
+                <h3 class="heading">사용승인일</h3>
+            </div>
+            <div class="option_box--quarter">
+                <ul class="option_list" _tagUI="BLDYR"></ul>
+            </div>
+        </div>
+        <div class="filter_box _singleFilter" filterName="floor">
+            <div class="heading_option">
+                <h3 class="heading">층수</h3>
+            </div>
+            <div class="option_box--five">
+                <ul class="option_list" _tagUI="FLOOR"></ul>
+            </div>
+        </div>
+        <div class="filter_box _singleFilter" filterName="dirct">
+            <div class="heading_option">
+                <h3 class="heading">방향</h3>
+            </div>
+            <div class="option_box--quarter">
+                <ul class="option_list" _tagUI="DIRCT"></ul>
+            </div>
+        </div>
+        <div class="filter_box _multiFilter" filterName="struc">
+            <div class="heading_option">
+                <h3 class="heading">구조</h3>
+            </div>
+            <div class="option_box--quarter">
+                <ul class="option_list" _tagUI="STRUC"></ul>
+            </div>
+        </div>
+        <div class="filter_box _singleFilter" filterName="loan">
+            <div class="heading_option">
+                <h3 class="heading">융자금</h3>
+            </div>
+            <div class="option_box--double">
+                <ul class="option_list" _tagUI="LOAN"></ul>
+            </div>
+        </div>
+        <div class="filter_box _singleFilter" filterName="numhh">
+            <div class="heading_option">
+                <h3 class="heading">세대수</h3>
+            </div>
+            <div class="option_box--three">
+                <ul class="option_list" _tagUI="NUMHH"></ul>
+            </div>
+        </div>
+        <div class="filter_box _facilFilter" filterName="rmfct" style="display:none;">
+            <div class="heading_option">
+                <h3 class="heading">방 내부 시설</h3>
+                <p class="p_guide_range"><em class="star">*</em> 오피스텔, 원룸에 한함</p>
+            </div>
+            <div class="facility_area">
+                <div class="scroller" id="scroller2">
+                    <div class="scroller_inner" id="option2">
+                        <ul class="facil_list" _tagUI="RMFCT"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter_box _singleFilter" filterName="dvsex" style="display:none;">
+            <div class="heading_option">
+                <h3 class="heading">남녀구분</h3>
+                <p class="p_guide_range"><em class="star">*</em> 오피스텔, 원룸에 한함</p>
+            </div>
+            <div class="option_box--three">
+                <ul class="option_list" _tagUI="DVSEX"></ul>
+            </div>
+        </div>
+    </div>
+</div><div class="article_box--option">
+    <div class="heading_toggle"><a href="javascript:void(0);" class="heading_toggle_inner"  role="button" id="dropdownMenu2" aria-expanded="false">
+            <h2>보안 및 시설정보 <i class="icon icon_arrow_down_bold" aria-hidden="true"></i></h2>
+        </a>
+    </div>
+    <div class="filter_boxs" aria-labelledby="dropdownMenu2">
+        <div class="filter_box _facilFilter" filterName="infct">
+            <div class="heading_option"><h3 class="heading">보안 및 내부시설</h3></div>
+            <div class="facility_area">
+                <div class="scroller" id="scroller3">
+                    <div class="scroller_inner" id="option3">
+                        <ul class="facil_list" _tagUI="INFCT"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="filter_box _singleFilter" filterName="parkl">
+            <div class="heading_option"><h3 class="heading">주차</h3></div>
+            <div class="option_box--three">
+                <ul class="option_list" _tagUI="PARKL"></ul>
+            </div>
+        </div>
+        <div class="close_article_area"><a href="javascript:void(0);" class="btn_close_article" _nclk="opt*s.close" role="button">닫기 <i class="icon icon_arrow_up" aria-hidden="true"></i></a>
+        </div>
+    </div>
+</div><div class="article_box--option">
+    <div class="heading_toggle">
+        <a href="javascript:void(0);" class="heading_toggle_inner"  role="button" id="dropdownMenu3" aria-expanded="false">
+            <h2>기타 태그 # <i class="icon icon_arrow_down_bold" aria-hidden="true"></i></h2>
+        </a>
+    </div>
+    <div class="filter_boxs"  aria-labelledby="dropdownMenu3">
+        <div class="filter_box _multiFilter" filterName="etc">
+            <div class="heading_option"><h2 class="heading">기타 태그 #</h2></div>
+            <div class="option_box option_box--tags">
+                <ul class="option_list" _tagUI="ETC"></ul>
+            </div>
+        </div>
+        <div class="close_article_area">
+            <a href="javascript:void(0);" class="btn_close_article" _nclk="opt*g.close" role="button">닫기 <i class="icon icon_arrow_up" aria-hidden="true"></i></a>
+        </div>
+    </div>
+</div></section>
+    <div class="btns_fixed btns_fixed--search">
+        <div class="btns_fixed_inner">
+            <a href="javascript:void(0);" class="btn_option btn_option--reset _filterResetBtn" role="button"><span>초기화</span></a>
+            <a href="javascript:void(0);" class="btn_option btn_option--search _filterSaveBtn" role="button">
+                <span id="_filterApplyButtonSpan">매물 검색</span>
+                <span class="sale_list_number">
+                    <em class="txt_result" id="_filterApplyButtonArticleEm">매물</em>
+                    <em class="txt_result" id="_filtering_count">0</em>
+                </span>
+            </a>
+        </div>
+    </div>
+</div>
+<div class="dimmed _miniFilterClose _prefix _filter_box_wrap" _prefix='hmf_' id="hscpMiniFilterLayer" style="display:none;">
+    <div class="layer_popup layer_popup—saletype">
+        <h1 class="layer_title" id="_hscp_mini_filter_nm">
+            <a href="javascript:void(0);" class="btn_space" role="button"><span class="blind">단위변환</span><i class="icon icon_change" aria-hidden="true"></i></a>
+        </h1>
+        <div class="layer_article" style="max-height:400px; overflow-y: auto;">
+            <div class="option_box option_box--three">
+                <ul class="option_list _hscpMultiFilter" filterName=""></ul>
+            </div>
+        </div>
+        <div class="layer_btn_area">
+            <a href="javascript:void(0);" class="btn btn--primary _miniFilterApply" role="button">적용</a>
+        </div>
+        <a href="javascript:void(0);" class="btn_close _miniFilterClose" role="button" aria-label="닫기"><i class="icon icon_close" aria-hidden="true"></i></a>
+    </div>
+</div>
+<div class="dimmed _miniFilterClose _prefix" _prefix='mf_' id="miniFilterLayer" style="display:none;">
+    <div class="layer_popup">
+        <h1 class="layer_title" id="_mini_filter_nm"></h1>
+        <div class="layer_article  _mini_rlet_filter _mini_trad_filter  _mini_filter_onoff">
+            <div class="option_box option_box--three">
+                <ul class="option_list _mini_trad_filter _mini_filter_onoff _multiFilter _trad" filterName="tradTpCd"></ul>
+                <ul class="option_list _mini_rlet_filter _mini_filter_onoff _multiFilter _rlet" filterName="rletTpCd"></ul>
+            </div>
+        </div>
+        <div class="layer_article _mini_filter_price _mini_filter_onoff _rangeFilter" filterName="miniprc">
+            <div class="option_box--quarter">
+                <ul class="option_list _spaceBox" id="_miniprcUl"></ul>
+            </div>
+            <div class="adjust_box_wrap">
+                <div class="adjust_box">
+                    <div class="adjust_box_inner">
+                        <a href="javascript:void(0);" class="btn_adjust btn_adjust--minus" adjust="miniprcMin" title="감소">
+                            <i class="icon icon_map_minus" aria-hidden="true"></i>
+                        </a>
+                        <input type="tel" id="miniprcMin" class="price_input _directFilter" title="최소가격 입력" placeholder="최소">
+                        <a href="javascript:void(0);" class="btn_adjust btn_adjust--plus" adjust="miniprcMin" title="증가">
+                            <i class="icon icon_map_plus" aria-hidden="true"></i>
+                        </a>
+                    </div>
+                </div>
+                <span class="price_symbol" role="img" aria-label="에서"><i class="icon icon_dash" aria-hidden="true"></i></span>
+                <div class="adjust_box">
+                    <div class="adjust_box_inner">
+                        <a href="javascript:void(0);" class="btn_adjust btn_adjust--minus" adjust="miniprcMax" title="감소">
+                            <i class="icon icon_map_minus" aria-hidden="true"></i>
+                        </a>
+                        <input type="tel" id="miniprcMax" class="price_input _directFilter" title="최대가격 입력" placeholder="최대">
+                        <a href="javascript:void(0);" class="btn_adjust btn_adjust--plus" adjust="miniprcMax" title="증가">
+                            <i class="icon icon_map_plus" aria-hidden="true"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layer_btn_area">
+            <a href="javascript:void(0);" class="btn _miniFilterRemove" role="button">조건삭제</a>
+            <a href="javascript:void(0);" class="btn btn--primary _miniFilterApply" role="button">적용</a>
+        </div>
+        <a href="javascript:void(0);" class="btn_close _miniFilterClose" role="button" aria-label="닫기"><i class="icon icon_close" aria-hidden="true"></i></a>
+    </div>
+</div><script type="text/javascript">
+    var _tradTpCd= [{tagCd:'A1',uiTagNm:'매매'},{tagCd:'B1',uiTagNm:'전세'},{tagCd:'B2',uiTagNm:'월세'},{tagCd:'B3',uiTagNm:'단기임대'}];
+    var _rletTpCdAll= [{tagCd:'APT',uiTagNm:'아파트'},{tagCd:'OPST',uiTagNm:'오피스텔'},{tagCd:'VL',uiTagNm:'빌라'},{tagCd:'ABYG',uiTagNm:'아파트분양권'},{tagCd:'OBYG',uiTagNm:'오피스텔분양권'},{tagCd:'JGC',uiTagNm:'재건축'},{tagCd:'JWJT',uiTagNm:'전원주택'},{tagCd:'DDDGG',uiTagNm:'단독/다가구'},{tagCd:'SGJT',uiTagNm:'상가주택'},{tagCd:'HOJT',uiTagNm:'한옥주택'},{tagCd:'JGB',uiTagNm:'재개발'},{tagCd:'OR',uiTagNm:'원룸'},{tagCd:'GSW',uiTagNm:'고시원'},{tagCd:'SG',uiTagNm:'상가'},{tagCd:'SMS',uiTagNm:'사무실'},{tagCd:'GJCG',uiTagNm:'공장/창고'},{tagCd:'GM',uiTagNm:'건물'},{tagCd:'TJ',uiTagNm:'토지'},{tagCd:'YR',uiTagNm:'연립'},{tagCd:'DSD',uiTagNm:'다세대'},{tagCd:'APTHGJ',uiTagNm:'지식산업센터'},{tagCd:'DSH',uiTagNm:'도시형'}];
+    var _tagUI= {"PARKL":[{"tagCd":"PARKINGYN","uiTagNm":"주차가능"},{"tagCd":"PARKINGONE","uiTagNm":"세대당 1대이상"},{"tagCd":"PARKINGMORE","uiTagNm":"세대당 1.5대이상"}],"STRUC":[{"tagCd":"KITCHSEPA","uiTagNm":"주방분리형"},{"tagCd":"DUPLEX","uiTagNm":"복층"},{"tagCd":"ROOFTOP","uiTagNm":"옥탑"},{"tagCd":"VERANDA","uiTagNm":"베란다/발코니"}],"RMCNT":[{"tagCd":"ONEROOM","uiTagNm":"1개"},{"tagCd":"TWOROOM","uiTagNm":"2개"},{"tagCd":"THREEROOM","uiTagNm":"3개"},{"tagCd":"FOURROOM","uiTagNm":"4개이상"}],"BRCNT":[{"tagCd":"ONEBATH","uiTagNm":"1개"},{"tagCd":"TOWBATH","uiTagNm":"2개"},{"tagCd":"THREEBATH","uiTagNm":"3개"},{"tagCd":"FOURBATH","uiTagNm":"4개 이상"}],"FLOOR":[{"tagCd":"ONEFLOOR","uiTagNm":"1층"},{"tagCd":"LOWFLOOR","uiTagNm":"저층"},{"tagCd":"MIDFLOOR","uiTagNm":"중간층"},{"tagCd":"HIGHFLOOR","uiTagNm":"고층"},{"tagCd":"TOPFLOOR","uiTagNm":"탑층"},{"tagCd":"UNDERFLOOR","uiTagNm":"지하층"},{"tagCd":"UPPERFLOOR","uiTagNm":"지상층(1층제외)"}],"LOAN":[{"tagCd":"NOLOAN","uiTagNm":"융자금없는"},{"tagCd":"LOWLOAN","uiTagNm":"융자금 30%미만"}],"NUMHH":[{"tagCd":"HSEH100","uiTagNm":"100세대 이상"},{"tagCd":"HSEH500","uiTagNm":"500세대 이상"},{"tagCd":"HSEH1000","uiTagNm":"1000세대 이상"}],"ETC":[{"tagCd":"LHRENT","uiTagNm":"LH매입임대주택"},{"tagCd":"ARTICLEPHOTO","uiTagNm":"매물사진"},{"tagCd":"ALLREPAIR","uiTagNm":"올수리"},{"tagCd":"TERRACE","uiTagNm":"테라스"},{"tagCd":"YARD","uiTagNm":"마당"},{"tagCd":"NOWARRAN","uiTagNm":"무보증"},{"tagCd":"EXTEND","uiTagNm":"확장형"},{"tagCd":"BIGCPLX","uiTagNm":"대단지"},{"tagCd":"STATION","uiTagNm":"역세권"},{"tagCd":"HOUSESEPA","uiTagNm":"세대분리"},{"tagCd":"BATHREPAIR","uiTagNm":"욕실수리"},{"tagCd":"CHANGESINC","uiTagNm":"주방교체"},{"tagCd":"CHANGEBOIL","uiTagNm":"보일러교체"},{"tagCd":"FASTSELL","uiTagNm":"급매"},{"tagCd":"PILOTI","uiTagNm":"필로티"},{"tagCd":"SMLSPC","uiTagNm":"소형평수"},{"tagCd":"BIGSPC","uiTagNm":"대형평수"},{"tagCd":"PENT","uiTagNm":"펜트하우스"},{"tagCd":"MAINROAD","uiTagNm":"큰길"},{"tagCd":"RENTHUG","uiTagNm":"세안고"},{"tagCd":"PET","uiTagNm":"애완동물"},{"tagCd":"ROOFAIRCON","uiTagNm":"천장에어컨"},{"tagCd":"LUXURYVILLA","uiTagNm":"고급빌라"},{"tagCd":"TOTFLR2","uiTagNm":"총2층"},{"tagCd":"TOTFLR3","uiTagNm":"총3층"},{"tagCd":"TOTFLR4","uiTagNm":"총4층"},{"tagCd":"TOTFLR5","uiTagNm":"총5층"},{"tagCd":"SECURITY","uiTagNm":"보안"},{"tagCd":"SMALLSPCRENT","uiTagNm":"소형전월세"},{"tagCd":"COOKING","uiTagNm":"요리"},{"tagCd":"NORMAL","uiTagNm":"기본형"},{"tagCd":"MOLD","uiTagNm":"곰팡이없는"},{"tagCd":"CONDENSATION","uiTagNm":"결로없는"}],"BLDYR":[{"tagCd":"COMPLETION2UNDER","uiTagNm":"~2년"},{"tagCd":"COMPLETION4UNDER","uiTagNm":"~4년"},{"tagCd":"COMPLETION10UNDER","uiTagNm":"~10년"},{"tagCd":"COMPLETION15UNDER","uiTagNm":"~15년"},{"tagCd":"COMPLETION25UNDER","uiTagNm":"~25년"},{"tagCd":"COMPLETION25OVER","uiTagNm":"25년~"},{"tagCd":"COMPLETION30OVER","uiTagNm":"30년~"}],"MTCST":[{"tagCd":"MF10UNDER","uiTagNm":"~10"},{"tagCd":"MF20UNDER","uiTagNm":"~20"},{"tagCd":"MF30UNDER","uiTagNm":"~30"},{"tagCd":"MF40UNDER","uiTagNm":"~40"},{"tagCd":"MF50UNDER","uiTagNm":"~50"},{"tagCd":"MF60UNDER","uiTagNm":"~60"},{"tagCd":"MF70UNDER","uiTagNm":"~70"},{"tagCd":"MF80UNDER","uiTagNm":"~80"}],"RMFCT":[{"tagCd":"FULLOP","uiTagNm":"풀옵션","uiClssNm":"fulloption"},{"tagCd":"AIRCON","uiTagNm":"에어컨","uiClssNm":"airconditional"},{"tagCd":"INTERPHONE","uiTagNm":"인터폰","uiClssNm":"interphone"},{"tagCd":"REFRI","uiTagNm":"냉장고","uiClssNm":"refrigerator"},{"tagCd":"WASHER","uiTagNm":"세탁기","uiClssNm":"washingmachine"},{"tagCd":"WARDROBE","uiTagNm":"옷장","uiClssNm":"closet"},{"tagCd":"GASRANGE","uiTagNm":"가스레인지","uiClssNm":"gasrange"},{"tagCd":"INDUCTION","uiTagNm":"인덕션레인지","uiClssNm":"induction"},{"tagCd":"BUILTIN","uiTagNm":"붙박이장","uiClssNm":"closet"},{"tagCd":"SHOERACK","uiTagNm":"신발장","uiClssNm":"shoerack"},{"tagCd":"BED","uiTagNm":"침대","uiClssNm":"bed"},{"tagCd":"DESK","uiTagNm":"책상","uiClssNm":"desk"},{"tagCd":"TABLE","uiTagNm":"식탁","uiClssNm":"dinnertable"},{"tagCd":"SOFA","uiTagNm":"소파","uiClssNm":"sofa"},{"tagCd":"DRYER","uiTagNm":"건조기","uiClssNm":"dryer"},{"tagCd":"SHOWERBOOTH","uiTagNm":"샤워부스","uiClssNm":"showerbooth"},{"tagCd":"BATHTUB","uiTagNm":"욕조","uiClssNm":"bath"},{"tagCd":"BIDET","uiTagNm":"비데","uiClssNm":"bidet"},{"tagCd":"SINC","uiTagNm":"싱크대","uiClssNm":"sink"},{"tagCd":"DISHWASHER","uiTagNm":"식기세척기","uiClssNm":"dishwasher"},{"tagCd":"MICROWAVE","uiTagNm":"전자레인지","uiClssNm":"microwave"},{"tagCd":"GASOVEN","uiTagNm":"가스오븐","uiClssNm":"oven"}],"INFCT":[{"tagCd":"CCTV","uiTagNm":"CCTV","uiClssNm":"cctv"},{"tagCd":"SECUREWINDOW","uiTagNm":"방범창","uiClssNm":"protectwindow"},{"tagCd":"VIDEOPHONE","uiTagNm":"비디오폰","uiClssNm":"videophone"},{"tagCd":"GUARD","uiTagNm":"경비원","uiClssNm":"guard"},{"tagCd":"DOORSECURE","uiTagNm":"현관보안","uiClssNm":"securitydoor"},{"tagCd":"FIREALARM","uiTagNm":"화재경보기","uiClssNm":"firealarm"},{"tagCd":"ELEVATOR","uiTagNm":"엘리베이터","uiClssNm":"elevator"},{"tagCd":"DELIVERYBOX","uiTagNm":"무인택배함","uiClssNm":"deliverybox"}],"DIRCT":[{"tagCd":"EAST","uiTagNm":"동"},{"tagCd":"WEST","uiTagNm":"서"},{"tagCd":"SOUTH","uiTagNm":"남"},{"tagCd":"NORTH","uiTagNm":"북"},{"tagCd":"EASTNORTH","uiTagNm":"북동"},{"tagCd":"EASTSOUTH","uiTagNm":"남동"},{"tagCd":"WESTNORTH","uiTagNm":"북서"},{"tagCd":"WESTSOUTH","uiTagNm":"남서"}]};
+
+    if(_tagUI['FLOOR'] && _tagUI['FLOOR'].length > 5){
+        _tagUI['FLOOR'] = _tagUI['FLOOR'].slice(0, 5);
+    }
+    delete _tagUI['MTCST'];
+
+    var _rletTpCd = [];
+    for(var i=0; i < _rletTpCdAll.length; i++){
+        var item = _rletTpCdAll[i];
+        // 빌라단지 관련 항목은 필터에서 노출 제외 > 빌라 필터 요청시 함께 요청
+        // 빌라단지-연립(YR), 빌라단지-다세대(DSD), 빌라단지-도시형(DSH), 빌라단지(VLA)
+        // 고시원(GSW) 제외
+        // 한옥주택(HOJT) 제외
+        if(item.tagCd !== 'YR' && item.tagCd !== 'DSD' && item.tagCd !== 'DSH' && item.tagCd !== 'VLA' && item.tagCd !== 'GSW' && item.tagCd !== 'HOJT'){
+            _rletTpCd.push(item);
+        }
+    }
+
+</script>
+<div class="wrap wrap_search" id="_timeSearchRecommendLayer" style="position:absolute;top:0;left:0;width:100%;z-index:2000;display:none;">
+    <!-- header -->
+    <header class="header_search">
+        <h1 class="blind">네이버페이 부동산</h1>
+        <h2 class="blind">검색</h2>
+        <div class="search_input search_input--distance">
+            <div class="area_button">
+                <a href="javascript:void(0);" class="btn_back _btn_back">
+                <span class="icon">
+                    <span class="blind">이전 페이지</span>
+                </span>
+                </a>
+            </div>
+            <div class="search_form">
+                <div class="search_input_area">
+                    <!-- 검색어 입력시 class="is-typed" 추가 -->
+                    <input type="search" id="_searchDestInput" title="검색어 입력" value="" class="search_input_input _search_input_input" autocomplete="off" maxlength="255" onfocus="" placeholder="회사 위치 검색">
+                    <button type="button" class="search_input_close">
+                    <span class="delete">
+                        <span class="blind">검색어 삭제하기</span>
+                    </span>
+                    </button>
+                </div>
+                <button type="button" class="search_input_submit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M3.51966 10.25C3.51966 6.39487 6.64487 3.26966 10.5 3.26966C14.3551 3.26966 17.4803 6.39487 17.4803 10.25C17.4803 14.1051 14.3551 17.2303 10.5 17.2303C6.64487 17.2303 3.51966 14.1051 3.51966 10.25ZM10.5 1.5C5.66751 1.5 1.75 5.41751 1.75 10.25C1.75 15.0825 5.66751 19 10.5 19C12.5965 19 14.5209 18.2626 16.0278 17.0331C16.0625 17.0872 16.1035 17.1384 16.1508 17.1857L20.7501 21.785C21.1049 22.1399 21.6803 22.1399 22.0351 21.785C22.39 21.4302 22.39 20.8548 22.0351 20.5L17.4358 15.9006C17.3885 15.8534 17.3373 15.8124 17.2832 15.7777C18.5127 14.2708 19.25 12.3465 19.25 10.25C19.25 5.41751 15.3325 1.5 10.5 1.5Z" fill="#1E1E23"/>
+                    </svg>
+                    <span class="blind">검색</span>
+                </button>
+            </div>
+        </div>
+    </header>
+    <!-- //header -->
+    <div class="content content_destination" id="ct" role="main">
+        <!-- 목적지 검색 -->
+        <div class="section_destination" id="destination">
+            <div class="article_box--search">
+                <div class="layer_result layer_result--recommand" id="_timeSearchRecommend">
+                    <h2 class="result_heading">추천 도착지</h2>
+                    <div class="region_infos">
+                        <table class="region_table">
+                            <caption>지역 선택</caption>
+                            <tbody>
+                            <tr class="region_row">
+                                <td class="region_cell _recommendArea" data-keyword="강남역" data-lat="37.49795" data-lng="127.027637"><a href="javascript:void(0);" class="region_inner">강남역</a></td>
+                                <td class="region_cell _recommendArea" data-keyword="여의도역" data-lat="37.521425" data-lng="126.924369"><a href="javascript:void(0);" class="region_inner">여의도역</a></td>
+                                <td class="region_cell _recommendArea" data-keyword="서울시청" data-lat="37.56661" data-lng="126.978388"><a href="javascript:void(0);" class="region_inner">서울시청</a></td>
+                            </tr>
+                            <tr class="region_row">
+                                <td class="region_cell _recommendArea" data-keyword="잠실역" data-lat="37.51335" data-lng="127.100171"><a href="javascript:void(0);" class="region_inner">잠실역</a></td>
+                                <td class="region_cell _recommendArea" data-keyword="광화문" data-lat="37.571629" data-lng=126.976456><a href="javascript:void(0);" class="region_inner">광화문</a></td>
+                                <td class="region_cell _recommendArea" data-keyword="양재역" data-lat="37.483673" data-lng="127.034812"><a href="javascript:void(0);" class="region_inner">양재역</a></td>
+                            </tr>
+                            <tr class="region_row">
+                                <td class="region_cell _recommendArea" data-keyword="가산디지털단지" data-lat="37.481442" data-lng="126.882652"><a href="javascript:void(0);" class="region_inner">가산디지털단지</a></td>
+                                <td class="region_cell _recommendArea" data-keyword="상암DMC" data-lat="37.575632" data-lng="126.900468"><a href="javascript:void(0);" class="region_inner">상암DMC</a></td>
+                                <td class="region_cell _recommendArea" data-keyword="센트럴시티" data-lat="37.504902" data-lng="127.003232"><a href="javascript:void(0);" class="region_inner">센트럴시티</a></td>
+                            </tr>
+                            <tr class="region_row">
+                                <td class="region_cell _recommendArea" data-keyword="홍대입구역" data-lat="37.556843" data-lng="126.92379"><a href="javascript:void(0);" class="region_inner">홍대입구역</a></td>
+                                <td class="region_cell _recommendArea" data-keyword="판교테크노벨리" data-lat="37.400322" data-lng="127.10487"><a href="javascript:void(0);" class="region_inner">판교테크노벨리</a></td>
+                                <td class="region_cell _recommendArea" data-keyword="부평구청역" data-lat="37.508724" data-lng="126.720604"><a href="javascript:void(0);" class="region_inner">부평구청역</a></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="article_box--search">
+                <div class="layer_result layer_result--time" id="time_auto">
+                    <ul class="result_list" title="자동완성 리스트"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="wrap wrap_alarm_setting" id="complexNotiLayer" style="position: fixed;top: 0;left: 0; width: 100%; z-index: 130; display:none;">
+    <section class="content contnet_alarm" id="ct" role="main">
+        <div class="alarm_heading_area">
+            <h1 class="heading">신규 매물 알림</h1>
+            <p class="p_alarm"><strong class="txt_highlight _hscp_nm"></strong>에 설정하신 조건의 신규 매물이 등록되면 알려드릴까요?</p>
+        </div>
+        <div class="filter_box">
+            <div class="heading_option">
+                <h2 class="heading">거래유형</h2>
+            </div>
+            <div class="option_box--quarter">
+                <ul class="option_list" title="내 옵션">
+                    <li class="option_item _notf_chk">
+                        <input type="checkbox" name="tradTpCdList" id="tradtp1" value="A1">
+                        <label for="tradtp1" class="option_label">
+							<span class="inner">
+								<span class="txt_checked">매매</span>
+							</span>
+                        </label>
+                    </li>
+                    <li class="option_item _notf_chk">
+                        <input type="checkbox" name="tradTpCdList" id="tradtp2" value="B1">
+                        <label for="tradtp2" class="option_label">
+							<span class="inner">
+								<span class="txt_checked">전세</span>
+							</span>
+                        </label>
+                    </li>
+                    <li class="option_item _notf_chk">
+                        <input type="checkbox" name="tradTpCdList" id="tradtp3" value="B2">
+                        <label for="tradtp3" class="option_label">
+							<span class="inner">
+								<span class="txt_checked">월세</span>
+							</span>
+                        </label>
+                    </li>
+                    <li class="option_item _notf_chk">
+                        <input type="checkbox" name="tradTpCdList" id="tradtp4" value="B3">
+                        <label for="tradtp4" class="option_label">
+							<span class="inner">
+								<span class="txt_checked">단기임대</span>
+							</span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="filter_box">
+            <div class="heading_option">
+                <h3 class="heading">면적
+                    <a href="javascript:void(0)" class="btn_space _btn_space_unit_change" role="button">
+                        <span class="blind">단위변환</span>
+                        <i class="icon icon_change" aria-hidden="true"></i>
+                    </a>
+                </h3>
+            </div>
+            <div class="option_box--quarter">
+                <ul class="option_list _option_list_spc">
+                </ul>
+            </div>
+        </div>
+        <div class="filter_box">
+            <div class="heading_option">
+                <h3 class="heading">동선택</h3>
+            </div>
+            <div class="option_box--quarter">
+                <ul class="option_list _option_list_bild">
+                </ul>
+            </div>
+        </div>
+        <div class="btns_fixed btns_fixed--search">
+            <div class="btns_fixed_inner">
+                <a href="javascript:void(0)" class="btn_option btn_option--reset _btn_close_complex_noti" role="button"><span>취소</span></a>
+                <a href="javascript:void(0)" class="btn_option btn_option--search _btn_yes_complex_noti" role="button"><span>알림 등록</span></a>
+            </div>
+        </div>
+        <a href="javascript:void(0);" class="btn_close _btn_close_complex_noti" role="button" aria-label="닫기"><i class="icon icon_close" aria-hidden="true"></i></a>
+    </section>
+</div><div id="pvframe" style="display:none;"></div>
+<script src="https://ssl.pstatic.net/static.land/static/space/js/deploy/20260914103633/min/mobile-media-viewer.min.js" type="text/javascript"></script><script type="text/javascript">
+    var _isAuthenticated = false;
+    
+
+    var staticImageServURL = 'https://ssl.pstatic.net/static.land/static/space/20231122',
+        photoInfraURL = 'https://landthumb-phinf.pstatic.net',
+        myhouseURL = 'https://neo.land.naver.com',
+        buildVerDateTime = '20260914103633';
+
+    var initMediaViewer = function (imageContentId) {
+        if (typeof imageContentId == "undefined") {
+            return;
+        }
+        mediaViewer = new MediaViewer.Viewer({
+            elRoot: $("#_root")[0],
+            elItemList: $("#"+ imageContentId)[0],
+            useImgDownload: false,
+            videoPlayerSettings : {
+                playerModule: naver.player.coreplayer,
+                type: MediaViewer.VideoPlayerType.VINFRA,
+                autoPlay: false,
+                envType: "real",
+                vodServiceId: "2014"
+            },
+        });
+
+        var mediaViewerEvent = {};
+        mediaViewerEvent[MediaViewer.MediaViewerEvent.OPEN] = function () {
+            baseScript.lcsSend("imageViewer");
+
+            history.pushState(null, null, location.href.slice(0, location.href.indexOf("#") > -1 ? location.href.indexOf("#") : location.href.length) + "#mediaViewer");
+            window.onpopstate = function () {
+                mediaViewer.close();
+            };
+        }
+        mediaViewerEvent[MediaViewer.MediaViewerEvent.CLOSE] = function () {
+            if (location.href.indexOf("#mediaViewer") > -1) {
+                history.back();
+            }
+        }
+
+        mediaViewer.on(mediaViewerEvent);
+
+        addAdditionalLayout();
+    }
+
+    var addAdditionalLayout = function () {
+        mediaViewer.addLayout([
+            new MediaViewer.CustomLayout({
+                id: "show360",
+                position: MediaViewer.LayoutPosition.TOP,
+                initialize: (parentElement) => {
+                    const wrapperElement = document.createElement('span');
+                    const element = document.createElement('button');
+                    element.setAttribute('class', '_btn_view_360');
+                    element.style.position = "absolute";
+                    element.style.top = (window.innerHeight * 4 / 7) + "px";
+                    element.style.left = "50%";
+                    element.style.color = "#ffffff";
+                    element.style.transform = "translateX(-50%)";
+                    element.style.zIndex = "2001";
+                    element.innerHTML = "!!360VR!!<span class=\"blind\">360VR 이미지 보기</span>";
+
+                    wrapperElement.appendChild(element);
+                    parentElement.appendChild(wrapperElement);
+                    return wrapperElement;
+                },
+                onDataUpdate: (itemData) => {
+                    if (itemData.imgType === '360') {
+                        $('._btn_view_360').show();
+                    } else {
+                        $('._btn_view_360').hide();
+                    }
+                },
+                onClick: (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    window.open(
+                        'https://m.land.naver.com/article/vr?vrPhotoUrl=' + mediaViewer.getCurrent().orgUrl,
+                        '_blank'
+                    );
+                }
+            }),
+            new MediaViewer.CustomLayout({
+                id: "openOriginal",
+                position: MediaViewer.LayoutPosition.BUTTONS,
+                initialize: (parentElement) => {
+                    const wrapperElement = document.createElement('span');
+                    const element = document.createElement('button');
+                    element.setAttribute('class', '_btn_original_view');
+                    element.style.position = "absolute";
+                    element.style.top = "15px";
+                    element.style.right = "15px";
+                    element.style.fontSize = "16px";
+                    element.style.color = "#ffffff";
+                    element.style.zIndex = "2001";
+                    element.innerHTML = "원본보기<span class=\"blind\">원본 이미지 보기</span>";
+
+                    wrapperElement.appendChild(element);
+                    parentElement.appendChild(wrapperElement);
+                    return wrapperElement;
+                },
+                onDataUpdate: (itemData) => {
+                    if (itemData.imgType === '360' || itemData.itemType === 'video') {
+                        $('._btn_original_view').hide();
+                    } else {
+                        $('._btn_original_view').show();
+                    }
+                },
+                onClick: (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    window.open(
+                        mediaViewer.getCurrent().orgUrl,
+                        '_blank'
+                    );
+                }
+            })
+        ]);
+    };
+</script>
+
+<script type="text/javascript">
+    window.addEventListener('load', function () {
+        baseScript.loadScript('/htdocs/js/common/dtd.min.js');
+    });
+</script>
+<script src="https://ssl.pstatic.net/static.land/static/space/js/deploy/20260914103633/min/jpageWplugin.min.js" type="text/javascript"></script><script src="https://ssl.pstatic.net/static.land/static/space/js/deploy/20260914103633/min/jquery_plugin.min.js" type="text/javascript"></script><script src="https://ssl.pstatic.net/static.land/static/space/js/deploy/20260914103633/min/layer.min.js" type="text/javascript"></script><script src="https://ssl.pstatic.net/static.land/static/space/js/deploy/20260914103633/min/photoViewer.min.js" type="text/javascript"></script></body>
+</html>

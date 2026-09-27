@@ -1,0 +1,55 @@
+{
+  "complex_no": {},
+  "results": [
+    [
+      "new_land_page",
+      "HTTP 200 (7,203B)",
+      "new_land_page.txt"
+    ],
+    [
+      "new_land_token",
+      "없음",
+      ""
+    ],
+    [
+      "new_search_고덕자이",
+      "HTTP 429 (76B)",
+      "new_search_고덕자이.json"
+    ],
+    [
+      "m_search_고덕자이",
+      "HTTP 200 (57,787B)",
+      "m_search_고덕자이.txt"
+    ],
+    [
+      "new_search_고덕센트럴아이파크",
+      "HTTP 429 (76B)",
+      "new_search_고덕센트럴아이파크.json"
+    ],
+    [
+      "m_search_고덕센트럴아이파크",
+      "HTTP 200 (13,842B)",
+      "m_search_고덕센트럴아이파크.txt"
+    ],
+    [
+      "new_search_센트럴타운",
+      "HTTP 429 (76B)",
+      "new_search_센트럴타운.json"
+    ],
+    [
+      "m_search_센트럴타운",
+      "HTTP 200 (57,799B)",
+      "m_search_센트럴타운.txt"
+    ],
+    [
+      "new_search_미사강변더샵센트럴포레스트",
+      "HTTP 429 (76B)",
+      "new_search_미사강변더샵센트럴포레스트.json"
+    ],
+    [
+      "m_search_미사강변더샵센트럴포레스트",
+      "HTTP 200 (57,895B)",
+      "m_search_미사강변더샵센트럴포레스트.txt"
+    ]
+  ]
+}
