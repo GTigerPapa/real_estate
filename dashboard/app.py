@@ -72,11 +72,12 @@ def stacked(titles: list[str], row_px: int, gap_px: int = 48) -> tuple[go.Figure
     return fig, height
 
 
-def cap_line(fig, cap, row=None, col=None):
+def cap_line(fig, cap, row=None, col=None, label_left=False):
     kw = dict(row=row, col=col) if row else {}
     fig.add_hline(y=cap / 10000, line=dict(color=C["muted"], width=1),
                   annotation=dict(text=f"상한 {eok(cap)}", font=dict(color=C["ink2"], size=10),
-                                  x=1, xanchor="right", yanchor="bottom"), **kw)
+                                  x=0 if label_left else 1, xanchor="left" if label_left else "right",
+                                  yanchor="bottom"), **kw)
 
 
 # ───── 데이터 ─────
@@ -152,7 +153,7 @@ X_RANGE[:] = [pd.Period(months[0]).to_timestamp() - pd.Timedelta(days=10),
 
 st.caption(f"{band}형 · {start} ~ {end} · 매매 중앙값: 해제 제외, 직거래 {'포함' if incl_direct else '제외'} · "
            f"전세 중앙값: 갱신 {'포함' if incl_renew else '제외'} · "
-           f"3개월 이동중앙값 = 해당 월 포함 직전 3개월 거래를 모아 계산 · 금액 단위 억원")
+           f"3개월 이동중앙값 = 해당 월 포함 직전 3개월 거래를 모아 계산 · 거래 없는 달은 앞뒤 값을 직선으로 연결 · 금액 단위 억원")
 
 facet_titles = lambda: [names[c] for c in sel]  # noqa: E731
 
@@ -179,7 +180,7 @@ for i, cid in enumerate(sel):
     m = roll_t[roll_t["complex_id"] == cid]
     fig.add_trace(go.Scatter(
         x=m["deal_ym"].map(x_of), y=m["median"] / 10000, mode="lines", name="3개월 이동중앙값",
-        legendgroup="med", showlegend=i == 0, line=dict(color=C["ink"], width=2), connectgaps=False,
+        legendgroup="med", showlegend=i == 0, line=dict(color=C["ink"], width=2), connectgaps=True,
         customdata=m[["n"]], hovertemplate="<b>%{y:.2f}억</b> (n=%{customdata[0]})<br>%{x|%Y-%m}<extra>3개월 중앙값</extra>",
     ), row=r, col=c)
     cap_line(fig, cap, r, c)
@@ -230,7 +231,7 @@ else:
             m = df[df["complex_id"] == cid]
             fig.add_trace(go.Scatter(
                 x=m["deal_ym"].map(x_of), y=m["median"] / 10000, mode="lines", name=label, legendgroup=label,
-                showlegend=i == 0, line=dict(color=col, width=2), customdata=m[["n"]],
+                showlegend=i == 0, line=dict(color=col, width=2), connectgaps=True, customdata=m[["n"]],
                 hovertemplate="<b>%{y:.2f}억</b> (n=%{customdata[0]})<br>%{x|%Y-%m}<extra>" + label + "</extra>",
             ), row=r, col=c)
         cap_line(fig, cap, r, c)
@@ -251,7 +252,7 @@ else:
         m = jr[jr["complex_id"] == cid]
         fig.add_trace(go.Scatter(
             x=m["deal_ym"].map(x_of), y=m["ratio"] * 100, mode="lines+markers", name=names[cid],
-            line=dict(color=color_of[cid], width=2), marker=dict(size=8, line=dict(width=2, color="rgba(255,255,255,0.9)")),
+            line=dict(color=color_of[cid], width=2), connectgaps=True, marker=dict(size=8, line=dict(width=2, color="rgba(255,255,255,0.9)")),
             customdata=m[["trade_median", "trade_n", "jeonse_median", "jeonse_n"]].fillna(0),
             hovertemplate="<b>%{y:.1f}%</b> %{x|%Y-%m}<br>매매 %{customdata[0]:,.0f}만 (n=%{customdata[1]})"
                           "<br>전세 %{customdata[2]:,.0f}만 (n=%{customdata[3]})<extra>" + names[cid] + "</extra>"))
@@ -267,7 +268,7 @@ for cid in sel:
     m = roll_t[roll_t["complex_id"] == cid]
     fig.add_trace(go.Scatter(
         x=m["deal_ym"].map(x_of), y=m["median"] / 10000, mode="lines", name=names[cid],
-        line=dict(color=color_of[cid], width=2), customdata=m[["n"]],
+        line=dict(color=color_of[cid], width=2), connectgaps=True, customdata=m[["n"]],
         hovertemplate="<b>%{y:.2f}억</b> (n=%{customdata[0]})<br>%{x|%Y-%m}<extra>" + names[cid] + "</extra>"))
 # 끝점 직접 라벨: 값이 가까워 겹치면 생략 (범례·툴팁·표가 대신)
 ends = []
@@ -284,7 +285,7 @@ for val, cid, last in sorted(ends, key=lambda e: e[0]):
         placed.append(val)
         fig.add_annotation(x=last["deal_ym"].map(x_of).iloc[0], y=val / 10000, text=eok(val), showarrow=False,
                            xanchor="left", xshift=8, font=dict(color=C["ink2"], size=12))
-cap_line(fig, cap)
+cap_line(fig, cap, label_left=True)  # 오른쪽은 끝점 라벨 자리
 fig.update_yaxes(title_text="억원")
 st.plotly_chart(style(fig, 420, hovermode="x unified"), use_container_width=True)
 
