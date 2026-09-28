@@ -1092,6 +1092,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-09-25,godeok_central_ipark,118210,41,15,16,72
 2026-09-27,godeok_central_ipark,118210,40,15,15,70
 2026-09-28,godeok_central_ipark,118210,40,15,15,70
+2026-09-29,godeok_central_ipark,118210,41,16,16,73
 2023-09-01,godeok_xi,121977,73,21,10,104
 2023-09-02,godeok_xi,121977,78,24,12,114
 2023-09-03,godeok_xi,121977,78,23,12,113
@@ -2185,6 +2186,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-09-25,godeok_xi,121977,61,6,4,71
 2026-09-27,godeok_xi,121977,59,6,4,69
 2026-09-28,godeok_xi,121977,59,6,4,69
+2026-09-29,godeok_xi,121977,61,5,4,70
 2023-09-01,misa_thesharp_central_forest,111028,44,4,3,51
 2023-09-02,misa_thesharp_central_forest,111028,44,5,3,52
 2023-09-03,misa_thesharp_central_forest,111028,45,5,3,53
@@ -3271,6 +3273,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-09-25,misa_thesharp_central_forest,111028,18,0,1,19
 2026-09-27,misa_thesharp_central_forest,111028,18,0,1,19
 2026-09-28,misa_thesharp_central_forest,111028,18,0,1,19
+2026-09-29,misa_thesharp_central_forest,111028,18,0,2,20
 2023-09-01,yeosu_central_town,102283,22,1,1,24
 2023-09-02,yeosu_central_town,102283,22,0,1,23
 2023-09-03,yeosu_central_town,102283,23,0,1,24
@@ -4359,3 +4362,4 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-09-25,yeosu_central_town,102283,20,1,2,23
 2026-09-27,yeosu_central_town,102283,19,1,2,22
 2026-09-28,yeosu_central_town,102283,19,1,2,22
+2026-09-29,yeosu_central_town,102283,21,1,3,25
