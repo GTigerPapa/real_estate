@@ -46,3 +46,14 @@ complexes:
     apt_seq: ["41450-360"]
     fallback: [{jibun: "486", apt_nm: 미사강변더샵센트럴포레}]
     bands: [74, 84]
+
+  - id: godeok_lotte_castle_venezia
+    name: 고덕롯데캐슬베네루체
+    short: 베네루체
+    naver_id: 117309
+    asil_id: "1500059822"
+    sgg_cd: "11740"
+    umd_nm: 상일동
+    apt_seq: ["11740-4672"]
+    fallback: [{jibun: "514", apt_nm: 고덕롯데캐슬베네루체}]
+    bands: [59, 84]
