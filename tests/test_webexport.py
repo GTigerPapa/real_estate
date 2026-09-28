@@ -53,3 +53,17 @@ def test_payload_listing_units(conn, tmp_path):
     assert L == [{"d": "2026-09-28", "sale": 12, "lease": None, "wolse": None,
                   "sale_min": 145000, "sale_max": None, "lease_min": None}]
     assert d["listing_through"] == "2026-09-28"
+
+
+def test_payload_asil_columns(conn, tmp_path):
+    csv = tmp_path / "asil.csv"
+    csv.write_text("date,complex_id,naver_id,sale,jeonse,wolse,total\n"
+                   "2026-09-28,x,1,59,6,4,69\n2026-09-27,x,1,58,6,4,68\n2026-09-28,other,2,1,1,1,3\n", encoding="utf-8")
+    db.upsert_rows(conn, "apt_trade", _rows_fixture(), "t")
+    db.sync_config(conn, SETTINGS, COMPLEXES)
+    d = webexport.build_payload(conn, SETTINGS, COMPLEXES, asil_csv=csv)
+    assert d["complexes"][0]["asil"] == {"d": ["2026-09-27", "2026-09-28"], "s": [58, 59], "j": [6, 6], "w": [4, 4]}
+    assert d["asil_through"] == "2026-09-28"
+    # CSV 가 없으면 빈 열
+    d2 = webexport.build_payload(conn, SETTINGS, COMPLEXES, asil_csv=tmp_path / "none.csv")
+    assert d2["complexes"][0]["asil"]["d"] == [] and d2["asil_through"] is None

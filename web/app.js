@@ -257,11 +257,20 @@ function monthsView() {
 function xDomain(months) { return [ymDate(months[0]) - 20 * 864e5, ymDate(months[months.length - 1]) + 20 * 864e5]; }
 const seriesPts = (obj, months, all) => all.map((ym, i) => ({ t: ymDate(ym), v: obj.v[i], n: obj.n ? obj.n[i] : undefined }))
   .filter((p) => months.includes(new Date(p.t).toISOString().slice(0, 7)));
-function listingDelta(c, key) {
-  const L = c.listings; if (L.length < 2) return null;
-  const a = L[L.length - 1][key], b = L[L.length - 2][key];
-  return (a === null || b === null) ? null : a - b;
+// 아실 일별 매물 수 (열 형식: d 날짜, s 매매, j 전세, w 월세)
+function asilLast(c) {
+  const A = c.asil; if (!A || !A.d.length) return null;
+  const i = A.d.length - 1;
+  return { d: A.d[i], sale: A.s[i], jeonse: A.j[i], wolse: A.w[i], i };
 }
+// 7일 전(그날 기록이 없으면 그 이전 가장 가까운 날) 대비 증감
+function asilDelta(c, key, days = 7) {
+  const A = c.asil, last = asilLast(c); if (!last) return null;
+  const target = dDate(last.d) - days * 864e5;
+  for (let i = last.i - 1; i >= 0; i--) if (dDate(A.d[i]) <= target) return A[key][last.i] - A[key][i];
+  return null;
+}
+const asilPts = (c, key) => c.asil.d.map((d, i) => ({ t: dDate(d), v: c.asil[key][i] }));
 
 // ───── 화면 ─────
 function header(title, sub, withRefresh = true) {
@@ -277,7 +286,7 @@ function bandSeg(bands, current, onPick) {
 }
 function updatedLine() {
   const d = state.data;
-  return `실거래 ~${dotted(d.data_through).slice(2)} · 매물 ${d.listing_through ? dotted(d.listing_through).slice(5) : "없음"}`;
+  return `실거래 ~${dotted(d.data_through).slice(2)} · 아실 매물 ${d.asil_through ? dotted(d.asil_through).slice(5) : "없음"}`;
 }
 
 function Home() {
@@ -287,12 +296,11 @@ function Home() {
     header("관심 단지", updatedLine()),
     bandSeg(d.bands, band, (b) => { state.band = b; store.set("band", b); render(); }),
     h("div", { class: "cards" }, list.map((c) => Card(c, band))),
-    h("p", { class: "hero-sub", style: "margin-top:14px" }, "3개월 중앙값: 직전 3개월 매매(해제·직거래 제외)를 모은 중앙값. 네이버 매물은 단지 전체 기준."));
+    h("p", { class: "hero-sub", style: "margin-top:14px" }, "3개월 중앙값: 직전 3개월 매매(해제·직거래 제외)를 모은 중앙값. 아실 매물은 단지 전체 기준(같은 물건 중복 제외), 괄호는 1주 전 대비."));
 }
+const dtxt = (v) => v === null ? null : h("span", { class: "delta" }, v === 0 ? "±0" : (v > 0 ? "+" : "") + v);
 function Card(c, band) {
-  const b = c.b[band], sm = b.summary, L = c.listings[c.listings.length - 1];
-  const dS = listingDelta(c, "sale"), dL = listingDelta(c, "lease");
-  const dtxt = (v) => v === null ? null : h("span", { class: "delta" }, v === 0 ? "±0" : (v > 0 ? "+" : "") + v);
+  const b = c.b[band], sm = b.summary, L = asilLast(c);
   return h("a", { class: "card", href: `#/c/${c.id}/${band}` },
     h("div", { class: "card-h" }, h("span", { class: "dot", style: `background:${colorOf(c)}` }), h("b", {}, c.name),
       h("span", { class: "area" }, c.area), h("span", { class: "chev", "aria-hidden": "true" }, "›")),
@@ -304,11 +312,11 @@ function Card(c, band) {
       h("div", {}, h("span", {}, `상한 ${eok(d0().cap)} 대비`), h("b", {}, eokSigned(sm.vs_cap))),
       h("div", {}, h("span", {}, "전세가율"), h("b", {}, pct(sm.ratio)))),
     h("div", { class: "spark" }, Spark(b.trade_3m.v, colorOf(c))),
-    L ? h("div", { class: "lrow" }, h("span", { class: "lbl" }, `네이버 매물 ${dotted(L.d).slice(5)}`),
-      h("span", {}, "매매 ", h("b", {}, L.sale ?? "–"), dtxt(dS)),
-      h("span", {}, "전세 ", h("b", {}, L.lease ?? "–"), dtxt(dL)),
-      h("span", {}, "최저 ", h("b", {}, eok(L.sale_min))))
-      : h("div", { class: "lrow" }, h("span", { class: "lbl" }, "네이버 매물 데이터 없음")));
+    L ? h("div", { class: "lrow" }, h("span", { class: "lbl" }, `아실 매물 ${dotted(L.d).slice(5)}`),
+      h("span", {}, "매매 ", h("b", {}, L.sale), dtxt(asilDelta(c, "s"))),
+      h("span", {}, "전세 ", h("b", {}, L.jeonse), dtxt(asilDelta(c, "j"))),
+      h("span", {}, "월세 ", h("b", {}, L.wolse), dtxt(asilDelta(c, "w"))))
+      : h("div", { class: "lrow" }, h("span", { class: "lbl" }, "아실 매물 데이터 없음")));
 }
 const d0 = () => state.data;
 
@@ -368,29 +376,37 @@ function Detail(id, band) {
     ],
   });
 
-  const L = c.listings;
+  // 아실 일별 매물 수: 기간 선택(1년/3년)을 따르고, 끝은 마지막 기록일
+  const AL = asilLast(c);
   let listingSec;
-  if (L.length) {
-    const t0 = dDate(L[0].d), t1 = dDate(L[L.length - 1].d), pad = Math.max(2, (t1 - t0) / 864e5 * 0.06) * 864e5;
-    const LX = [t0 - pad, t1 + pad];
+  if (AL) {
+    const t1 = dDate(AL.d), t0 = Math.max(dDate(c.asil.d[0]), t1 - (state.range === "12" ? 365 : 3 * 365 + 1) * 864e5);
+    const pad = Math.max(2, (t1 - t0) / 864e5 * 0.02) * 864e5;
     const lc = Chart({
-      label: "네이버 매물 수", xDomain: LX, height: 170, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => v + "건",
-      xTicks: dayTicks, xFmt: fmtMD, tipDate: fmtYMD,
+      label: "아실 일별 매물 수", xDomain: [t0 - pad, t1 + pad], height: 190, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => v + "건",
+      tipDate: fmtYMD,
       series: [
-        { name: "매매", kind: "line", color: "var(--ink)", pts: L.map((x) => ({ t: dDate(x.d), v: x.sale })) },
-        { name: "전세", kind: "line", color: "var(--jeonse)", pts: L.map((x) => ({ t: dDate(x.d), v: x.lease })) },
-        { name: "월세", kind: "line", color: "var(--wolse)", pts: L.map((x) => ({ t: dDate(x.d), v: x.wolse })) },
+        { name: "매매", kind: "line", color: "var(--ink)", width: 1.6, pts: asilPts(c, "s") },
+        { name: "전세", kind: "line", color: "var(--jeonse)", width: 1.6, pts: asilPts(c, "j") },
+        { name: "월세", kind: "line", color: "var(--wolse)", width: 1.6, pts: asilPts(c, "w") },
       ],
     });
-    const ac = Chart({
-      label: "매매 최저 호가", xDomain: LX, height: 160, yFmt: (v) => eok(v, 1), tipFmt: (v) => eok(v),
+    const wk = (k) => { const v = asilDelta(c, k); return v === null ? "" : ` (${v > 0 ? "+" : ""}${v})`; };
+    listingSec = Section("아실 매물",
+      `단지 전체 · 같은 물건 중복 제외 · ${dotted(AL.d)} 매매 ${AL.sale}${wk("s")} · 전세 ${AL.jeonse}${wk("j")} · 월세 ${AL.wolse}${wk("w")} · 괄호는 1주 전 대비`, lc);
+  } else {
+    listingSec = Section("아실 매물", "아직 기록이 없습니다. 매일 06:30 자동 수집으로 쌓입니다.");
+  }
+  // 네이버 호가 (북마클릿으로 수집한 날만): 기록이 있을 때만 표시
+  const L = c.listings;
+  let askSec = null;
+  if (L.some((x) => x.sale_min !== null)) {
+    const t0 = dDate(L[0].d), t1 = dDate(L[L.length - 1].d), pad = Math.max(2, (t1 - t0) / 864e5 * 0.06) * 864e5;
+    askSec = Section("매매 최저 호가 (네이버)", `북마클릿으로 수집한 날만 · ${L.length}회 기록 · 최근 ${dotted(L[L.length - 1].d)}`, Chart({
+      label: "매매 최저 호가", xDomain: [t0 - pad, t1 + pad], height: 160, yFmt: (v) => eok(v, 1), tipFmt: (v) => eok(v),
       xTicks: dayTicks, xFmt: fmtMD, tipDate: fmtYMD, refs: [{ v: cap, label: `상한 ${eok(cap)}` }],
       series: [{ name: "매매 최저 호가", kind: "line", color: colorOf(c), pts: L.map((x) => ({ t: dDate(x.d), v: x.sale_min })) }],
-    });
-    listingSec = Section("네이버 매물", `단지 전체 기준 · ${L.length}회 기록 · 최근 ${dotted(L[L.length - 1].d)}`, lc,
-      h("h2", { style: "margin-top:10px" }, "매매 최저 호가"), ac);
-  } else {
-    listingSec = Section("네이버 매물", "아직 기록이 없습니다. 북마클릿으로 덤프를 올리면 여기에 쌓입니다.");
+    }));
   }
 
   const recent = b.deals.slice(-15).reverse();
@@ -415,10 +431,11 @@ function Detail(id, band) {
     h("div", { style: "margin-top:14px" }, rangeChips()),
     h("div", { class: "sections" },
       wide(Section("매매 실거래", "점: 개별 거래 · 선: 3개월 중앙값(해제·직거래 제외)", tradeChart)),
+      wide(listingSec),  // 가격 바로 아래에 같은 폭으로 두어 매물 증감과 가격 흐름을 위아래로 비교
       Section("매매 vs 전세", "3개월 중앙값 · 전세는 갱신 계약 제외", tjChart),
       Section("전세가율 · 갱신 비율", "갱신 비율↑ = 신규 전세 공급 감소 신호 (3개월 표본 5건 이상만)", ratioChart),
       Section("월별 거래량", null, volChart),
-      listingSec,
+      askSec,
       wide(Section("최근 거래", sm.last_deal ? `최근 정상 거래 ${dotted(sm.last_deal.d)} · ${eok(sm.last_deal.p)}` : null, table))));
 }
 
@@ -434,12 +451,26 @@ function Compare() {
     label: "단지별 전세가율", xDomain: X, height: 190, yFmt: (v) => v + "%", tipFmt: (v) => v.toFixed(1) + "%",
     series: list.map((c) => ({ name: c.short, kind: "line", color: colorOf(c), pts: seriesPts(c.b[band].ratio_3m, months, d.months) })),
   });
+  const withAsil = list.filter((c) => asilLast(c));
+  let offers = null;
+  if (withAsil.length) {
+    const t1 = Math.max(...withAsil.map((c) => dDate(asilLast(c).d)));
+    const t0 = Math.max(Math.min(...withAsil.map((c) => dDate(c.asil.d[0]))), t1 - (state.range === "12" ? 365 : 3 * 365 + 1) * 864e5);
+    const pad = Math.max(2, (t1 - t0) / 864e5 * 0.02) * 864e5;
+    offers = Chart({
+      label: "단지별 아실 매매 매물 수", xDomain: [t0 - pad, t1 + pad], height: 210, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => v + "건",
+      tipDate: fmtYMD,
+      series: withAsil.map((c) => ({ name: c.short, kind: "line", color: colorOf(c), width: 1.6, pts: asilPts(c, "s") })),
+    });
+  }
   const table = h("table", { class: "cmp" },
-    h("thead", {}, h("tr", {}, h("th", {}, "단지"), h("th", {}, "중앙값"), h("th", {}, "1년"), h("th", {}, "전세율"), h("th", {}, "매물"))),
+    h("thead", {}, h("tr", {}, h("th", {}, "단지"), h("th", {}, "중앙값"), h("th", {}, "1년"), h("th", {}, "전세율"),
+      h("th", {}, "매물"), h("th", {}, "1주"))),
     h("tbody", {}, list.map((c) => {
-      const sm = c.b[band].summary, L = c.listings[c.listings.length - 1];
+      const sm = c.b[band].summary, A = asilLast(c), dw = asilDelta(c, "s");
       return h("tr", {}, h("td", {}, h("span", { class: "dot", style: `display:inline-block;margin-right:6px;background:${colorOf(c)}` }), c.short),
-        h("td", {}, eok(sm.median)), h("td", {}, pctSigned(sm.yoy_pct)), h("td", {}, pct(sm.ratio)), h("td", {}, L ? String(L.sale ?? "–") : "–"));
+        h("td", {}, eok(sm.median)), h("td", {}, pctSigned(sm.yoy_pct)), h("td", {}, pct(sm.ratio)),
+        h("td", {}, A ? String(A.sale) : "–"), h("td", {}, dw === null ? "–" : (dw > 0 ? "+" : dw < 0 ? "−" : "±") + Math.abs(dw)));
     })));
   return h("div", {},
     header("단지 비교", updatedLine()),
@@ -448,14 +479,15 @@ function Compare() {
     h("div", { class: "sections" },
       Section(`${band}형 매매 3개월 중앙값`, null, med),
       Section(`${band}형 전세가율`, "전세 3개월 중앙값 ÷ 매매 3개월 중앙값", ratio),
-      wide(Section("요약", "중앙값 = 3개월 매매 중앙값 · 전세율 = 전세가율 · 매물 = 네이버 매매 매물 수(단지 전체)", table))));
+      offers ? wide(Section("아실 매매 매물 수", "단지 전체 기준 · 같은 물건 중복 제외 · 일별", offers)) : null,
+      wide(Section("요약", "중앙값 = 3개월 매매 중앙값 · 전세율 = 전세가율 · 매물 = 아실 최근일 매매 매물 수(단지 전체) · 1주 = 1주 전 대비", table))));
 }
 
 function Info() {
   const d = state.data;
   return h("div", { class: "info" },
     header("정보", null, false),
-    h("div", { class: "banner" }, `데이터 생성 ${d.generated_at.replace("T", " ")} · 실거래 ${dotted(d.data_through)}까지 · 네이버 매물 ${d.listing_through ? dotted(d.listing_through) : "없음"}`),
+    h("div", { class: "banner" }, `데이터 생성 ${d.generated_at.replace("T", " ")} · 실거래 ${dotted(d.data_through)}까지 · 아실 매물 ${d.asil_through ? dotted(d.asil_through) : "없음"}까지`),
     h("h2", {}, "기준"),
     h("ul", {},
       h("li", {}, "3개월 중앙값: 그 달 포함 직전 3개월의 개별 매매를 모은 중앙값. 해제·직거래 제외. n은 거래 수(3건 미만은 ⚠)."),
@@ -466,7 +498,8 @@ function Info() {
     h("h2", {}, "출처"),
     h("ul", {},
       h("li", {}, "국토교통부 아파트 매매·전월세 실거래가 (공공데이터포털) — 매일 06:30 자동 갱신"),
-      h("li", {}, "네이버페이 부동산 매물 수·호가 — 북마클릿으로 수집한 날만 기록")),
+      h("li", {}, "아실(asil.kr) 일별 매물 수(매매·전세·월세) — 2023.09부터, 매일 06:30 자동 갱신. 여러 중개사가 올린 같은 물건은 1건."),
+      h("li", {}, "네이버페이 부동산 매매 최저 호가 — 북마클릿으로 수집한 날만 기록")),
     h("h2", {}, "홈 화면에 추가"),
     h("ul", {},
       h("li", {}, "아이폰(Safari): 공유 버튼 → 홈 화면에 추가"),

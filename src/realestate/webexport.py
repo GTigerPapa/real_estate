@@ -4,7 +4,8 @@
 - 매매 중앙값: 해제·직거래 제외, 3개월 이동(직전 3개월 개별 거래 풀링)
 - 전세 중앙값: 갱신 계약 제외(유형 미상 포함), 3개월 이동
 - 전세가율: 같은 단지·평형 3개월 창 전세 중앙값 ÷ 매매 중앙값
-- 네이버 매물: listing_metric 스냅샷 (settings.yaml listing_metrics 규칙, 단지 전체 기준)
+- 네이버 매물: listing_metric 스냅샷 (settings.yaml listing_metrics 규칙, 단지 전체 기준) — 호가만 앱에서 사용
+- 아실 매물: data/listings/asil/asil_offer_counts.csv 의 일별 매매·전세·월세 매물 수 (단지 전체, 중복 매물 1건)
 금액 단위는 만원(실거래)·원(네이버 호가)을 앱에서 억으로 바꾸지 않도록 여기서 모두 '만원'으로 맞춘다.
 """
 from __future__ import annotations
@@ -39,8 +40,27 @@ def _series(df: pd.DataFrame, months: list[str], value: str, n: str = "n", nd: i
             "n": [int(d[n].get(m, 0)) if m in d.index else 0 for m in months]}
 
 
-def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | None = None) -> dict:
+ASIL_CSV = config.DATA_DIR / "listings" / "asil" / "asil_offer_counts.csv"
+
+
+def load_asil(path=ASIL_CSV) -> dict:
+    """{complex_id: {"d": [날짜...], "s": [매매], "j": [전세], "w": [월세]}} (날짜 오름차순, 열 형식으로 용량 절약)."""
+    from pathlib import Path
+    p = Path(path)
+    if not p.exists():
+        return {}
+    df = pd.read_csv(p, dtype={"date": str, "complex_id": str})
+    out = {}
+    for cid, g in df.sort_values("date").groupby("complex_id"):
+        out[cid] = {"d": g["date"].tolist(), "s": [int(x) for x in g["sale"]],
+                    "j": [int(x) for x in g["jeonse"]], "w": [int(x) for x in g["wolse"]]}
+    return out
+
+
+def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | None = None,
+                  asil_csv=ASIL_CSV) -> dict:
     now = now or config.now_kst()
+    asil = load_asil(asil_csv)
     cap = int(settings.get("buy_cap_manwon", 140000))
     trades = metrics.load_trades(conn, include_canceled=True)
     rents = metrics.load_rents(conn, rent_type=None)
@@ -138,13 +158,15 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
                             "lease_min": g("lease_min_ask", True)})
 
         out_complexes.append({"id": cid, "name": c["name"], "short": c.get("short") or c["name"], "slot": idx, "bands": [str(b) for b in c.get("bands", [])],
-                              "area": f"{c['umd_nm']}", "b": bands_out, "listings": lst})
+                              "area": f"{c['umd_nm']}", "b": bands_out, "listings": lst,
+                              "asil": asil.get(cid, {"d": [], "s": [], "j": [], "w": []})})
 
     return {
         "format": FORMAT,
         "generated_at": now.isoformat(timespec="minutes"),
         "data_through": trades["deal_date"].max().strftime("%Y-%m-%d") if not trades.empty else None,
         "listing_through": max((x["d"] for c in out_complexes for x in c["listings"]), default=None),
+        "asil_through": max((c["asil"]["d"][-1] for c in out_complexes if c["asil"]["d"]), default=None),
         "cap": cap,
         "months": months,
         "bands": [str(b["band"]) for b in settings.get("size_bands", [])],
