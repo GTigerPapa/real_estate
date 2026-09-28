@@ -162,6 +162,38 @@ button { font: inherit; color: inherit; }
 .banner { background: var(--card); border-radius: 12px; padding: 12px 14px; margin: 8px 0 12px; font-size: 13px;
   color: var(--ink2); outline: 1px solid var(--ring); outline-offset: -1px; }
 
+
+/* 단지 탭 상단: 최근 실거래 · 최근 매물 표 */
+.feeds { display: grid; gap: 12px; margin: 0 0 16px; }
+.feed { margin-top: 0; }
+.feed-h { display: flex; align-items: baseline; gap: 8px; }
+.feed-h .cnt { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.feed .chips { margin: 2px 0 6px; flex-wrap: wrap; }
+.tscroll { overflow-x: auto; margin: 0 -4px; }
+.ftable { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.ftable th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; padding: 6px 4px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+.ftable td { padding: 7px 4px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+.ftable tbody tr { cursor: pointer; }
+.ftable tbody tr:active td { background: var(--page); }
+.ftable .r { text-align: right; } .ftable .b { font-weight: 700; white-space: nowrap; } .ftable .nw { white-space: nowrap; }
+.ftable .tag, .ftable .badge { white-space: nowrap; }
+@media (max-width: 480px) { .ftable { font-size: 12.5px; } .ftable td, .ftable th { padding-left: 3px; padding-right: 3px; } }
+.ftable tr.x td { color: var(--muted); } .ftable tr.x td.b { text-decoration: line-through; }
+.ftable .tag { margin-left: 4px; }
+.cname { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.cname .dot { width: 8px; height: 8px; }
+.sub2 { color: var(--ink2); font-size: 12px; }
+.ftable td > div.sub2 { color: var(--muted); font-size: 11px; }
+.badge { display: inline-block; font-size: 10px; font-weight: 700; line-height: 1; padding: 3px 5px; border-radius: 5px; margin-left: 4px;
+  background: var(--ring); color: var(--ink2); vertical-align: 1px; }
+.badge.new { background: var(--accent); color: #fff; }
+.badge.dn { background: color-mix(in srgb, var(--down) 16%, transparent); color: var(--down); }
+.badge.upb { background: color-mix(in srgb, var(--up) 16%, transparent); color: var(--up); }
+.kind { font-size: 11px; color: var(--muted); }
+.more { display: block; width: 100%; margin-top: 8px; padding: 9px 0; border: 1px solid var(--ring); background: transparent;
+  border-radius: 10px; color: var(--ink2); cursor: pointer; font-size: 13px; }
+.more:active { background: var(--ring); }
+
 /* 하단 탭 */
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
@@ -211,6 +243,13 @@ button { font: inherit; color: inherit; }
   .top h1 { font-size: 28px; }
   .seg { max-width: 360px; }
   .iconbtn:hover { background: var(--ring); }
+
+  /* 홈: 상단 표 2열(좌 실거래 · 우 매물) */
+  .feeds { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; margin-bottom: 20px; }
+  .feed { padding: 18px 18px 14px; }
+  .ftable { font-size: 14px; }
+  .ftable tbody tr:hover td { background: var(--page); }
+  .more:hover { background: var(--ring); }
 
   /* 홈: 카드 격자 */
   .cards { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }

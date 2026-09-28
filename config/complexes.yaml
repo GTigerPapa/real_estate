@@ -1,11 +1,13 @@
 # 관심 단지 매칭 (확정: 실거래 데이터 확인 후 사용자 승인)
 # 매칭: apt_seq 우선, 보조로 (umd_nm, jibun, apt_nm) — 전월세 등 aptSeq 누락 대비
-# naver_id: 네이버페이 부동산 단지번호 (지도 URL layer 파라미터에서 확인, 2026-09)
+# naver_id: 네이버페이 부동산 단지번호 (지도 URL layer 파라미터에서 확인, 2026-09) = 아실 일별 매물 수(asil.py)의 단지 번호
+# asil_id: 아실 단지 번호 (매물 목록용, 아실 검색 결과의 seq, 2026-09)
 complexes:
   - id: godeok_xi
     name: 고덕자이
     short: 고덕자이
     naver_id: 121977
+    asil_id: "1500060907"
     sgg_cd: "11740"
     umd_nm: 상일동
     apt_seq: ["11740-4799"]
@@ -16,6 +18,7 @@ complexes:
     name: 고덕센트럴아이파크
     short: 고덕아이파크
     naver_id: 118210
+    asil_id: "1500059984"
     sgg_cd: "11740"
     umd_nm: 상일동
     apt_seq: ["11740-4675"]
@@ -26,6 +29,7 @@ complexes:
     name: 센트럴타운
     short: 센트럴타운
     naver_id: 102283
+    asil_id: "20171106"
     sgg_cd: "41133"
     umd_nm: 여수동
     apt_seq: ["41133-2813"]
@@ -36,6 +40,7 @@ complexes:
     name: 미사강변더샵센트럴포레스트
     short: 미사더샵
     naver_id: 111028
+    asil_id: "20357534"
     sgg_cd: "41450"
     umd_nm: 풍산동
     apt_seq: ["41450-360"]

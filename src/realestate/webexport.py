@@ -41,6 +41,59 @@ def _series(df: pd.DataFrame, months: list[str], value: str, n: str = "n", nd: i
 
 
 ASIL_CSV = config.DATA_DIR / "listings" / "asil" / "asil_offer_counts.csv"
+OFFERS_CSV = config.DATA_DIR / "listings" / "asil" / "asil_offers.csv"
+RECENT_TRADES = 300   # 홈 '최근 실거래' 표에 싣는 건수 (전체 단지·전체 면적)
+OFFERS_MAX = 400      # 홈 '매물' 표에 싣는 물건 수
+
+
+def load_offers(path=OFFERS_CSV) -> dict:
+    """아실 매물 추적 파일 → 현재 게시 중인 물건 목록.
+
+    같은 물건(단지·유형·동·층·전용면적·가격)을 여러 중개사가 올린 건 1줄로 묶는다.
+    reg: 가장 이른 게시일(=등록일에 가장 가까운 값), upd: 가장 최근 게시일(광고 갱신),
+    seen: 이 추적에서 처음 본 날, chg/prev: 가격이 바뀐 날과 이전 가격.
+    """
+    from pathlib import Path
+    p = Path(path)
+    empty = {"items": [], "since": None, "through": None}
+    if not p.exists():
+        return empty
+    df = pd.read_csv(p, dtype=str).fillna("")
+    if df.empty:
+        return empty
+    since, through = df["first_seen"].min(), df["last_seen"].max()
+    act = df[df["active"] == "1"].copy()
+    items = []
+    for key, g in act.groupby(["complex_id", "deal", "dong", "floor", "excl_area", "price", "rent"], sort=False):
+        cid, deal, dong, floor, ar, price, rent = key
+        posted = sorted(x for x in g["posted"] if x)
+        chg = g[g["price_changed"] != ""].sort_values("price_changed")
+        desc = next((x for x in g["desc"] if x), "")
+        items.append({
+            "c": cid, "t": deal, "p": int(price or 0), "r": int(rent) if rent else None,
+            "dong": dong, "f": floor, "ar": _num(ar, 2) if ar else None,
+            "reg": posted[0] if posted else g["first_seen"].min(), "upd": posted[-1] if posted else None,
+            "seen": g["first_seen"].min(), "n": int(len(g)),
+            "chg": chg["price_changed"].iloc[-1] if not chg.empty else None,
+            "prev": int(chg["prev_price"].iloc[-1]) if not chg.empty and chg["prev_price"].iloc[-1] else None,
+            "desc": desc[:60],
+        })
+    items.sort(key=lambda x: (x["reg"] or "", x["upd"] or "", x["seen"] or ""), reverse=True)
+    return {"items": items[:OFFERS_MAX], "since": since, "through": through}
+
+
+def recent_trades(conn, complexes: list[dict], limit: int = RECENT_TRADES) -> list:
+    """관심 단지 전체(평형 구간 밖 면적 포함) 매매 실거래, 계약일 최신순. pub: 이 저장소가 처음 받은 날(≈공개일)."""
+    ids = [c["id"] for c in complexes]
+    if not ids:
+        return []
+    q = ("SELECT complex_id, deal_date, deal_amount, floor, apt_dong, exclu_use_ar, dealing_gbn, is_canceled, "
+         "substr(first_seen_at, 1, 10) AS pub FROM v_trade WHERE complex_id IN (%s) "
+         "ORDER BY deal_date DESC, first_seen_at DESC LIMIT ?" % ",".join("?" * len(ids)))
+    rows = conn.execute(q, [*ids, limit]).fetchall()
+    return [{"c": r[0], "d": r[1], "p": int(r[2]), "f": int(r[3]), "dong": (r[4] or "").removesuffix("동"),
+             "ar": round(float(r[5]), 2),
+             "t": "direct" if r[6] == "직거래" else "broker", "x": int(r[7]), "pub": r[8]} for r in rows]
 
 
 def load_asil(path=ASIL_CSV) -> dict:
@@ -58,9 +111,10 @@ def load_asil(path=ASIL_CSV) -> dict:
 
 
 def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | None = None,
-                  asil_csv=ASIL_CSV) -> dict:
+                  asil_csv=ASIL_CSV, offers_csv=OFFERS_CSV) -> dict:
     now = now or config.now_kst()
     asil = load_asil(asil_csv)
+    offers = load_offers(offers_csv)
     cap = int(settings.get("buy_cap_manwon", 140000))
     trades = metrics.load_trades(conn, include_canceled=True)
     rents = metrics.load_rents(conn, rent_type=None)
@@ -171,4 +225,10 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
         "months": months,
         "bands": [str(b["band"]) for b in settings.get("size_bands", [])],
         "complexes": out_complexes,
+        "trades_recent": recent_trades(conn, complexes),
+        # 최초 백필 날짜: 이 날 받은 거래는 '새로 공개'로 표시하지 않는다
+        "trades_since": (conn.execute("SELECT substr(min(first_seen_at), 1, 10) FROM apt_trade").fetchone() or [None])[0],
+        "offers": offers["items"],
+        "offers_since": offers["since"],
+        "offers_through": offers["through"],
     }

@@ -92,6 +92,22 @@ streamlit run dashboard/app.py          # http://localhost:8501  (?band=74 처�
   아실 쪽에 기록이 없는 날은 행이 없다.
 - 공개 API가 아니라 화면 내부 주소다. 응답이 비거나 형식이 바뀌면 워크플로가 실패로 표시된다 — 우회하지 말고 확인할 것.
 
+### 아실 매물 목록 (Mac, 매일)
+
+아실 단지 화면의 개별 매물(유형·가격·동·층·전용면적·중개사·게시일)을 `data/listings/asil/asil_offers.csv` 에 매물 단위로 추적한다.
+아실 매물 서버는 **해외 접속을 끊어서** GitHub Actions 에서는 못 돌리고, 국내 PC(Mac launchd)에서 매일 실행해 push 한다.
+
+```bash
+python3 scripts/install_asil_offers.py            # 매일 07:13 실행 등록 (--status, --run-now, --uninstall)
+python3 scripts/asil_offers.py                    # 수동 수집만 (--commit 이면 커밋·push 까지)
+```
+
+- 단지 번호: `config/complexes.yaml` 의 `asil_id` (네이버·일별 매물 수용 번호와 다름).
+- 게시일(`posted`)은 중개사가 광고를 다시 올리면 바뀐다. 그래서 `first_seen`(처음 본 날)·`price_changed`/`prev_price`(가격 변경)·
+  `last_seen`+`active=0`(내려감)은 매일 비교해서 직접 기록한다. 추적 시작 2026-09-29.
+- 웹앱 '최근 매물' 표는 같은 물건(단지·유형·동·층·전용·가격)을 여러 중개사가 올린 것을 1줄(N곳)로 묶는다.
+- 중개사 전화번호는 저장하지 않는다. 내려간 매물은 120일 뒤 파일에서 정리.
+
 ## 모바일 웹앱 (휴대폰 홈 화면용)
 
 `web/` 은 설치형 웹앱(PWA): 단지 카드(3개월 중앙값·1년 대비·상한 대비·전세가율·네이버 매물),

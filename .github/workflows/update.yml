@@ -1,5 +1,5 @@
 # 매일 06:30 KST 실거래 증분 수집 + 아실 일별 매물 수 수집 + 모바일 웹앱 데이터(web/data/app.json) 갱신.
-# 네이버 매물 덤프(data/listings/raw/)가 push 될 때도 실행 → Cloudflare Pages가 커밋마다 자동 배포.
+# 네이버 매물 덤프(data/listings/raw/)·아실 매물 목록(Mac launchd)이 push 될 때도 실행 → Cloudflare Pages가 커밋마다 자동 배포.
 name: 데이터 갱신
 
 on:
@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - "data/listings/raw/**"
+      - "data/listings/asil/asil_offers.csv"   # Mac이 매일 올리는 아실 매물 목록 → 웹앱 데이터 재생성
       - "config/**"
       - "src/realestate/**"
       - "scripts/export_web.py"

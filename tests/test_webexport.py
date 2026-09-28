@@ -67,3 +67,25 @@ def test_payload_asil_columns(conn, tmp_path):
     # CSV 가 없으면 빈 열
     d2 = webexport.build_payload(conn, SETTINGS, COMPLEXES, asil_csv=tmp_path / "none.csv")
     assert d2["complexes"][0]["asil"]["d"] == [] and d2["asil_through"] is None
+
+
+def test_payload_recent_trades_and_grouped_offers(conn, tmp_path):
+    offers = tmp_path / "offers.csv"
+    head = "uid,complex_id,deal,price,rent,dong,floor,excl_area,supply_area,desc,broker,posted,first_seen,last_seen,price_changed,prev_price,active\n"
+    offers.write_text(head +
+        "1,x,sale,185000,,105,저,59.93,83.3,로얄동,A,2026-09-21,2026-09-29,2026-09-30,,,1\n"
+        "2,x,sale,185000,,105,저,59.93,83.3,,B,2026-09-28,2026-09-29,2026-09-30,,,1\n"          # 같은 물건, 다른 중개사
+        "3,x,wolse,30000,300,110,중,84.44,110.4,,C,2026-09-29,2026-09-30,2026-09-30,2026-09-30,35000,1\n"
+        "4,x,sale,200000,,101,고,84.9,110,,D,2026-09-25,2026-09-29,2026-09-29,,,0\n", encoding="utf-8")  # 내려간 매물
+    db.upsert_rows(conn, "apt_trade", _rows_fixture(), "t")
+    db.sync_config(conn, SETTINGS, COMPLEXES)
+    d = webexport.build_payload(conn, SETTINGS, COMPLEXES, offers_csv=offers, asil_csv=tmp_path / "none.csv")
+    o = d["offers"]
+    assert len(o) == 2 and o[0]["t"] == "wolse"            # 최신 등록 먼저
+    assert (o[0]["p"], o[0]["r"], o[0]["chg"], o[0]["prev"]) == (30000, 300, "2026-09-30", 35000)
+    assert (o[1]["n"], o[1]["reg"], o[1]["upd"], o[1]["desc"]) == (2, "2026-09-21", "2026-09-28", "로얄동")
+    assert d["offers_since"] == "2026-09-29" and d["offers_through"] == "2026-09-30"
+    tr = d["trades_recent"]
+    assert tr and all(a["d"] >= b["d"] for a, b in zip(tr, tr[1:]))   # 계약일 최신순
+    assert {"c", "d", "p", "f", "dong", "ar", "t", "x", "pub"} <= set(tr[0])
+    json.dumps(d, allow_nan=False)

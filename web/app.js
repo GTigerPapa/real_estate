@@ -235,7 +235,7 @@ function Spark(values, color) {
 }
 
 // ───── 데이터 ─────
-const state = { data: null, band: store.get("band", "84"), range: store.get("range", "36"), error: null };
+const state = { data: null, band: store.get("band", "84"), range: store.get("range", "36"), offerKind: "all", error: null };
 async function loadData(force) {
   try {
     const res = await fetch("data/app.json", { cache: force ? "reload" : "no-cache" });
@@ -294,11 +294,69 @@ function Home() {
   const list = d.complexes.filter((c) => c.bands.includes(band));
   return h("div", {},
     header("관심 단지", updatedLine()),
+    h("div", { class: "feeds" }, TradeFeed(), OfferFeed()),
     bandSeg(d.bands, band, (b) => { state.band = b; store.set("band", b); render(); }),
     h("div", { class: "cards" }, list.map((c) => Card(c, band))),
     h("p", { class: "hero-sub", style: "margin-top:14px" }, "3개월 중앙값: 직전 3개월 매매(해제·직거래 제외)를 모은 중앙값. 아실 매물은 단지 전체 기준(같은 물건 중복 제외), 괄호는 1주 전 대비."));
 }
 const dtxt = (v) => v === null ? null : h("span", { class: "delta" }, v === 0 ? "±0" : (v > 0 ? "+" : "") + v);
+
+// ───── 단지 탭 상단: 전체 단지 최근 실거래 · 최근 매물 표 ─────
+const md = (s) => s ? dotted(s).slice(5) : "–";          // 2026-09-28 → 09.28
+const ymd2 = (s) => s ? dotted(s).slice(2) : "–";        // → 26.09.28
+const daysAgo = (s, base) => (dDate(base) - dDate(s)) / 864e5;
+const feedMore = {};                                      // 표별 펼친 줄 수 (새로고침 전까지 유지)
+function cxShort(id) { const c = cx(id); return c ? h("span", { class: "cname" }, h("span", { class: "dot", style: `background:${colorOf(c)}` }), c.short) : id; }
+function goCx(id) { const c = cx(id); if (c) location.hash = `#/c/${id}/${c.bands.includes(state.band) ? state.band : c.bands[c.bands.length - 1]}`; }
+function Feed(key, title, note, chips, head, rows, total) {
+  const shown = feedMore[key] || 10;
+  const more = rows.length > shown
+    ? h("button", { class: "more", onclick: () => { feedMore[key] = shown + 20; render(); } }, `더 보기 (${rows.length - shown}건 더)`) : null;
+  return h("section", { class: "section feed" },
+    h("div", { class: "feed-h" }, h("h2", {}, title), h("span", { class: "cnt" }, `${total}건`)),
+    note ? h("p", { class: "note" }, note) : null, chips,
+    h("div", { class: "tscroll" }, h("table", { class: "ftable" }, h("thead", {}, h("tr", {}, head.map((x) => h("th", { class: x.r ? "r" : "" }, x.t)))),
+      h("tbody", {}, rows.slice(0, shown)))),
+    more);
+}
+function TradeFeed() {
+  const d = state.data, T = d.trades_recent || [];
+  const base = d.generated_at.slice(0, 10);
+  const rows = T.map((x) => h("tr", { class: x.x ? "x" : "", onclick: () => goCx(x.c) },
+    h("td", {}, cxShort(x.c)),
+    h("td", { class: "nw" }, ymd2(x.d), x.pub && x.pub > (d.trades_since || "") && daysAgo(x.pub, base) <= 3 ? h("span", { class: "badge new" }, "NEW") : null),
+    h("td", {}, h("span", { class: "sub2" }, `${x.dong ? x.dong + "동 " : ""}${x.f}층 · ${x.ar}㎡`),
+      x.t === "direct" ? h("span", { class: "tag" }, "직거래") : null, x.x ? h("span", { class: "tag" }, "해제") : null),
+    h("td", { class: "r b" }, eok(x.p))));
+  return Feed("trades", "최근 실거래", "관심 단지 전체 · 계약일 최신순 · NEW = 최근 3일 안에 새로 신고·공개된 거래 · 국토부 자료에 호수는 없음(동·층까지)", null,
+    [{ t: "단지" }, { t: "계약일" }, { t: "동·층·전용" }, { t: "금액", r: 1 }], rows, T.length);
+}
+const OFFER_T = { sale: "매매", jeonse: "전세", wolse: "월세" };
+function offerPrice(o) { return o.t === "wolse" ? `${eok(o.p)}/${o.r ?? "–"}` : eok(o.p); }
+function OfferFeed() {
+  const d = state.data, all = d.offers || [];
+  const kind = state.offerKind || "all";
+  const O = all.filter((o) => kind === "all" || o.t === kind);
+  const since = d.offers_since;
+  const chips = h("div", { class: "chips" }, [["all", "전체"], ["sale", "매매"], ["jeonse", "전세"], ["wolse", "월세"]].map(([v, t]) =>
+    h("button", { "aria-pressed": String(kind === v), onclick: () => { state.offerKind = v; feedMore.offers = 10; render(); } },
+      t + (v === "all" ? "" : ` ${all.filter((o) => o.t === v).length}`))));
+  const rows = O.map((o) => {
+    const down = o.prev && o.p < o.prev, up = o.prev && o.p > o.prev;
+    const fresh = since && o.seen > since && daysAgo(o.seen, d.offers_through) <= 7;
+    return h("tr", { onclick: () => goCx(o.c), title: o.desc || "" },
+      h("td", {}, cxShort(o.c)),
+      h("td", { class: "nw" }, h("span", { class: `kind k-${o.t}` }, OFFER_T[o.t] || o.t), " ", h("b", {}, offerPrice(o)),
+        o.chg ? h("span", { class: `badge ${down ? "dn" : up ? "upb" : ""}` }, `${down ? "▼" : up ? "▲" : "변경"} ${md(o.chg)}`) : null),
+      h("td", {}, h("span", { class: "sub2" }, `${o.dong ? o.dong + "동 " : ""}${o.f ? o.f + "층" : ""}${o.ar ? " · " + o.ar + "㎡" : ""}`),
+        o.n > 1 ? h("span", { class: "tag" }, `${o.n}곳`) : null),
+      h("td", { class: "nw" }, md(o.reg), fresh ? h("span", { class: "badge new" }, "신규") : null,
+        o.upd && o.upd !== o.reg ? h("div", { class: "sub2" }, `갱신 ${md(o.upd)}`) : null));
+  });
+  const note = `아실 매물 · 등록일(가장 이른 게시일) 최신순 · 같은 물건을 여러 중개사가 올리면 1줄(N곳) · ▼▲ 가격 변경일 · 신규 = 추적 시작(${md(since)}) 뒤 새로 올라온 매물`;
+  return Feed("offers", "최근 매물", all.length ? note : "아직 매물 목록이 없습니다. Mac의 매일 자동 수집(install_asil_offers.py)을 켜면 쌓입니다.", all.length ? chips : null,
+    [{ t: "단지" }, { t: "가격" }, { t: "동·층·전용" }, { t: "등록" }], rows, O.length);
+}
 function Card(c, band) {
   const b = c.b[band], sm = b.summary, L = asilLast(c);
   return h("a", { class: "card", href: `#/c/${c.id}/${band}` },
