@@ -170,6 +170,11 @@ button { font: inherit; color: inherit; }
 .feed-h .cnt { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .feed .chips { margin: 2px 0 6px; flex-wrap: wrap; }
 .tscroll { overflow-x: auto; margin: 0 -4px; }
+.tscroll.fixed { max-height: min(62vh, 560px); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  border-top: 1px solid var(--grid); border-bottom: 1px solid var(--grid); }
+.tscroll.fixed thead th { position: sticky; top: 0; z-index: 1; background: var(--card); }
+.ftable td.emptyrow { color: var(--muted); text-align: center; padding: 20px 0; cursor: default; }
+.feed .chips + .chips { margin-top: 0; }
 .ftable { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
 .ftable th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px; padding: 6px 4px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
 .ftable td { padding: 7px 4px; border-bottom: 1px solid var(--grid); vertical-align: top; }

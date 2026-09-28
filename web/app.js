@@ -235,7 +235,7 @@ function Spark(values, color) {
 }
 
 // ───── 데이터 ─────
-const state = { data: null, band: store.get("band", "84"), range: store.get("range", "36"), offerKind: "all", error: null };
+const state = { data: null, band: store.get("band", "84"), range: store.get("range", "36"), offerKind: "all", offerCx: "all", error: null };
 async function loadData(force) {
   try {
     const res = await fetch("data/app.json", { cache: force ? "reload" : "no-cache" });
@@ -308,15 +308,16 @@ const daysAgo = (s, base) => (dDate(base) - dDate(s)) / 864e5;
 const feedMore = {};                                      // 표별 펼친 줄 수 (새로고침 전까지 유지)
 function cxShort(id) { const c = cx(id); return c ? h("span", { class: "cname" }, h("span", { class: "dot", style: `background:${colorOf(c)}` }), c.short) : id; }
 function goCx(id) { const c = cx(id); if (c) location.hash = `#/c/${id}/${c.bands.includes(state.band) ? state.band : c.bands[c.bands.length - 1]}`; }
-function Feed(key, title, note, chips, head, rows, total) {
-  const shown = feedMore[key] || 10;
-  const more = rows.length > shown
+function Feed(key, title, note, chips, head, rows, total, scroll = false) {
+  // scroll: 전부 그려 두고 표 안에서 스크롤 (머리글 고정). 아니면 10줄씩 '더 보기'
+  const shown = scroll ? rows.length : (feedMore[key] || 10);
+  const more = !scroll && rows.length > shown
     ? h("button", { class: "more", onclick: () => { feedMore[key] = shown + 20; render(); } }, `더 보기 (${rows.length - shown}건 더)`) : null;
   return h("section", { class: "section feed" },
     h("div", { class: "feed-h" }, h("h2", {}, title), h("span", { class: "cnt" }, `${total}건`)),
     note ? h("p", { class: "note" }, note) : null, chips,
-    h("div", { class: "tscroll" }, h("table", { class: "ftable" }, h("thead", {}, h("tr", {}, head.map((x) => h("th", { class: x.r ? "r" : "" }, x.t)))),
-      h("tbody", {}, rows.slice(0, shown)))),
+    h("div", { class: "tscroll" + (scroll ? " fixed" : "") }, h("table", { class: "ftable" }, h("thead", {}, h("tr", {}, head.map((x) => h("th", { class: x.r ? "r" : "" }, x.t)))),
+      h("tbody", {}, rows.length ? rows.slice(0, shown) : h("tr", {}, h("td", { colspan: head.length, class: "emptyrow" }, "조건에 맞는 매물이 없습니다"))))),
     more);
 }
 function TradeFeed() {
@@ -335,27 +336,34 @@ const OFFER_T = { sale: "매매", jeonse: "전세", wolse: "월세" };
 function offerPrice(o) { return o.t === "wolse" ? `${eok(o.p)}/${o.r ?? "–"}` : eok(o.p); }
 function OfferFeed() {
   const d = state.data, all = d.offers || [];
-  const kind = state.offerKind || "all";
-  const O = all.filter((o) => kind === "all" || o.t === kind);
+  const kind = state.offerKind || "all", cid = state.offerCx || "all";
+  const byCx = all.filter((o) => cid === "all" || o.c === cid);
+  const O = byCx.filter((o) => kind === "all" || o.t === kind);
   const since = d.offers_since;
-  const chips = h("div", { class: "chips" }, [["all", "전체"], ["sale", "매매"], ["jeonse", "전세"], ["wolse", "월세"]].map(([v, t]) =>
-    h("button", { "aria-pressed": String(kind === v), onclick: () => { state.offerKind = v; feedMore.offers = 10; render(); } },
-      t + (v === "all" ? "" : ` ${all.filter((o) => o.t === v).length}`))));
+  const cxIds = d.complexes.map((c) => c.id).filter((id) => all.some((o) => o.c === id));
+  const pick = (k, v) => () => { state[k] = v; render(); };
+  const chips = h("div", {},
+    h("div", { class: "chips" }, [["all", "전체 단지", all.length], ...cxIds.map((id) => [id, cx(id).short, all.filter((o) => o.c === id).length])].map(([v, t, n]) =>
+      h("button", { "aria-pressed": String(cid === v), onclick: pick("offerCx", v) },
+        v === "all" ? t : h("span", { class: "cname" }, h("span", { class: "dot", style: `background:${colorOf(cx(v))}` }), `${t} ${n}`)))),
+    h("div", { class: "chips" }, [["all", "전체"], ["sale", "매매"], ["jeonse", "전세"], ["wolse", "월세"]].map(([v, t]) =>
+      h("button", { "aria-pressed": String(kind === v), onclick: pick("offerKind", v) },
+        t + (v === "all" ? "" : ` ${byCx.filter((o) => o.t === v).length}`)))));
   const rows = O.map((o) => {
     const down = o.prev && o.p < o.prev, up = o.prev && o.p > o.prev;
-    const fresh = since && o.seen > since && daysAgo(o.seen, d.offers_through) <= 7;
+    const fresh = since && o.seen > since;   // 추적 시작 뒤 처음 나타난 매물 = 실제 신규 등록
     return h("tr", { onclick: () => goCx(o.c), title: o.desc || "" },
       h("td", {}, cxShort(o.c)),
       h("td", { class: "nw" }, h("span", { class: `kind k-${o.t}` }, OFFER_T[o.t] || o.t), " ", h("b", {}, offerPrice(o)),
         o.chg ? h("span", { class: `badge ${down ? "dn" : up ? "upb" : ""}` }, `${down ? "▼" : up ? "▲" : "변경"} ${md(o.chg)}`) : null),
       h("td", {}, h("span", { class: "sub2" }, `${o.dong ? o.dong + "동 " : ""}${o.f ? o.f + "층" : ""}${o.ar ? " · " + o.ar + "㎡" : ""}`),
         o.n > 1 ? h("span", { class: "tag" }, `${o.n}곳`) : null),
-      h("td", { class: "nw" }, md(o.reg), fresh ? h("span", { class: "badge new" }, "신규") : null,
-        o.upd && o.upd !== o.reg ? h("div", { class: "sub2" }, `갱신 ${md(o.upd)}`) : null));
+      h("td", { class: "nw" }, fresh ? h("span", {}, md(o.seen), h("span", { class: "badge new" }, "신규")) : md(o.reg)));
   });
-  const note = `아실 매물 · 등록일(가장 이른 게시일) 최신순 · 같은 물건을 여러 중개사가 올리면 1줄(N곳) · ▼▲ 가격 변경일 · 신규 = 추적 시작(${md(since)}) 뒤 새로 올라온 매물`;
+  const note = `아실 매물 목록 · 최근 날짜순 · 같은 물건을 여러 중개사가 올리면 1줄(N곳) · ▼▲ 가격 변경일. ` +
+    `날짜: '신규'는 ${md(since)} 추적 시작 뒤 처음 나타난 날(실제 등록일), 그 외는 아실 게시일(중개사가 광고를 다시 올린 날이라 최근 날짜에 몰림)`;
   return Feed("offers", "최근 매물", all.length ? note : "아직 매물 목록이 없습니다. Mac의 매일 자동 수집(install_asil_offers.py)을 켜면 쌓입니다.", all.length ? chips : null,
-    [{ t: "단지" }, { t: "가격" }, { t: "동·층·전용" }, { t: "등록" }], rows, O.length);
+    [{ t: "단지" }, { t: "가격" }, { t: "동·층·전용" }, { t: "게시일" }], rows, O.length, true);
 }
 function Card(c, band) {
   const b = c.b[band], sm = b.summary, L = asilLast(c);
