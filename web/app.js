@@ -5,6 +5,7 @@
 // ───── 유틸 ─────
 const $ = (sel, el = document) => el.querySelector(sel);
 const SLOT = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s4)"];
+const WIDE = window.matchMedia("(min-width: 1024px)");  // app.css 의 PC 레이아웃 기준과 같게 유지
 const store = {
   get(k, d) { try { const v = localStorage.getItem("re." + k); return v === null ? d : v; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem("re." + k, v); } catch (e) { /* 저장 불가 환경 무시 */ } },
@@ -71,10 +72,12 @@ function Chart(opts) {
   wrap.append(holder);
   const tip = h("div", { class: "tip", hidden: true });
   holder.append(tip);
-  const H = opts.height || 190, M = { l: 40, r: 10, t: 10, b: 24 };
+  const M = { l: 40, r: 10, t: 10, b: 24 };
+  let H = opts.height || 190;
 
   function draw() {
     const W = Math.max(260, holder.clientWidth || 320);
+    H = Math.round((opts.height || 190) * (WIDE.matches ? 1.3 : 1));  // PC에선 그래프를 조금 더 높게
     holder.querySelectorAll("svg").forEach((x) => x.remove());
     const svg = s("svg", { viewBox: `0 0 ${W} ${H}`, height: H, role: "img", "aria-label": opts.label || "" });
     const [t0, t1] = opts.xDomain;
@@ -316,6 +319,8 @@ function rangeChips() {
 function Section(title, note, ...kids) {
   return h("section", { class: "section" }, h("h2", {}, title), note ? h("p", { class: "note" }, note) : null, ...kids);
 }
+// PC 레이아웃에서 2열 격자의 한 줄 전체를 쓰는 섹션 (모바일에선 차이 없음)
+const wide = (el) => { el.classList.add("wide"); return el; };
 
 function Detail(id, band) {
   const d = state.data, c = cx(id);
@@ -408,12 +413,13 @@ function Detail(id, band) {
       h("div", {}, h("span", {}, `전세 중앙값 (n=${sm.jeonse_n})`), h("b", {}, eok(sm.jeonse))),
       h("div", {}, h("span", {}, "전세가율"), h("b", {}, pct(sm.ratio)))),
     h("div", { style: "margin-top:14px" }, rangeChips()),
-    Section("매매 실거래", "점: 개별 거래 · 선: 3개월 중앙값(해제·직거래 제외)", tradeChart),
-    Section("매매 vs 전세", "3개월 중앙값 · 전세는 갱신 계약 제외", tjChart),
-    Section("전세가율 · 갱신 비율", "갱신 비율↑ = 신규 전세 공급 감소 신호 (3개월 표본 5건 이상만)", ratioChart),
-    Section("월별 거래량", null, volChart),
-    listingSec,
-    Section("최근 거래", sm.last_deal ? `최근 정상 거래 ${dotted(sm.last_deal.d)} · ${eok(sm.last_deal.p)}` : null, table));
+    h("div", { class: "sections" },
+      wide(Section("매매 실거래", "점: 개별 거래 · 선: 3개월 중앙값(해제·직거래 제외)", tradeChart)),
+      Section("매매 vs 전세", "3개월 중앙값 · 전세는 갱신 계약 제외", tjChart),
+      Section("전세가율 · 갱신 비율", "갱신 비율↑ = 신규 전세 공급 감소 신호 (3개월 표본 5건 이상만)", ratioChart),
+      Section("월별 거래량", null, volChart),
+      listingSec,
+      wide(Section("최근 거래", sm.last_deal ? `최근 정상 거래 ${dotted(sm.last_deal.d)} · ${eok(sm.last_deal.p)}` : null, table))));
 }
 
 function Compare() {
@@ -439,9 +445,10 @@ function Compare() {
     header("단지 비교", updatedLine()),
     bandSeg(d.bands, band, (b) => { state.band = b; store.set("band", b); render(); }),
     rangeChips(),
-    Section(`${band}형 매매 3개월 중앙값`, null, med),
-    Section(`${band}형 전세가율`, "전세 3개월 중앙값 ÷ 매매 3개월 중앙값", ratio),
-    Section("요약", "중앙값 = 3개월 매매 중앙값 · 전세율 = 전세가율 · 매물 = 네이버 매매 매물 수(단지 전체)", table));
+    h("div", { class: "sections" },
+      Section(`${band}형 매매 3개월 중앙값`, null, med),
+      Section(`${band}형 전세가율`, "전세 3개월 중앙값 ÷ 매매 3개월 중앙값", ratio),
+      wide(Section("요약", "중앙값 = 3개월 매매 중앙값 · 전세율 = 전세가율 · 매물 = 네이버 매매 매물 수(단지 전체)", table))));
 }
 
 function Info() {
