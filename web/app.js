@@ -294,8 +294,9 @@ function Home() {
   const list = d.complexes.filter((c) => c.bands.includes(band));
   return h("div", {},
     header("관심 단지", updatedLine()),
-    h("div", { class: "feeds" }, TradeFeed(), OfferFeed()),
+    // 평형이 최우선 필터: 탭 하나로 아래 실거래·매물 표와 단지 카드가 모두 바뀐다
     bandSeg(d.bands, band, (b) => { state.band = b; store.set("band", b); render(); }),
+    h("div", { class: "feeds" }, TradeFeed(band), OfferFeed(null, band)),
     h("div", { class: "cards" }, list.map((c) => Card(c, band))),
     h("p", { class: "hero-sub", style: "margin-top:14px" }, "3개월 중앙값: 직전 3개월 매매(해제·직거래 제외)를 모은 중앙값. 아실 매물은 단지 전체 기준(같은 물건 중복 제외), 괄호는 1주 전 대비."));
 }
@@ -320,8 +321,8 @@ function Feed(key, title, note, chips, head, rows, total, scroll = false) {
       h("tbody", {}, rows.length ? rows.slice(0, shown) : h("tr", {}, h("td", { colspan: head.length, class: "emptyrow" }, "조건에 맞는 매물이 없습니다"))))),
     more);
 }
-function TradeFeed() {
-  const d = state.data, T = d.trades_recent || [];
+function TradeFeed(band) {
+  const d = state.data, T = (d.trades_recent || []).filter((x) => !band || x.b === band);
   const base = d.generated_at.slice(0, 10);
   const rows = T.map((x) => h("tr", { class: x.x ? "x" : "", onclick: () => goCx(x.c) },
     h("td", {}, cxShort(x.c)),
@@ -329,14 +330,14 @@ function TradeFeed() {
     h("td", {}, h("span", { class: "sub2" }, `${x.dong ? x.dong + "동 " : ""}${x.f}층 · ${x.ar}㎡`),
       x.t === "direct" ? h("span", { class: "tag" }, "직거래") : null, x.x ? h("span", { class: "tag" }, "해제") : null),
     h("td", { class: "r b" }, eok(x.p))));
-  return Feed("trades", "최근 실거래", "관심 단지 전체 · 계약일 최신순 · NEW = 최근 3일 안에 새로 신고·공개된 거래 · 국토부 자료에 호수는 없음(동·층까지)", null,
+  return Feed("trades", `최근 실거래 · ${band}형`, `관심 단지 전체 ${band}형 · 계약일 최신순 · NEW = 최근 3일 안에 새로 신고·공개된 거래 · 국토부 자료에 호수는 없음(동·층까지)`, null,
     [{ t: "단지" }, { t: "계약일" }, { t: "동·층·전용" }, { t: "금액", r: 1 }], rows, T.length);
 }
 const OFFER_T = { sale: "매매", jeonse: "전세", wolse: "월세" };
 function offerPrice(o) { return o.t === "wolse" ? `${eok(o.p)}/${o.r ?? "–"}` : eok(o.p); }
 // fixedId 가 있으면 그 단지 상세 화면용: 단지 필터·단지 열을 빼고 매물 특징을 함께 보여 준다
-function OfferFeed(fixedId) {
-  const d = state.data, all = (d.offers || []).filter((o) => !fixedId || o.c === fixedId);
+function OfferFeed(fixedId, band) {
+  const d = state.data, all = (d.offers || []).filter((o) => (!fixedId || o.c === fixedId) && (!band || o.b === band));
   const kKey = fixedId ? "offerKindCx" : "offerKind";
   const kind = state[kKey] || "all", cid = fixedId || state.offerCx || "all";
   const byCx = all.filter((o) => cid === "all" || o.c === cid);
@@ -364,12 +365,14 @@ function OfferFeed(fixedId) {
         fixedId && o.desc ? h("div", { class: "desc" }, o.desc) : null),
       h("td", { class: "nw" }, fresh ? h("span", {}, md(o.seen), h("span", { class: "badge new" }, "신규")) : md(o.reg)));
   });
-  const note = (fixedId ? "이 단지 아실 매물 · 전체 면적 · " : "아실 매물 목록 · ") +
+  const note = (fixedId ? `이 단지 아실 매물 · ${band}형 · ` : `아실 매물 목록 · ${band}형 · `) +
     `최근 날짜순 · 같은 물건을 여러 중개사가 올리면 1줄(N곳) · ▼▲ 가격 변경일. ` +
     `날짜: '신규'는 ${md(since)} 추적 시작 뒤 처음 나타난 날(실제 등록일), 그 외는 아실 게시일(중개사가 광고를 다시 올린 날이라 최근 날짜에 몰림)`;
   const head = [{ t: "가격" }, { t: fixedId ? "동·층·전용 · 특징" : "동·층·전용" }, { t: "게시일" }];
-  return Feed(fixedId ? "offers-" + fixedId : "offers", "최근 매물",
-    all.length ? note : (fixedId ? "이 단지의 아실 매물 목록이 아직 없습니다." : "아직 매물 목록이 없습니다. Mac의 매일 자동 수집(install_asil_offers.py)을 켜면 쌓입니다."),
+  const anyOffers = (d.offers || []).length > 0;
+  return Feed(fixedId ? "offers-" + fixedId : "offers", `최근 매물 · ${band}형`,
+    all.length ? note : !anyOffers ? "아직 매물 목록이 없습니다. Mac의 매일 자동 수집(install_asil_offers.py)을 켜면 쌓입니다."
+      : `지금 올라온 ${band}형 아실 매물이 없습니다.`,
     all.length ? chips : null, fixedId ? head : [{ t: "단지" }, ...head], rows, O.length, true);
 }
 function Card(c, band) {
@@ -493,7 +496,7 @@ function Detail(id, band) {
 
   return h("div", {},
     back,
-    c.bands.length > 1 ? h("div", { style: "margin-top:8px" }, bandSeg(c.bands, band, (nb) => { location.replace(`#/c/${id}/${nb}`); })) : null,
+    c.bands.length > 1 ? h("div", { style: "margin-top:8px" }, bandSeg(c.bands, band, (nb) => { state.band = nb; store.set("band", nb); location.replace(`#/c/${id}/${nb}`); })) : null,
     h("div", { class: "hero", style: "margin-top:4px" }, sm.median ? eok(sm.median).replace("억", "") : "–", h("small", {}, "억")),
     h("div", { class: "hero-sub" }, `${band}형 3개월 중앙값 · ${dotted(sm.ym || "")} · n=${sm.n}`, sm.n > 0 && sm.n < 3 ? " ⚠ 표본 적음" : ""),
     h("div", { class: "stats" },
@@ -509,8 +512,8 @@ function Detail(id, band) {
       Section("전세가율 · 갱신 비율", "갱신 비율↑ = 신규 전세 공급 감소 신호 (3개월 표본 5건 이상만)", ratioChart),
       Section("월별 거래량", null, volChart),
       askSec,
-      wide(Section("최근 거래", sm.last_deal ? `최근 정상 거래 ${dotted(sm.last_deal.d)} · ${eok(sm.last_deal.p)}` : null, table)),
-      wide(OfferFeed(id))));
+      wide(Section(`최근 거래 · ${band}형`, sm.last_deal ? `최근 정상 거래 ${dotted(sm.last_deal.d)} · ${eok(sm.last_deal.p)}` : null, table)),
+      wide(OfferFeed(id, band))));
 }
 
 function Compare() {

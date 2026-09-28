@@ -87,5 +87,8 @@ def test_payload_recent_trades_and_grouped_offers(conn, tmp_path):
     assert d["offers_since"] == "2026-09-29" and d["offers_through"] == "2026-09-30"
     tr = d["trades_recent"]
     assert tr and all(a["d"] >= b["d"] for a, b in zip(tr, tr[1:]))   # 계약일 최신순
-    assert {"c", "d", "p", "f", "dong", "ar", "t", "x", "pub"} <= set(tr[0])
+    assert {"c", "d", "p", "f", "dong", "ar", "t", "x", "pub", "b"} <= set(tr[0])
+    # 평형: SETTINGS 는 59(57~62)·84(82~87) 구간 → 59.93㎡ 매매는 59형, 84.44㎡ 월세는 84형
+    assert (o[1]["b"], o[0]["b"]) == ("59", "84")
+    assert webexport.band_of("90", SETTINGS["size_bands"]) is None
     json.dumps(d, allow_nan=False)

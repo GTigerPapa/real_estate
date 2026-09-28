@@ -42,11 +42,23 @@ def _series(df: pd.DataFrame, months: list[str], value: str, n: str = "n", nd: i
 
 ASIL_CSV = config.DATA_DIR / "listings" / "asil" / "asil_offer_counts.csv"
 OFFERS_CSV = config.DATA_DIR / "listings" / "asil" / "asil_offers.csv"
-RECENT_TRADES = 300   # 홈 '최근 실거래' 표에 싣는 건수 (전체 단지·전체 면적)
+RECENT_TRADES = 600   # 홈 '최근 실거래' 표에 싣는 건수 (전체 단지·전체 면적, 앱에서 평형으로 거름)
 OFFERS_MAX = 400      # 홈 '매물' 표에 싣는 물건 수
 
 
-def load_offers(path=OFFERS_CSV) -> dict:
+def band_of(ar, size_bands) -> str | None:
+    """전용면적 → 평형 구간 이름 (settings.yaml size_bands, [min, max)). 구간 밖이면 None."""
+    try:
+        a = float(ar)
+    except (TypeError, ValueError):
+        return None
+    for b in size_bands or []:
+        if float(b["min"]) <= a < float(b["max"]):
+            return str(b["band"])
+    return None
+
+
+def load_offers(path=OFFERS_CSV, size_bands=None) -> dict:
     """아실 매물 추적 파일 → 현재 게시 중인 물건 목록.
 
     같은 물건(단지·유형·동·층·전용면적·가격)을 여러 중개사가 올린 건 1줄로 묶는다.
@@ -70,7 +82,7 @@ def load_offers(path=OFFERS_CSV) -> dict:
         chg = g[g["price_changed"] != ""].sort_values("price_changed")
         desc = next((x for x in g["desc"] if x), "")
         items.append({
-            "c": cid, "t": deal, "p": int(price or 0), "r": int(rent) if rent else None,
+            "c": cid, "t": deal, "p": int(price or 0), "r": int(rent) if rent else None, "b": band_of(ar, size_bands),
             "dong": dong, "f": floor, "ar": _num(ar, 2) if ar else None,
             "reg": posted[0] if posted else g["first_seen"].min(), "upd": posted[-1] if posted else None,
             "seen": g["first_seen"].min(), "n": int(len(g)),
@@ -88,12 +100,12 @@ def recent_trades(conn, complexes: list[dict], limit: int = RECENT_TRADES) -> li
     if not ids:
         return []
     q = ("SELECT complex_id, deal_date, deal_amount, floor, apt_dong, exclu_use_ar, dealing_gbn, is_canceled, "
-         "substr(first_seen_at, 1, 10) AS pub FROM v_trade WHERE complex_id IN (%s) "
+         "substr(first_seen_at, 1, 10) AS pub, size_band FROM v_trade WHERE complex_id IN (%s) "
          "ORDER BY deal_date DESC, first_seen_at DESC LIMIT ?" % ",".join("?" * len(ids)))
     rows = conn.execute(q, [*ids, limit]).fetchall()
     return [{"c": r[0], "d": r[1], "p": int(r[2]), "f": int(r[3]), "dong": (r[4] or "").removesuffix("동"),
              "ar": round(float(r[5]), 2),
-             "t": "direct" if r[6] == "직거래" else "broker", "x": int(r[7]), "pub": r[8]} for r in rows]
+             "t": "direct" if r[6] == "직거래" else "broker", "x": int(r[7]), "pub": r[8], "b": r[9]} for r in rows]
 
 
 def load_asil(path=ASIL_CSV) -> dict:
@@ -114,7 +126,7 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
                   asil_csv=ASIL_CSV, offers_csv=OFFERS_CSV) -> dict:
     now = now or config.now_kst()
     asil = load_asil(asil_csv)
-    offers = load_offers(offers_csv)
+    offers = load_offers(offers_csv, settings.get("size_bands"))
     cap = int(settings.get("buy_cap_manwon", 140000))
     trades = metrics.load_trades(conn, include_canceled=True)
     rents = metrics.load_rents(conn, rent_type=None)
