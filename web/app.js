@@ -336,7 +336,7 @@ function TradeFeed(band) {
       x.t === "direct" ? h("span", { class: "tag" }, "직거래") : null, x.x ? h("span", { class: "tag" }, "해제") : null),
     h("td", { class: "r b" }, eok(x.p))));
   return Feed("trades", `최근 실거래 · ${band}형`, `관심 단지 전체 ${band}형 · 계약일 최신순 · NEW = 최근 3일 안에 새로 신고·공개된 거래 · 국토부 자료에 호수는 없음(동·층까지)`, null,
-    [{ t: "단지" }, { t: "계약일" }, { t: "동·층·전용" }, { t: "금액", r: 1 }], rows, T.length);
+    [{ t: "단지" }, { t: "계약일" }, { t: "동·층·전용" }, { t: "금액", r: 1 }], rows, T.length, true);
 }
 const OFFER_T = { sale: "매매", jeonse: "전세", wolse: "월세" };
 function offerPrice(o) { return o.t === "wolse" ? `${eok(o.p)}/${o.r ?? "–"}` : eok(o.p); }

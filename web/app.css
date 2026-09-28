@@ -253,8 +253,10 @@ button { font: inherit; color: inherit; }
   .iconbtn:hover { background: var(--ring); }
 
   /* 홈: 상단 표 2열(좌 실거래 · 우 매물) */
-  .feeds { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; margin-bottom: 20px; }
-  .feed { padding: 18px 18px 14px; }
+  .feeds { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; margin-bottom: 20px; }
+  /* 두 표 카드 높이를 같게: 카드 높이 고정, 설명·필터 아래 표 영역이 남은 높이를 채우고 그 안에서 스크롤 */
+  .feeds > .feed { padding: 18px 18px 14px; display: flex; flex-direction: column; height: min(78vh, 720px); }
+  .feeds > .feed .tscroll.fixed { flex: 1 1 auto; min-height: 0; max-height: none; }
   .ftable { font-size: 14px; }
   .ftable tbody tr:hover td { background: var(--page); }
   .more:hover { background: var(--ring); }
