@@ -79,6 +79,19 @@ streamlit run dashboard/app.py          # http://localhost:8501  (?band=74 처�
 첫 실제 덤프를 보고 확정하며, 규칙만 고치면 이미 쌓인 덤프에 소급 적용된다.
 단지 목록(`config/complexes.yaml` 의 `naver_id`)이 바뀌면 `python3 tools/build_bookmarklet.py` 로 다시 빌드.
 
+## 아실 일별 매물 수 (자동, 매일)
+
+아실(asil.kr) '매물증감 → 일별 매물현황'의 단지별 매매·전세·월세 매물 수를
+`data/listings/asil/asil_offer_counts.csv` (`date, complex_id, naver_id, sale, jeonse, wolse, total`)에 쌓는다.
+
+- GitHub Actions `데이터 갱신`(매일 06:30 KST)이 `python scripts/asil_collect.py` 로 최근 3개월을 다시 받아 병합·커밋한다.
+  단지당 하루 1회 요청. 하루 이틀 실패해도 다음 실행에서 빈 날이 채워진다.
+- 백필: `python scripts/asil_collect.py --start 2023-09` (아실은 약 3년치 제공, 2023-09-01부터 저장돼 있음).
+- 아실 단지 번호 = `config/complexes.yaml` 의 `naver_id`. 단지를 추가하면 다음 실행부터 함께 수집된다.
+- 아실 집계는 같은 물건을 여러 중개사가 올려도 1건으로 센다 (네이버 단지 매물 수와 같은 값).
+  아실 쪽에 기록이 없는 날은 행이 없다.
+- 공개 API가 아니라 화면 내부 주소다. 응답이 비거나 형식이 바뀌면 워크플로가 실패로 표시된다 — 우회하지 말고 확인할 것.
+
 ## 모바일 웹앱 (휴대폰 홈 화면용)
 
 `web/` 은 설치형 웹앱(PWA): 단지 카드(3개월 중앙값·1년 대비·상한 대비·전세가율·네이버 매물),

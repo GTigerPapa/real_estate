@@ -1,4 +1,4 @@
-# 매일 06:30 KST 실거래 증분 수집 + 모바일 웹앱 데이터(web/data/app.json) 갱신.
+# 매일 06:30 KST 실거래 증분 수집 + 아실 일별 매물 수 수집 + 모바일 웹앱 데이터(web/data/app.json) 갱신.
 # 네이버 매물 덤프(data/listings/raw/)가 push 될 때도 실행 → Cloudflare Pages가 커밋마다 자동 배포.
 name: 데이터 갱신
 
@@ -52,6 +52,12 @@ jobs:
           fi
           python -m realestate.ingest || echo "::warning::일부 월 수집 실패 — 다음 실행에서 자동 재시도"
 
+      - name: 아실 일별 매물 수 수집 (최근 3개월 재수집, 단지당 1회 요청)
+        id: asil
+        # 실패해도 나머지(실거래·웹앱 데이터) 커밋은 진행하고, 마지막 단계에서 작업을 실패로 표시해 알림을 받는다
+        continue-on-error: true
+        run: python scripts/asil_collect.py
+
       - name: 웹앱 데이터 생성
         run: python scripts/export_web.py
 
@@ -61,7 +67,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/data/app.json
+          git add web/data/app.json data/listings/asil/
           # DB(45MB)는 매월 1일(KST) 또는 수동 요청 때만 커밋해 저장소 용량을 관리한다.
           # 매 실행이 최근 3개월을 재수집하므로 그 사이 데이터가 빠지지 않는다.
           if [ "$(TZ=Asia/Seoul date +%d)" = "01" ] || [ "$COMMIT_DB" = "true" ]; then
@@ -73,4 +79,10 @@ jobs:
             git pull -q --rebase && git push -q && exit 0
             sleep 5
           done
+          exit 1
+
+      - name: 아실 수집 실패 알림
+        if: steps.asil.outcome == 'failure'
+        run: |
+          echo "::error::아실 매물 수 수집 실패 — 로그 확인 (응답 형식 변경·차단 가능성. 우회하지 말고 확인할 것)"
           exit 1
