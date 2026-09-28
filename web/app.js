@@ -334,36 +334,43 @@ function TradeFeed() {
 }
 const OFFER_T = { sale: "매매", jeonse: "전세", wolse: "월세" };
 function offerPrice(o) { return o.t === "wolse" ? `${eok(o.p)}/${o.r ?? "–"}` : eok(o.p); }
-function OfferFeed() {
-  const d = state.data, all = d.offers || [];
-  const kind = state.offerKind || "all", cid = state.offerCx || "all";
+// fixedId 가 있으면 그 단지 상세 화면용: 단지 필터·단지 열을 빼고 매물 특징을 함께 보여 준다
+function OfferFeed(fixedId) {
+  const d = state.data, all = (d.offers || []).filter((o) => !fixedId || o.c === fixedId);
+  const kKey = fixedId ? "offerKindCx" : "offerKind";
+  const kind = state[kKey] || "all", cid = fixedId || state.offerCx || "all";
   const byCx = all.filter((o) => cid === "all" || o.c === cid);
   const O = byCx.filter((o) => kind === "all" || o.t === kind);
   const since = d.offers_since;
   const cxIds = d.complexes.map((c) => c.id).filter((id) => all.some((o) => o.c === id));
   const pick = (k, v) => () => { state[k] = v; render(); };
-  const chips = h("div", {},
+  const kindChips = h("div", { class: "chips" }, [["all", "전체"], ["sale", "매매"], ["jeonse", "전세"], ["wolse", "월세"]].map(([v, t]) =>
+    h("button", { "aria-pressed": String(kind === v), onclick: pick(kKey, v) },
+      t + (v === "all" ? "" : ` ${byCx.filter((o) => o.t === v).length}`))));
+  const chips = fixedId ? kindChips : h("div", {},
     h("div", { class: "chips" }, [["all", "전체 단지", all.length], ...cxIds.map((id) => [id, cx(id).short, all.filter((o) => o.c === id).length])].map(([v, t, n]) =>
       h("button", { "aria-pressed": String(cid === v), onclick: pick("offerCx", v) },
         v === "all" ? t : h("span", { class: "cname" }, h("span", { class: "dot", style: `background:${colorOf(cx(v))}` }), `${t} ${n}`)))),
-    h("div", { class: "chips" }, [["all", "전체"], ["sale", "매매"], ["jeonse", "전세"], ["wolse", "월세"]].map(([v, t]) =>
-      h("button", { "aria-pressed": String(kind === v), onclick: pick("offerKind", v) },
-        t + (v === "all" ? "" : ` ${byCx.filter((o) => o.t === v).length}`)))));
+    kindChips);
   const rows = O.map((o) => {
     const down = o.prev && o.p < o.prev, up = o.prev && o.p > o.prev;
     const fresh = since && o.seen > since;   // 추적 시작 뒤 처음 나타난 매물 = 실제 신규 등록
-    return h("tr", { onclick: () => goCx(o.c), title: o.desc || "" },
-      h("td", {}, cxShort(o.c)),
+    return h("tr", { onclick: fixedId ? null : () => goCx(o.c), class: fixedId ? "static" : "", title: o.desc || "" },
+      fixedId ? null : h("td", {}, cxShort(o.c)),
       h("td", { class: "nw" }, h("span", { class: `kind k-${o.t}` }, OFFER_T[o.t] || o.t), " ", h("b", {}, offerPrice(o)),
         o.chg ? h("span", { class: `badge ${down ? "dn" : up ? "upb" : ""}` }, `${down ? "▼" : up ? "▲" : "변경"} ${md(o.chg)}`) : null),
       h("td", {}, h("span", { class: "sub2" }, `${o.dong ? o.dong + "동 " : ""}${o.f ? o.f + "층" : ""}${o.ar ? " · " + o.ar + "㎡" : ""}`),
-        o.n > 1 ? h("span", { class: "tag" }, `${o.n}곳`) : null),
+        o.n > 1 ? h("span", { class: "tag" }, `${o.n}곳`) : null,
+        fixedId && o.desc ? h("div", { class: "desc" }, o.desc) : null),
       h("td", { class: "nw" }, fresh ? h("span", {}, md(o.seen), h("span", { class: "badge new" }, "신규")) : md(o.reg)));
   });
-  const note = `아실 매물 목록 · 최근 날짜순 · 같은 물건을 여러 중개사가 올리면 1줄(N곳) · ▼▲ 가격 변경일. ` +
+  const note = (fixedId ? "이 단지 아실 매물 · 전체 면적 · " : "아실 매물 목록 · ") +
+    `최근 날짜순 · 같은 물건을 여러 중개사가 올리면 1줄(N곳) · ▼▲ 가격 변경일. ` +
     `날짜: '신규'는 ${md(since)} 추적 시작 뒤 처음 나타난 날(실제 등록일), 그 외는 아실 게시일(중개사가 광고를 다시 올린 날이라 최근 날짜에 몰림)`;
-  return Feed("offers", "최근 매물", all.length ? note : "아직 매물 목록이 없습니다. Mac의 매일 자동 수집(install_asil_offers.py)을 켜면 쌓입니다.", all.length ? chips : null,
-    [{ t: "단지" }, { t: "가격" }, { t: "동·층·전용" }, { t: "게시일" }], rows, O.length, true);
+  const head = [{ t: "가격" }, { t: fixedId ? "동·층·전용 · 특징" : "동·층·전용" }, { t: "게시일" }];
+  return Feed(fixedId ? "offers-" + fixedId : "offers", "최근 매물",
+    all.length ? note : (fixedId ? "이 단지의 아실 매물 목록이 아직 없습니다." : "아직 매물 목록이 없습니다. Mac의 매일 자동 수집(install_asil_offers.py)을 켜면 쌓입니다."),
+    all.length ? chips : null, fixedId ? head : [{ t: "단지" }, ...head], rows, O.length, true);
 }
 function Card(c, band) {
   const b = c.b[band], sm = b.summary, L = asilLast(c);
@@ -502,7 +509,8 @@ function Detail(id, band) {
       Section("전세가율 · 갱신 비율", "갱신 비율↑ = 신규 전세 공급 감소 신호 (3개월 표본 5건 이상만)", ratioChart),
       Section("월별 거래량", null, volChart),
       askSec,
-      wide(Section("최근 거래", sm.last_deal ? `최근 정상 거래 ${dotted(sm.last_deal.d)} · ${eok(sm.last_deal.p)}` : null, table))));
+      wide(Section("최근 거래", sm.last_deal ? `최근 정상 거래 ${dotted(sm.last_deal.d)} · ${eok(sm.last_deal.p)}` : null, table)),
+      wide(OfferFeed(id))));
 }
 
 function Compare() {
