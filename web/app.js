@@ -258,19 +258,24 @@ function xDomain(months) { return [ymDate(months[0]) - 20 * 864e5, ymDate(months
 const seriesPts = (obj, months, all) => all.map((ym, i) => ({ t: ymDate(ym), v: obj.v[i], n: obj.n ? obj.n[i] : undefined }))
   .filter((p) => months.includes(new Date(p.t).toISOString().slice(0, 7)));
 // 아실 일별 매물 수 (열 형식: d 날짜, s 매매, j 전세, w 월세)
-function asilLast(c) {
-  const A = c.asil; if (!A || !A.d.length) return null;
+// 시계열 A = {d, s, j, w}: 단지 전체(c.asil, 아실 일별 매물 수 3년치) 또는 평형별(c.asil_b[band], 매물 목록 추적)
+function serLast(A) {
+  if (!A || !A.d.length) return null;
   const i = A.d.length - 1;
   return { d: A.d[i], sale: A.s[i], jeonse: A.j[i], wolse: A.w[i], i };
 }
-// 7일 전(그날 기록이 없으면 그 이전 가장 가까운 날) 대비 증감
-function asilDelta(c, key, days = 7) {
-  const A = c.asil, last = asilLast(c); if (!last) return null;
+// 7일 전(그날 기록이 없으면 그 이전 가장 가까운 날) 대비 증감. 7일치가 안 쌓였으면 null
+function serDelta(A, key, days = 7) {
+  const last = serLast(A); if (!last) return null;
   const target = dDate(last.d) - days * 864e5;
   for (let i = last.i - 1; i >= 0; i--) if (dDate(A.d[i]) <= target) return A[key][last.i] - A[key][i];
   return null;
 }
-const asilPts = (c, key) => c.asil.d.map((d, i) => ({ t: dDate(d), v: c.asil[key][i] }));
+const serPts = (A, key) => A.d.map((d, i) => ({ t: dDate(d), v: A[key][i] }));
+const bandSer = (c, band) => (c.asil_b && c.asil_b[band]) || null;
+const asilLast = (c) => serLast(c.asil);
+const asilPts = (c, key) => serPts(c.asil, key);
+const wkTxt = (A, k) => { const v = serDelta(A, k); return v === null ? "" : ` (${v > 0 ? "+" : ""}${v})`; };
 
 // ───── 화면 ─────
 function header(title, sub, withRefresh = true) {
@@ -298,7 +303,7 @@ function Home() {
     bandSeg(d.bands, band, (b) => { state.band = b; store.set("band", b); render(); }),
     h("div", { class: "feeds" }, TradeFeed(band), OfferFeed(null, band)),
     h("div", { class: "cards" }, list.map((c) => Card(c, band))),
-    h("p", { class: "hero-sub", style: "margin-top:14px" }, "3개월 중앙값: 직전 3개월 매매(해제·직거래 제외)를 모은 중앙값. 아실 매물은 단지 전체 기준(같은 물건 중복 제외), 괄호는 1주 전 대비."));
+    h("p", { class: "hero-sub", style: "margin-top:14px" }, "3개월 중앙값: 직전 3개월 매매(해제·직거래 제외)를 모은 중앙값. 매물 수는 선택한 평형의 아실 매물(같은 물건 1개), 괄호는 1주 전 대비."));
 }
 const dtxt = (v) => v === null ? null : h("span", { class: "delta" }, v === 0 ? "±0" : (v > 0 ? "+" : "") + v);
 
@@ -376,7 +381,7 @@ function OfferFeed(fixedId, band) {
     all.length ? chips : null, fixedId ? head : [{ t: "단지" }, ...head], rows, O.length, true);
 }
 function Card(c, band) {
-  const b = c.b[band], sm = b.summary, L = asilLast(c);
+  const b = c.b[band], sm = b.summary, B = bandSer(c, band), L = serLast(B);
   return h("a", { class: "card", href: `#/c/${c.id}/${band}` },
     h("div", { class: "card-h" }, h("span", { class: "dot", style: `background:${colorOf(c)}` }), h("b", {}, c.name),
       h("span", { class: "area" }, c.area), h("span", { class: "chev", "aria-hidden": "true" }, "›")),
@@ -388,11 +393,11 @@ function Card(c, band) {
       h("div", {}, h("span", {}, `상한 ${eok(d0().cap)} 대비`), h("b", {}, eokSigned(sm.vs_cap))),
       h("div", {}, h("span", {}, "전세가율"), h("b", {}, pct(sm.ratio)))),
     h("div", { class: "spark" }, Spark(b.trade_3m.v, colorOf(c))),
-    L ? h("div", { class: "lrow" }, h("span", { class: "lbl" }, `아실 매물 ${dotted(L.d).slice(5)}`),
-      h("span", {}, "매매 ", h("b", {}, L.sale), dtxt(asilDelta(c, "s"))),
-      h("span", {}, "전세 ", h("b", {}, L.jeonse), dtxt(asilDelta(c, "j"))),
-      h("span", {}, "월세 ", h("b", {}, L.wolse), dtxt(asilDelta(c, "w"))))
-      : h("div", { class: "lrow" }, h("span", { class: "lbl" }, "아실 매물 데이터 없음")));
+    L ? h("div", { class: "lrow" }, h("span", { class: "lbl" }, `${band}형 매물 ${dotted(L.d).slice(5)}`),
+      h("span", {}, "매매 ", h("b", {}, L.sale), dtxt(serDelta(B, "s"))),
+      h("span", {}, "전세 ", h("b", {}, L.jeonse), dtxt(serDelta(B, "j"))),
+      h("span", {}, "월세 ", h("b", {}, L.wolse), dtxt(serDelta(B, "w"))))
+      : h("div", { class: "lrow" }, h("span", { class: "lbl" }, `${band}형 매물 데이터 없음`)));
 }
 const d0 = () => state.data;
 
@@ -452,27 +457,39 @@ function Detail(id, band) {
     ],
   });
 
-  // 아실 일별 매물 수: 기간 선택(1년/3년)을 따르고, 끝은 마지막 기록일
-  const AL = asilLast(c);
-  let listingSec;
+  // 아실 매물: ① 선택한 평형(매물 목록 추적으로 센 일별 수, 추적 시작일부터) ② 단지 전체 3년(아실 일별 매물 수, 평형 구분 없음)
+  const lineSeries = (A) => [
+    { name: "매매", kind: "line", color: "var(--ink)", width: 1.8, pts: serPts(A, "s") },
+    { name: "전세", kind: "line", color: "var(--jeonse)", width: 1.8, pts: serPts(A, "j") },
+    { name: "월세", kind: "line", color: "var(--wolse)", width: 1.8, pts: serPts(A, "w") },
+  ];
+  const B = bandSer(c, band), BL = serLast(B), AL = asilLast(c);
+  let bandChart = null;
+  if (BL) {
+    const t0 = dDate(B.d[0]), t1 = dDate(BL.d), span = Math.max(14, (t1 - t0) / 864e5);  // 쌓인 날이 적어도 2주 폭으로
+    bandChart = Chart({
+      label: `${band}형 아실 매물 수`, xDomain: [t1 - span * 864e5 - 864e5, t1 + 864e5], height: 170, yMin: 0,
+      yFmt: (v) => String(v), tipFmt: (v) => v + "건", xTicks: dayTicks, xFmt: fmtMD, tipDate: fmtYMD, series: lineSeries(B),
+    });
+  }
+  let allChart = null;
   if (AL) {
     const t1 = dDate(AL.d), t0 = Math.max(dDate(c.asil.d[0]), t1 - (state.range === "12" ? 365 : 3 * 365 + 1) * 864e5);
     const pad = Math.max(2, (t1 - t0) / 864e5 * 0.02) * 864e5;
-    const lc = Chart({
-      label: "아실 일별 매물 수", xDomain: [t0 - pad, t1 + pad], height: 190, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => v + "건",
-      tipDate: fmtYMD,
-      series: [
-        { name: "매매", kind: "line", color: "var(--ink)", width: 1.6, pts: asilPts(c, "s") },
-        { name: "전세", kind: "line", color: "var(--jeonse)", width: 1.6, pts: asilPts(c, "j") },
-        { name: "월세", kind: "line", color: "var(--wolse)", width: 1.6, pts: asilPts(c, "w") },
-      ],
+    allChart = Chart({
+      label: "단지 전체 아실 일별 매물 수", xDomain: [t0 - pad, t1 + pad], height: 150, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => v + "건",
+      tipDate: fmtYMD, series: lineSeries(c.asil),
     });
-    const wk = (k) => { const v = asilDelta(c, k); return v === null ? "" : ` (${v > 0 ? "+" : ""}${v})`; };
-    listingSec = Section("아실 매물",
-      `단지 전체 · 같은 물건 중복 제외 · ${dotted(AL.d)} 매매 ${AL.sale}${wk("s")} · 전세 ${AL.jeonse}${wk("j")} · 월세 ${AL.wolse}${wk("w")} · 괄호는 1주 전 대비`, lc);
-  } else {
-    listingSec = Section("아실 매물", "아직 기록이 없습니다. 매일 06:30 자동 수집으로 쌓입니다.");
   }
+  const listingSec = Section(`아실 매물 · ${band}형`,
+    BL ? `${dotted(BL.d)} 매매 ${BL.sale}${wkTxt(B, "s")} · 전세 ${BL.jeonse}${wkTxt(B, "j")} · 월세 ${BL.wolse}${wkTxt(B, "w")} · ` +
+      `아실 매물 목록에서 ${band}형만 센 수(같은 물건 1개) · ${dotted(B.d[0])}부터 매일 쌓임 · 괄호는 1주 전 대비`
+      : `${band}형 매물 기록이 아직 없습니다. 매일 아침 매물 목록 수집으로 쌓입니다.`,
+    bandChart,
+    allChart ? h("h2", { style: "margin-top:14px" }, "단지 전체 (평형 구분 없음)") : null,
+    allChart ? h("p", { class: "note" }, `아실 일별 매물 수 · 2023.09부터 · 아실이 평형별 추이는 제공하지 않아 전체 면적 합계` +
+      (AL ? ` · ${dotted(AL.d)} 매매 ${AL.sale}${wkTxt(c.asil, "s")} · 전세 ${AL.jeonse} · 월세 ${AL.wolse}` : "")) : null,
+    allChart);
   // 네이버 호가 (북마클릿으로 수집한 날만): 기록이 있을 때만 표시
   const L = c.listings;
   let askSec = null;
@@ -528,23 +545,23 @@ function Compare() {
     label: "단지별 전세가율", xDomain: X, height: 190, yFmt: (v) => v + "%", tipFmt: (v) => v.toFixed(1) + "%",
     series: list.map((c) => ({ name: c.short, kind: "line", color: colorOf(c), pts: seriesPts(c.b[band].ratio_3m, months, d.months) })),
   });
-  const withAsil = list.filter((c) => asilLast(c));
+  const withB = list.filter((c) => serLast(bandSer(c, band)));
   let offers = null;
-  if (withAsil.length) {
-    const t1 = Math.max(...withAsil.map((c) => dDate(asilLast(c).d)));
-    const t0 = Math.max(Math.min(...withAsil.map((c) => dDate(c.asil.d[0]))), t1 - (state.range === "12" ? 365 : 3 * 365 + 1) * 864e5);
-    const pad = Math.max(2, (t1 - t0) / 864e5 * 0.02) * 864e5;
+  if (withB.length) {
+    const t1 = Math.max(...withB.map((c) => dDate(serLast(bandSer(c, band)).d)));
+    const t0 = Math.min(...withB.map((c) => dDate(bandSer(c, band).d[0])));
+    const span = Math.max(14, (t1 - t0) / 864e5);
     offers = Chart({
-      label: "단지별 아실 매매 매물 수", xDomain: [t0 - pad, t1 + pad], height: 210, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => v + "건",
-      tipDate: fmtYMD,
-      series: withAsil.map((c) => ({ name: c.short, kind: "line", color: colorOf(c), width: 1.6, pts: asilPts(c, "s") })),
+      label: `단지별 ${band}형 매매 매물 수`, xDomain: [t1 - span * 864e5 - 864e5, t1 + 864e5], height: 200, yMin: 0,
+      yFmt: (v) => String(v), tipFmt: (v) => v + "건", xTicks: dayTicks, xFmt: fmtMD, tipDate: fmtYMD,
+      series: withB.map((c) => ({ name: c.short, kind: "line", color: colorOf(c), width: 1.8, pts: serPts(bandSer(c, band), "s") })),
     });
   }
   const table = h("table", { class: "cmp" },
     h("thead", {}, h("tr", {}, h("th", {}, "단지"), h("th", {}, "중앙값"), h("th", {}, "1년"), h("th", {}, "전세율"),
       h("th", {}, "매물"), h("th", {}, "1주"))),
     h("tbody", {}, list.map((c) => {
-      const sm = c.b[band].summary, A = asilLast(c), dw = asilDelta(c, "s");
+      const sm = c.b[band].summary, B = bandSer(c, band), A = serLast(B), dw = serDelta(B, "s");
       return h("tr", {}, h("td", {}, h("span", { class: "dot", style: `display:inline-block;margin-right:6px;background:${colorOf(c)}` }), c.short),
         h("td", {}, eok(sm.median)), h("td", {}, pctSigned(sm.yoy_pct)), h("td", {}, pct(sm.ratio)),
         h("td", {}, A ? String(A.sale) : "–"), h("td", {}, dw === null ? "–" : (dw > 0 ? "+" : dw < 0 ? "−" : "±") + Math.abs(dw)));
@@ -556,8 +573,8 @@ function Compare() {
     h("div", { class: "sections" },
       Section(`${band}형 매매 3개월 중앙값`, null, med),
       Section(`${band}형 전세가율`, "전세 3개월 중앙값 ÷ 매매 3개월 중앙값", ratio),
-      offers ? wide(Section("아실 매매 매물 수", "단지 전체 기준 · 같은 물건 중복 제외 · 일별", offers)) : null,
-      wide(Section("요약", "중앙값 = 3개월 매매 중앙값 · 전세율 = 전세가율 · 매물 = 아실 최근일 매매 매물 수(단지 전체) · 1주 = 1주 전 대비", table))));
+      offers ? wide(Section(`${band}형 매매 매물 수`, "아실 매물 목록에서 평형별로 센 일별 수(같은 물건 1개) · 추적 시작일부터 쌓임", offers)) : null,
+      wide(Section("요약", `중앙값 = 3개월 매매 중앙값 · 전세율 = 전세가율 · 매물 = ${band}형 아실 매매 매물 수(최근일) · 1주 = 1주 전 대비`, table))));
 }
 
 function Info() {

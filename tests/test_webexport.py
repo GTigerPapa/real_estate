@@ -91,4 +91,8 @@ def test_payload_recent_trades_and_grouped_offers(conn, tmp_path):
     # 평형: SETTINGS 는 59(57~62)·84(82~87) 구간 → 59.93㎡ 매매는 59형, 84.44㎡ 월세는 84형
     assert (o[1]["b"], o[0]["b"]) == ("59", "84")
     assert webexport.band_of("90", SETTINGS["size_bands"]) is None
+    # 평형별 일별 매물 수: 59형 매매는 같은 물건 2중개사 → 1개, 84형 월세 1개(09.30부터), 내려간 매물(90㎡)은 구간 밖
+    ab = d["complexes"][0]["asil_b"]
+    assert ab["59"] == {"d": ["2026-09-29", "2026-09-30"], "s": [1, 1], "j": [0, 0], "w": [0, 0]}
+    assert ab["84"]["w"] == [0, 1] and ab["84"]["s"] == [1, 0]   # 84.9㎡ 매매는 09.29만 보이고 내려감
     json.dumps(d, allow_nan=False)

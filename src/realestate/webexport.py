@@ -58,6 +58,37 @@ def band_of(ar, size_bands) -> str | None:
     return None
 
 
+def offer_band_counts(path=OFFERS_CSV, size_bands=None) -> dict:
+    """아실 매물 추적 파일 → 단지·평형별 일별 매물 수 {cid: {band: {"d","s","j","w"}}}.
+
+    아실 일별 매물 수(asil_offer_counts.csv)는 단지 전체 값만 준다(면적 조건 무시). 그래서 평형별 추이는
+    매물 목록 추적(first_seen~last_seen)으로 직접 센다. 같은 물건(유형·동·층·전용·가격)은 1개. 추적 시작일부터 쌓인다.
+    """
+    from datetime import date, timedelta
+    from pathlib import Path
+    p = Path(path)
+    if not p.exists():
+        return {}
+    df = pd.read_csv(p, dtype=str).fillna("")
+    if df.empty:
+        return {}
+    df["band"] = [band_of(a, size_bands) for a in df["excl_area"]]
+    df = df[df["band"].notna() & (df["first_seen"] != "") & (df["last_seen"] != "")]
+    d0, d1 = date.fromisoformat(df["first_seen"].min()), date.fromisoformat(df["last_seen"].max())
+    days = [(d0 + timedelta(n)).isoformat() for n in range((d1 - d0).days + 1)]
+    key = df["deal"] + "|" + df["dong"] + "|" + df["floor"] + "|" + df["excl_area"] + "|" + df["price"] + "|" + df["rent"]
+    df = df.assign(key=key)
+    out = {}
+    for (cid, band), g in df.groupby(["complex_id", "band"]):
+        ser = {"d": days, "s": [], "j": [], "w": []}
+        for day in days:
+            on = g[(g["first_seen"] <= day) & (g["last_seen"] >= day)]
+            for deal, k in (("sale", "s"), ("jeonse", "j"), ("wolse", "w")):
+                ser[k].append(int(on.loc[on["deal"] == deal, "key"].nunique()))
+        out.setdefault(cid, {})[str(band)] = ser
+    return out
+
+
 def load_offers(path=OFFERS_CSV, size_bands=None) -> dict:
     """아실 매물 추적 파일 → 현재 게시 중인 물건 목록.
 
@@ -127,6 +158,7 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
     now = now or config.now_kst()
     asil = load_asil(asil_csv)
     offers = load_offers(offers_csv, settings.get("size_bands"))
+    band_counts = offer_band_counts(offers_csv, settings.get("size_bands"))
     cap = int(settings.get("buy_cap_manwon", 140000))
     trades = metrics.load_trades(conn, include_canceled=True)
     rents = metrics.load_rents(conn, rent_type=None)
@@ -225,7 +257,10 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
 
         out_complexes.append({"id": cid, "name": c["name"], "short": c.get("short") or c["name"], "slot": idx, "bands": [str(b) for b in c.get("bands", [])],
                               "area": f"{c['umd_nm']}", "b": bands_out, "listings": lst,
-                              "asil": asil.get(cid, {"d": [], "s": [], "j": [], "w": []})})
+                              "asil": asil.get(cid, {"d": [], "s": [], "j": [], "w": []}),
+                              # 평형별 일별 매물 수 (아실 매물 목록 추적에서 계산, 추적 시작일부터)
+                              "asil_b": {b: band_counts.get(cid, {}).get(b, {"d": [], "s": [], "j": [], "w": []})
+                                         for b in [str(x) for x in c.get("bands", [])]}})
 
     return {
         "format": FORMAT,
