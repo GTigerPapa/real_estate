@@ -266,6 +266,8 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
         "format": FORMAT,
         "generated_at": now.isoformat(timespec="minutes"),
         "data_through": trades["deal_date"].max().strftime("%Y-%m-%d") if not trades.empty else None,
+        # 실거래를 마지막으로 받은 시각 (DB fetch_log). 더 새 실거래를 담은 app.json 을 덮어쓰지 않는 데 쓴다
+        "trades_fetched_at": (conn.execute("SELECT max(fetched_at) FROM fetch_log WHERE status='ok'").fetchone() or [None])[0],
         "listing_through": max((x["d"] for c in out_complexes for x in c["listings"]), default=None),
         "asil_through": max((c["asil"]["d"][-1] for c in out_complexes if c["asil"]["d"]), default=None),
         "cap": cap,
@@ -279,3 +281,44 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
         "offers_since": offers["since"],
         "offers_through": offers["through"],
     }
+
+
+# 실거래에서 나오는 항목. 공공데이터포털은 해외(GitHub Actions)에서 막혀 실거래는 국내 Mac이 받는다.
+# Mac은 매일 app.json 을 새로 만들지만 DB는 매월만 커밋하므로, Actions 가 저장소의 (오래된) DB로 다시 내보내면
+# 실거래가 뒤로 돌아간다. 그래서 기존 app.json 의 실거래가 더 새 것이면 그 부분은 그대로 둔다.
+TRADE_TOP = ("data_through", "trades_fetched_at", "months", "trades_recent", "trades_since")
+
+
+def keep_newer_trades(new: dict, old: dict | None) -> bool:
+    """old 의 실거래 수집 시각이 더 늦으면 new 의 실거래 부분을 old 것으로 바꾼다. 바꿨으면 True.
+
+    단지별 평형 데이터(b)는 old 에 있는 단지·평형만 옮긴다 (새로 추가한 단지·평형은 DB 값 유지 — 그 경우 months 가
+    어긋날 수 있어, 같은 months 일 때만 섞는다)."""
+    if not old or not old.get("trades_fetched_at"):
+        return False
+    if (new.get("trades_fetched_at") or "") >= old["trades_fetched_at"]:
+        return False
+    same_months = old.get("months") == new.get("months")
+    for k in TRADE_TOP:
+        if k in old:
+            new[k] = old[k]
+    olds = {c["id"]: c for c in old.get("complexes", [])}
+    for c in new.get("complexes", []):
+        o = olds.get(c["id"])
+        if not o:
+            continue
+        for band in c["bands"]:
+            if band in o.get("b", {}):
+                c["b"][band] = o["b"][band]
+            elif not same_months:   # 새 평형인데 기간 축이 달라졌으면 비워 둔다 (다음 Mac 갱신 때 채워짐)
+                c["b"][band] = _empty_band(len(new["months"]))
+    return True
+
+
+def _empty_band(n: int) -> dict:
+    none = {"v": [None] * n, "n": [0] * n}
+    return {"summary": {"ym": None, "median": None, "n": 0, "yoy_pct": None, "vs_cap": None, "jeonse": None,
+                        "jeonse_n": 0, "ratio": None, "last_deal": None},
+            "trade_3m": none, "jeonse_3m": none, "ratio_3m": {"v": [None] * n},
+            "volume": {"broker": [0] * n, "direct": [0] * n, "canceled": [0] * n},
+            "renew_ratio_3m": {"v": [None] * n}, "deals": []}

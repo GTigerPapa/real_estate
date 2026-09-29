@@ -96,3 +96,23 @@ def test_payload_recent_trades_and_grouped_offers(conn, tmp_path):
     assert ab["59"] == {"d": ["2026-09-29", "2026-09-30"], "s": [1, 1], "j": [0, 0], "w": [0, 0]}
     assert ab["84"]["w"] == [0, 1] and ab["84"]["s"] == [1, 0]   # 84.9㎡ 매매는 09.29만 보이고 내려감
     json.dumps(d, allow_nan=False)
+
+
+def test_keep_newer_trades_preserves_mac_export():
+    band = {"summary": {"n": 9}, "deals": [1]}
+    old = {"trades_fetched_at": "2026-09-30T07:13:00+09:00", "data_through": "2026-09-28", "months": ["2026-09"],
+           "trades_recent": ["new"], "trades_since": "2026-09-01",
+           "complexes": [{"id": "a", "bands": ["84"], "b": {"84": band}}]}
+    new = {"trades_fetched_at": "2026-09-27T22:13:28+09:00", "data_through": "2026-09-18", "months": ["2026-09"],
+           "trades_recent": ["old"], "trades_since": "2026-09-01",
+           "complexes": [{"id": "a", "bands": ["84", "101"], "b": {"84": {"summary": {"n": 1}}, "101": {"x": 1}}},
+                         {"id": "b", "bands": ["84"], "b": {"84": {"y": 1}}}]}
+    assert webexport.keep_newer_trades(new, old) is True
+    assert new["data_through"] == "2026-09-28" and new["trades_recent"] == ["new"]
+    assert new["complexes"][0]["b"]["84"] is band          # 기존 단지·평형은 새 값 유지
+    assert new["complexes"][0]["b"]["101"] == {"x": 1}      # 없던 평형은 DB 값 (기간 축 같음)
+    assert new["complexes"][1]["b"]["84"] == {"y": 1}       # 새 단지는 DB 값
+    # DB가 더 새 것이면 그대로
+    newer = {"trades_fetched_at": "2026-10-01T07:00:00+09:00", "data_through": "2026-09-30", "complexes": []}
+    assert webexport.keep_newer_trades(newer, old) is False and newer["data_through"] == "2026-09-30"
+    assert webexport.keep_newer_trades(dict(newer), None) is False

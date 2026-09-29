@@ -3,7 +3,8 @@
     python scripts/export_web.py
 
 저장소의 DB를 임시 사본으로 열어 data/listings/raw/ 의 네이버 덤프를 적재한 뒤 내보낸다
-(원본 DB 파일은 건드리지 않음). GitHub Actions(.github/workflows/update.yml)가 매일·덤프 push 때 실행.
+(원본 DB 파일은 건드리지 않음). GitHub Actions(.github/workflows/update.yml)가 매일·덤프 push 때 실행하고,
+실거래를 받는 Mac 매일 작업(scripts/mac_daily.py)도 실행한다. 기존 app.json 의 실거래가 더 새 것이면 그 부분은 유지.
 """
 from __future__ import annotations
 
@@ -33,8 +34,10 @@ def main() -> int:
         payload = webexport.build_payload(conn, settings, complexes)
         conn.close()
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     old = OUT.read_text(encoding="utf-8") if OUT.exists() else None
+    if old is not None and webexport.keep_newer_trades(payload, json.loads(old)):
+        print(f"실거래는 기존 app.json 이 더 새 것이라 유지 ({payload['trades_fetched_at']} 수집분)")
+    text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     # generated_at 만 다른 경우는 파일을 바꾸지 않음 (불필요한 커밋·배포 방지)
     def strip(t):
         d = json.loads(t)

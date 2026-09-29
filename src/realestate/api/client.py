@@ -36,11 +36,13 @@ FATAL_GATEWAY_CODES = {"20", "22", "30", "31", "32"}
 
 
 class ApiError(Exception):
-    """URL·키가 포함되지 않은 메시지만 담는 예외. fatal이면 같은 API의 남은 호출도 무의미."""
+    """URL·키가 포함되지 않은 메시지만 담는 예외. fatal이면 같은 API의 남은 호출도 무의미.
+    unreachable: 재시도가 모두 연결 단계에서 실패(서버에 닿지 않음) → 다른 API 호출도 무의미."""
 
-    def __init__(self, message: str, fatal: bool = False):
+    def __init__(self, message: str, fatal: bool = False, unreachable: bool = False):
         super().__init__(message)
-        self.fatal = fatal
+        self.fatal = fatal or unreachable
+        self.unreachable = unreachable
 
 
 def get_service_key() -> str:
@@ -151,6 +153,7 @@ class RtmsClient:
             "numOfRows": self.num_of_rows,
         }
         last_err = ""
+        conn_fail = 0   # 연결 자체가 안 된 횟수 (ConnectTimeout·ConnectionError)
         for attempt in range(self.max_retries + 1):
             if attempt:
                 delay = self.backoff * 2 ** (attempt - 1) + random.uniform(0, 0.5)
@@ -159,10 +162,13 @@ class RtmsClient:
             self._throttle()
             self.calls += 1
             try:
-                resp = self.session.get(ENDPOINTS[api], params=params, timeout=self.timeout)
+                # 연결은 10초 안에 안 되면 포기 (막힌 네트워크에서 오래 매달리지 않게), 응답 대기는 설정값
+                resp = self.session.get(ENDPOINTS[api], params=params, timeout=(min(10, self.timeout), self.timeout))
             except requests.RequestException as e:
                 # str(e)에는 URL이 들어갈 수 있으므로 타입명만 사용
                 last_err = type(e).__name__
+                if isinstance(e, (requests.ConnectTimeout, requests.ConnectionError)) and not isinstance(e, requests.ReadTimeout):
+                    conn_fail += 1
                 continue
 
             text = mask_secret(resp.content.decode("utf-8", errors="replace"), self._key)
@@ -181,7 +187,10 @@ class RtmsClient:
                 raise ApiError(f"{ctx}: HTTP {resp.status_code}")
             return Page(page_no=page_no, body=text, parsed=parsed)
 
-        raise ApiError(f"{ctx}: {self.max_retries}회 재시도 후 실패 ({last_err})")
+        unreachable = conn_fail == self.max_retries + 1
+        raise ApiError(f"{ctx}: {self.max_retries}회 재시도 후 실패 ({last_err})"
+                       + (" — 서버에 연결되지 않음 (공공데이터포털은 해외 IP 접속이 막힐 수 있음)" if unreachable else ""),
+                       unreachable=unreachable)
 
     def fetch_month(self, api: str, lawd_cd: str, deal_ymd: str) -> list[Page]:
         """해당 월 전체 페이지. totalCount만큼 모일 때까지 페이지를 넘긴다."""

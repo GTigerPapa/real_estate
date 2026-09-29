@@ -64,7 +64,8 @@ def ingest_month(conn, client: RtmsClient, api: str, lawd: str, ym: str) -> dict
         db.set_fetch_log(conn, api, lawd, ym, "error", None, None, fetched_at, msg)
         conn.commit()
         log.error("%s %s %s 실패: %s", api, lawd, ym, msg)
-        return {"status": "error", "error": msg, "fatal": getattr(e, "fatal", False)}
+        return {"status": "error", "error": msg, "fatal": getattr(e, "fatal", False),
+                "unreachable": getattr(e, "unreachable", False)}
 
     total = pages[0].parsed.total_count if pages else 0
     assign_dup_seq(rows, key)
@@ -121,7 +122,10 @@ def main(argv: list[str] | None = None) -> int:
         r = ingest_month(conn, client, *t)
         if r["status"] != "ok":
             errors.append(t)
-            if r.get("fatal"):
+            if r.get("unreachable"):
+                stopped.update(APIS)
+                log.error("공공데이터포털 서버에 연결되지 않음 → 남은 호출 모두 건너뜀 (해외 IP 차단·네트워크 확인)")
+            elif r.get("fatal"):
                 stopped.add(t[0])
                 log.error("%s API 치명적 오류 → 남은 월 건너뜀 (키 등록/한도 확인 필요)", t[0])
     log.info("완료: 호출 %d회, 성공 %d, 실패 %d, 건너뜀 %d",

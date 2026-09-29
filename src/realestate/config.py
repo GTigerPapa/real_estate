@@ -18,7 +18,14 @@ KST = ZoneInfo("Asia/Seoul")
 def load_dotenv_if_present() -> None:
     try:
         from dotenv import load_dotenv
-    except ImportError:
+    except ImportError:  # python-dotenv 없이도 .env 의 KEY=VALUE 줄은 읽는다 (Mac launchd 실행 등)
+        p = ROOT / ".env"
+        if p.exists():
+            for line in p.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
         return
     load_dotenv(ROOT / ".env", override=False)
 

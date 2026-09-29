@@ -1,4 +1,4 @@
-"""아실 매물 목록 수집(scripts/asil_offers.py --commit)을 Mac launchd 에 등록/해제.
+"""Mac 매일 작업(scripts/mac_daily.py: 실거래 수집 + 아실 매물 목록 + 웹앱 데이터 → 커밋·push)을 launchd 에 등록/해제.
 
     python3 scripts/install_asil_offers.py                # 매일 07:13 (Mac 시간대 기준)
     python3 scripts/install_asil_offers.py --time 20:47   # 시각 변경
@@ -8,6 +8,7 @@
 
 - 정한 시각에 Mac이 잠자고 있었다면 깨어난 직후 한 번 실행된다. 전원이 꺼져 있던 날은 건너뛴다.
 - push 는 이 Mac의 git 인증(키체인)을 쓴다. 터미널에서 git push 가 되면 된다.
+- 실거래 키는 저장소의 .env (DATA_GO_KR_KEY). 패키지: pip3 install -r requirements.txt (이 파이썬으로)
 - 로그: ~/Library/Logs/real_estate/asil_offers.log
 """
 from __future__ import annotations
@@ -40,7 +41,7 @@ def install(hour: int, minute: int) -> int:
     with PLIST.open("wb") as f:
         plistlib.dump({
             "Label": LABEL,
-            "ProgramArguments": [sys.executable, str(ROOT / "scripts" / "asil_offers.py"), "--commit"],
+            "ProgramArguments": [sys.executable, str(ROOT / "scripts" / "mac_daily.py")],
             "WorkingDirectory": str(ROOT),
             "StartCalendarInterval": {"Hour": hour, "Minute": minute},
             "StandardOutPath": str(LOG), "StandardErrorPath": str(LOG),

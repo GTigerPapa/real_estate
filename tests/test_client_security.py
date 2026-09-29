@@ -100,3 +100,16 @@ def test_db_has_no_key_even_if_echoed(fake_key, fixture_text, conn):
         _assert_no_key(db.decompress(blob), fake_key)
     for (err,) in conn.execute("SELECT COALESCE(error,'') FROM fetch_log"):
         _assert_no_key(err, fake_key)
+
+
+def test_unreachable_server_is_marked(fake_key):
+    # 재시도가 모두 연결 단계 실패면 unreachable (다른 API 호출도 멈추게), 읽기 타임아웃이 섞이면 아님
+    c = _client(FakeSession(["conn", "conn", "conn"]), fake_key)
+    with pytest.raises(ApiError) as ei:
+        c.fetch_page("trade", "11740", "202508", 1)
+    assert ei.value.unreachable and ei.value.fatal
+    _assert_no_key(str(ei.value), fake_key)
+    c = _client(FakeSession(["conn", "timeout", "conn"]), fake_key)
+    with pytest.raises(ApiError) as ei:
+        c.fetch_page("trade", "11740", "202508", 1)
+    assert not ei.value.unreachable

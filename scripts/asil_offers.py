@@ -1,7 +1,7 @@
 """아실 매물 목록 수집 → data/listings/asil/asil_offers.csv (국내 PC 전용: 아실 매물 서버가 해외 접속을 끊음)
 
     python3 scripts/asil_offers.py             # 수집만
-    python3 scripts/asil_offers.py --commit    # 수집 후 git pull --rebase → 커밋 → push (Mac launchd 가 매일 실행)
+    python3 scripts/asil_offers.py --commit    # = scripts/mac_daily.py (실거래 수집·웹앱 데이터까지 포함한 Mac 매일 작업)
 
 단지 목록은 config/complexes.yaml 의 asil_id (아실 단지 번호, 네이버 번호와 다름).
 단지당 20건씩 끝까지(보통 3~12회) 요청, 요청 간 1.5초. push 되면 GitHub Actions 가 웹앱 데이터를 다시 만든다.
@@ -31,6 +31,9 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="아실 매물 목록 수집")
     ap.add_argument("--commit", action="store_true", help="수집 결과를 커밋하고 push")
     a = ap.parse_args(argv)
+    if a.commit:  # 예전에 등록한 launchd 작업도 새 매일 작업(실거래 포함)을 돌도록 넘긴다
+        import os
+        os.execv(sys.executable, [sys.executable, str(ROOT / "scripts" / "mac_daily.py")])
     now = datetime.now(config.KST)
     today = now.strftime("%Y-%m-%d")
     print(f"[{now:%Y-%m-%d %H:%M}] 아실 매물 목록 수집")

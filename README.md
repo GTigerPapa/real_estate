@@ -94,15 +94,22 @@ streamlit run dashboard/app.py          # http://localhost:8501  (?band=74 처�
   아실 쪽에 기록이 없는 날은 행이 없다.
 - 공개 API가 아니라 화면 내부 주소다. 응답이 비거나 형식이 바뀌면 워크플로가 실패로 표시된다 — 우회하지 말고 확인할 것.
 
-### 아실 매물 목록 (Mac, 매일)
+### Mac 매일 작업 (실거래 + 아실 매물 목록)
 
-아실 단지 화면의 개별 매물(유형·가격·동·층·전용면적·중개사·게시일)을 `data/listings/asil/asil_offers.csv` 에 매물 단위로 추적한다.
-아실 매물 서버는 **해외 접속을 끊어서** GitHub Actions 에서는 못 돌리고, 국내 PC(Mac launchd)에서 매일 실행해 push 한다.
+**공공데이터포털(실거래)과 아실 매물 서버는 해외 접속을 막아서** GitHub Actions 에서는 받을 수 없다
+(2026-09-29 확인: Actions 에서 공공데이터포털 호출이 전부 ConnectTimeout). 그래서 국내 Mac 이 매일 07:13 에
+`scripts/mac_daily.py` 로 ① 실거래 수집(최근 3개월 + 빠진 달·새 시군구 백필) ② 아실 매물 목록 ③ 웹앱 데이터 생성을 하고
+커밋·push 한다. DB(45MB)는 매월 1일·대량 백필 날만 커밋하고, 평소엔 `web/data/app.json` 만 올린다.
+Actions 가 저장소의 오래된 DB로 웹앱 데이터를 다시 만들어도, 실거래 부분은 `trades_fetched_at` 이 더 새 app.json 쪽을 유지한다.
 
 ```bash
+pip3 install -r requirements.txt                  # launchd 가 쓰는 같은 python3 으로 (requests·PyYAML·pandas)
 python3 scripts/install_asil_offers.py            # 매일 07:13 실행 등록 (--status, --run-now, --uninstall)
-python3 scripts/asil_offers.py                    # 수동 수집만 (--commit 이면 커밋·push 까지)
+python3 scripts/mac_daily.py --no-push            # 수동 실행 (커밋·push 없이)
 ```
+
+- 실거래 키: 저장소의 `.env` (`DATA_GO_KR_KEY`). 서버에 연결이 안 되면 남은 호출을 모두 건너뛴다(오래 매달리지 않음).
+- 예전에 등록한 `asil_offers.py --commit` 작업도 이제 `mac_daily.py` 로 넘어간다.
 
 - 단지 번호: `config/complexes.yaml` 의 `asil_id` (네이버·일별 매물 수용 번호와 다름).
 - 게시일(`posted`)은 중개사가 광고를 다시 올리면 바뀐다. 그래서 `first_seen`(처음 본 날)·`price_changed`/`prev_price`(가격 변경)·
