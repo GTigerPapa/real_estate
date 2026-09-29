@@ -1,0 +1,31 @@
+[2026-09-30 06:10] Mac 매일 작업 · python 3.9.6 · .env 없음
+── 실거래 수집
+/Users/chan/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+2026-09-30 06:10:13,920 INFO realestate.ingest: 대상 90건 (api=['trade', 'rent'], lawd=['11740', '41133', '41450', '41135'], 202310~202609)
+Traceback (most recent call last):
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 197, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 87, in _run_code
+    exec(code, run_globals)
+  File "/Users/chan/real_estate/src/realestate/ingest.py", line 140, in <module>
+    sys.exit(main())
+  File "/Users/chan/real_estate/src/realestate/ingest.py", line 116, in main
+    client = RtmsClient.from_settings(settings)
+  File "/Users/chan/real_estate/src/realestate/api/client.py", line 128, in from_settings
+    return cls(
+  File "/Users/chan/real_estate/src/realestate/api/client.py", line 114, in __init__
+    self._key = key or get_service_key()
+  File "/Users/chan/real_estate/src/realestate/api/client.py", line 51, in get_service_key
+    raise RuntimeError(f"{KEY_ENV} 환경변수가 설정되지 않았습니다 (.env.example 참고)")
+RuntimeError: DATA_GO_KR_KEY 환경변수가 설정되지 않았습니다 (.env.example 참고)
+── 아실 매물 목록
+고덕자이: 매물 245건 · 신규 0 · 가격변경 0 · 내려감 0
+고덕센트럴아이파크: 매물 252건 · 신규 0 · 가격변경 0 · 내려감 0
+센트럴타운: 매물 8건 · 신규 0 · 가격변경 0 · 내려감 0
+미사강변더샵센트럴포레스트: 매물 13건 · 신규 0 · 가격변경 0 · 내려감 0
+고덕롯데캐슬베네루체: 매물 182건 · 신규 0 · 가격변경 0 · 내려감 0
+yatap_jangmi8_hyundai: 실패 — AsilOfferError: 빈 목록 (형식 변경·차단 가능성)
+── 웹앱 데이터
+변경 없음: web/data/app.json
+요약: 실거래 실패(대상 90건) · 매물 실패 1곳 · 웹앱 성공 · DB 커밋 False · 문제: 실거래 수집 · 아실 매물 목록: yatap_jangmi8_hyundai
