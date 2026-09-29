@@ -29,6 +29,13 @@ from realestate import asil_offers, config  # noqa: E402  (둘 다 표준 라이
 DB_REL = "data/realestate.db"
 APP_REL = "web/data/app.json"
 OFFERS_REL = "data/listings/asil/asil_offers.csv"
+LOG_REL = "data/logs/mac_daily_last.log"   # 마지막 실행 기록 (원격에서 문제 확인용, 키는 로그에 남지 않음)
+_LOG: list[str] = []
+
+
+def say(msg: str = "") -> None:
+    print(msg)
+    _LOG.append(msg)
 BACKFILL_TASKS = 40   # 수집 대상이 이보다 많으면(평소 3개 시군구 이상 × 3개월 × 2 = 24건 안팎) 백필로 보고 DB 커밋
 
 
@@ -41,7 +48,7 @@ def run_py(*args: str) -> tuple[int, str]:
     env = dict(os.environ, PYTHONPATH=str(ROOT / "src"), PYTHONUNBUFFERED="1")
     p = subprocess.run([sys.executable, *args], cwd=ROOT, env=env, capture_output=True, text=True)
     out = (p.stdout or "") + (p.stderr or "")
-    print(out.rstrip())
+    say(out.rstrip())
     return p.returncode, out
 
 
@@ -50,7 +57,7 @@ def main(argv=None) -> int:
     ap.add_argument("--no-push", action="store_true", help="커밋·push 하지 않음")
     a = ap.parse_args(argv)
     now = datetime.now(config.KST)
-    print(f"[{now:%Y-%m-%d %H:%M}] Mac 매일 작업")
+    say(f"[{now:%Y-%m-%d %H:%M}] Mac 매일 작업 · python {sys.version.split()[0]} · .env {'있음' if (ROOT / '.env').exists() else '없음'}")
     problems = []
 
     if not a.no_push:  # 먼저 최신을 받아 두어야 Actions 가 만든 커밋과 충돌하지 않는다
@@ -60,7 +67,7 @@ def main(argv=None) -> int:
             return 1
 
     # 1) 실거래
-    print("── 실거래 수집")
+    say("── 실거래 수집")
     rc, out = run_py("-m", "realestate.ingest")
     m = re.search(r"대상 (\d+)건", out)
     tasks = int(m.group(1)) if m else 0
@@ -68,27 +75,33 @@ def main(argv=None) -> int:
         problems.append("실거래 수집" + (" (패키지 설치 필요: pip3 install -r requirements.txt)" if "ModuleNotFoundError" in out else ""))
 
     # 2) 아실 매물 목록
-    print("── 아실 매물 목록")
-    failed = asil_offers.collect(config.load_complexes(), ROOT / OFFERS_REL, now.strftime("%Y-%m-%d"))
+    say("── 아실 매물 목록")
+    failed = asil_offers.collect(config.load_complexes(), ROOT / OFFERS_REL, now.strftime("%Y-%m-%d"), log=say)
     if failed:
         problems.append("아실 매물 목록: " + ", ".join(failed))
 
     # 3) 웹앱 데이터
-    print("── 웹앱 데이터")
+    say("── 웹앱 데이터")
     rc_web, _ = run_py(str(ROOT / "scripts" / "export_web.py"))
     if rc_web:
         problems.append("웹앱 데이터 생성")
 
-    commit_db = tasks > BACKFILL_TASKS or now.day == 1 or (rc_web != 0 and rc == 0)
+    # DB는 실거래 수집이 성공했을 때만: 백필한 날·매월 1일, 또는 웹앱 데이터를 못 만들어 Actions 가 대신 만들어야 할 때
+    commit_db = rc == 0 and (tasks > BACKFILL_TASKS or now.day == 1 or rc_web != 0)
+    say(f"요약: 실거래 {'성공' if rc == 0 else '실패'}(대상 {tasks}건) · 매물 실패 {len(failed)}곳 · "
+        f"웹앱 {'성공' if rc_web == 0 else '실패'} · DB 커밋 {commit_db}" + (f" · 문제: {' · '.join(problems)}" if problems else ""))
+    log_path = ROOT / LOG_REL
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.write_text("\n".join(_LOG)[-20000:] + "\n", encoding="utf-8")
     if a.no_push:
         print(f"커밋 생략 (--no-push) · DB 커밋 대상이었는지: {commit_db}")
     else:
-        paths = [APP_REL, OFFERS_REL] + ([DB_REL] if commit_db else [])
+        paths = [APP_REL, OFFERS_REL, LOG_REL] + ([DB_REL] if commit_db else [])
         git("add", *paths, check=False)
         if git("diff", "--cached", "--quiet", check=False).returncode == 0:
             print("변경 없음")
         else:
-            what = "실거래·매물" + (" + DB" if commit_db else "")
+            what = ("실거래·매물" if rc == 0 else "매물 · 실거래 실패") + (" + DB" if commit_db else "")
             git("commit", "-q", "-m", f"Mac 매일 갱신 {now:%Y-%m-%d %H:%M} KST ({what})")
             for _ in range(3):
                 if git("push", "-q", check=False).returncode == 0:
