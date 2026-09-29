@@ -255,7 +255,7 @@ function Spark(values, color) {
 
 // ───── 데이터 ─────
 const state = { data: null, band: store.get("band", "84"), range: store.get("range", "36"), offerKind: "all", offerCx: "all",
-  cmpView: store.get("cmpView", "all"), cmpDeal: store.get("cmpDeal", "both"), error: null };
+  cmpView: store.get("cmpView", "all"), cmpDeal: store.get("cmpDeal", "both"), dtlView: "band", error: null };
 async function loadData(force) {
   try {
     const res = await fetch("data/app.json", { cache: force ? "reload" : "no-cache" });
@@ -501,15 +501,27 @@ function Detail(id, band) {
       tipDate: fmtYMD, series: lineSeries(c.asil),
     });
   }
-  const listingSec = Section(`아실 매물 · ${band}형`,
-    BL ? `${dotted(BL.d)} 매매 ${BL.sale}${wkTxt(B, "s")} · 전세 ${BL.jeonse}${wkTxt(B, "j")} · 월세 ${BL.wolse}${wkTxt(B, "w")} · ` +
-      `아실 매물 목록에서 ${band}형만 센 수(같은 물건 1개) · ${dotted(B.d[0])}부터 매일 쌓임 · 괄호는 1주 전 대비`
-      : `${band}형 매물 기록이 아직 없습니다. 매일 아침 매물 목록 수집으로 쌓입니다.`,
-    bandChart,
-    allChart ? h("h2", { style: "margin-top:14px" }, "단지 전체 (평형 구분 없음)") : null,
-    allChart ? h("p", { class: "note" }, `아실 일별 매물 수 · 2023.09부터 · 아실이 평형별 추이는 제공하지 않아 전체 면적 합계` +
-      (AL ? ` · ${dotted(AL.d)} 매매 ${AL.sale}${wkTxt(c.asil, "s")} · 전세 ${AL.jeonse} · 월세 ${AL.wolse}` : "")) : null,
-    allChart);
+  // 한 섹션에서 평형 필터를 따른다: 기본은 선택 평형(추적분), 없거나 사용자가 고르면 단지 전체 3년.
+  // 두 출처는 범위가 달라 한 선에 이어 붙이지 않는다 — 추적 목록은 아실 제휴 중개사 매물만이라 단지 전체 수보다 적다.
+  const bandSum = (k) => c.bands.reduce((acc, bb) => { const L2 = serLast(bandSer(c, bb)); return acc + (L2 ? L2[k] : 0); }, 0);
+  const cover = AL && AL.sale && c.bands.some((bb) => serLast(bandSer(c, bb))) ? Math.round(bandSum("sale") / AL.sale * 100) : null;
+  const dView = !BL ? "all" : (state.dtlView === "all" ? "all" : "band");
+  const viewChips = h("div", { class: "chips" },
+    [["band", `${band}형만 · 추적분`], ["all", "단지 전체 · 3년"]].map(([v, t]) =>
+      h("button", { "aria-pressed": String(dView === v), disabled: v === "band" && !BL ? true : null,
+        onclick: () => { state.dtlView = v; render(); } }, t)));
+  const noBandMsg = c.asil_b && Object.values(c.asil_b).some((x) => x.d.length)
+    ? `${band}형은 지금 추적 목록에 올라온 매물이 없습니다.`
+    : "이 단지는 아실 매물 목록을 받을 수 없어 평형별 매물 수가 없습니다 (단지 전체 수만 있음)";
+  const listingSec = Section(`매물 수 · ${dView === "band" ? band + "형" : "단지 전체"}`,
+    dView === "band"
+      ? `${dotted(BL.d)} 매매 ${BL.sale}${wkTxt(B, "s")} · 전세 ${BL.jeonse}${wkTxt(B, "j")} · 월세 ${BL.wolse}${wkTxt(B, "w")} · ` +
+        `아실 매물 목록에서 ${band}형만 센 수(같은 물건 1개) · ${dotted(B.d[0])}부터 매일 쌓임 · 괄호는 1주 전 대비` +
+        (cover !== null ? ` · 이 목록은 아실 제휴 중개사 매물만이라 단지 전체 매매 ${AL.sale}건 중 약 ${cover}%를 잡음` : "")
+      : (!BL ? noBandMsg + " · " : "") + `아실 일별 매물 수 · 2023.09부터 · 전체 면적 합계(아실이 평형별 과거 값을 주지 않음)` +
+        (AL ? ` · ${dotted(AL.d)} 매매 ${AL.sale}${wkTxt(c.asil, "s")} · 전세 ${AL.jeonse} · 월세 ${AL.wolse}` : ""),
+    viewChips,
+    dView === "band" ? bandChart : allChart);
   // 네이버 호가 (북마클릿으로 수집한 날만): 기록이 있을 때만 표시
   const L = c.listings;
   let askSec = null;

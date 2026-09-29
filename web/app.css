@@ -284,3 +284,4 @@ button { font: inherit; color: inherit; }
   /* 정보 */
   .info { max-width: 760px; }
 }
+.chips button[disabled] { opacity: .45; cursor: default; }
