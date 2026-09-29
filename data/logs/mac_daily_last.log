@@ -1,24 +1,99 @@
-[2026-09-30 06:10] Mac 매일 작업 · python 3.9.6 · .env 없음
+[2026-09-30 06:13] Mac 매일 작업 · python 3.9.6 · .env 있음
 ── 실거래 수집
 /Users/chan/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
   warnings.warn(
-2026-09-30 06:10:13,920 INFO realestate.ingest: 대상 90건 (api=['trade', 'rent'], lawd=['11740', '41133', '41450', '41135'], 202310~202609)
-Traceback (most recent call last):
-  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 197, in _run_module_as_main
-    return _run_code(code, main_globals, None,
-  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 87, in _run_code
-    exec(code, run_globals)
-  File "/Users/chan/real_estate/src/realestate/ingest.py", line 140, in <module>
-    sys.exit(main())
-  File "/Users/chan/real_estate/src/realestate/ingest.py", line 116, in main
-    client = RtmsClient.from_settings(settings)
-  File "/Users/chan/real_estate/src/realestate/api/client.py", line 128, in from_settings
-    return cls(
-  File "/Users/chan/real_estate/src/realestate/api/client.py", line 114, in __init__
-    self._key = key or get_service_key()
-  File "/Users/chan/real_estate/src/realestate/api/client.py", line 51, in get_service_key
-    raise RuntimeError(f"{KEY_ENV} 환경변수가 설정되지 않았습니다 (.env.example 참고)")
-RuntimeError: DATA_GO_KR_KEY 환경변수가 설정되지 않았습니다 (.env.example 참고)
+2026-09-30 06:13:36,917 INFO realestate.ingest: 대상 90건 (api=['trade', 'rent'], lawd=['11740', '41133', '41450', '41135'], 202310~202609)
+2026-09-30 06:13:37,364 INFO realestate.ingest: trade 11740 202607: total=277 rows=277 신규=2 갱신=275 원문변경=1/1
+2026-09-30 06:13:37,609 INFO realestate.ingest: trade 11740 202608: total=169 rows=169 신규=2 갱신=167 원문변경=1/1
+2026-09-30 06:13:37,886 INFO realestate.ingest: trade 11740 202609: total=66 rows=66 신규=8 갱신=58 원문변경=1/1
+2026-09-30 06:13:38,260 INFO realestate.ingest: trade 41133 202607: total=160 rows=160 신규=0 갱신=160 원문변경=0/1
+2026-09-30 06:13:38,588 INFO realestate.ingest: trade 41133 202608: total=114 rows=114 신규=0 갱신=114 원문변경=0/1
+2026-09-30 06:13:38,913 INFO realestate.ingest: trade 41133 202609: total=53 rows=53 신규=9 갱신=44 원문변경=1/1
+2026-09-30 06:13:39,344 INFO realestate.ingest: trade 41450 202607: total=313 rows=313 신규=0 갱신=313 원문변경=0/1
+2026-09-30 06:13:39,688 INFO realestate.ingest: trade 41450 202608: total=246 rows=246 신규=1 갱신=245 원문변경=1/1
+2026-09-30 06:13:40,041 INFO realestate.ingest: trade 41450 202609: total=111 rows=111 신규=27 갱신=84 원문변경=1/1
+2026-09-30 06:13:40,463 INFO realestate.ingest: trade 41135 202310: total=160 rows=160 신규=160 갱신=0 원문변경=1/1
+2026-09-30 06:13:40,806 INFO realestate.ingest: trade 41135 202311: total=133 rows=133 신규=133 갱신=0 원문변경=1/1
+2026-09-30 06:13:41,167 INFO realestate.ingest: trade 41135 202312: total=134 rows=134 신규=134 갱신=0 원문변경=1/1
+2026-09-30 06:13:41,562 INFO realestate.ingest: trade 41135 202401: total=204 rows=204 신규=204 갱신=0 원문변경=1/1
+2026-09-30 06:13:41,908 INFO realestate.ingest: trade 41135 202402: total=225 rows=225 신규=225 갱신=0 원문변경=1/1
+2026-09-30 06:13:42,234 INFO realestate.ingest: trade 41135 202403: total=322 rows=322 신규=322 갱신=0 원문변경=1/1
+2026-09-30 06:13:42,550 INFO realestate.ingest: trade 41135 202404: total=357 rows=357 신규=357 갱신=0 원문변경=1/1
+2026-09-30 06:13:42,883 INFO realestate.ingest: trade 41135 202405: total=510 rows=510 신규=510 갱신=0 원문변경=1/1
+2026-09-30 06:13:43,286 INFO realestate.ingest: trade 41135 202406: total=847 rows=847 신규=847 갱신=0 원문변경=1/1
+2026-09-30 06:13:43,625 INFO realestate.ingest: trade 41135 202407: total=716 rows=716 신규=716 갱신=0 원문변경=1/1
+2026-09-30 06:13:43,883 INFO realestate.ingest: trade 41135 202408: total=418 rows=418 신규=418 갱신=0 원문변경=1/1
+2026-09-30 06:13:44,204 INFO realestate.ingest: trade 41135 202409: total=212 rows=212 신규=212 갱신=0 원문변경=1/1
+2026-09-30 06:13:44,551 INFO realestate.ingest: trade 41135 202410: total=310 rows=310 신규=310 갱신=0 원문변경=1/1
+2026-09-30 06:13:44,828 INFO realestate.ingest: trade 41135 202411: total=277 rows=277 신규=277 갱신=0 원문변경=1/1
+2026-09-30 06:13:45,183 INFO realestate.ingest: trade 41135 202412: total=227 rows=227 신규=227 갱신=0 원문변경=1/1
+2026-09-30 06:13:45,562 INFO realestate.ingest: trade 41135 202501: total=230 rows=230 신규=230 갱신=0 원문변경=1/1
+2026-09-30 06:13:45,994 INFO realestate.ingest: trade 41135 202502: total=497 rows=497 신규=497 갱신=0 원문변경=1/1
+2026-09-30 06:13:46,418 INFO realestate.ingest: trade 41135 202503: total=804 rows=804 신규=804 갱신=0 원문변경=1/1
+2026-09-30 06:13:46,718 INFO realestate.ingest: trade 41135 202504: total=544 rows=544 신규=544 갱신=0 원문변경=1/1
+2026-09-30 06:13:47,064 INFO realestate.ingest: trade 41135 202505: total=898 rows=898 신규=898 갱신=0 원문변경=1/1
+2026-09-30 06:13:47,822 INFO realestate.ingest: trade 41135 202506: total=1432 rows=1432 신규=1432 갱신=0 원문변경=2/2
+2026-09-30 06:13:48,058 INFO realestate.ingest: trade 41135 202507: total=251 rows=251 신규=251 갱신=0 원문변경=1/1
+2026-09-30 06:13:48,468 INFO realestate.ingest: trade 41135 202508: total=368 rows=368 신규=368 갱신=0 원문변경=1/1
+2026-09-30 06:13:49,116 INFO realestate.ingest: trade 41135 202509: total=1099 rows=1099 신규=1099 갱신=0 원문변경=2/2
+2026-09-30 06:13:49,547 INFO realestate.ingest: trade 41135 202510: total=673 rows=673 신규=673 갱신=0 원문변경=1/1
+2026-09-30 06:13:49,780 INFO realestate.ingest: trade 41135 202511: total=91 rows=91 신규=91 갱신=0 원문변경=1/1
+2026-09-30 06:13:50,173 INFO realestate.ingest: trade 41135 202512: total=279 rows=279 신규=279 갱신=0 원문변경=1/1
+2026-09-30 06:13:50,570 INFO realestate.ingest: trade 41135 202601: total=368 rows=368 신규=368 갱신=0 원문변경=1/1
+2026-09-30 06:13:50,846 INFO realestate.ingest: trade 41135 202602: total=283 rows=283 신규=283 갱신=0 원문변경=1/1
+2026-09-30 06:13:51,187 INFO realestate.ingest: trade 41135 202603: total=245 rows=245 신규=245 갱신=0 원문변경=1/1
+2026-09-30 06:13:51,548 INFO realestate.ingest: trade 41135 202604: total=537 rows=537 신규=537 갱신=0 원문변경=1/1
+2026-09-30 06:13:51,991 INFO realestate.ingest: trade 41135 202605: total=529 rows=529 신규=529 갱신=0 원문변경=1/1
+2026-09-30 06:13:52,249 INFO realestate.ingest: trade 41135 202606: total=458 rows=458 신규=458 갱신=0 원문변경=1/1
+2026-09-30 06:13:52,591 INFO realestate.ingest: trade 41135 202607: total=469 rows=469 신규=469 갱신=0 원문변경=1/1
+2026-09-30 06:13:52,891 INFO realestate.ingest: trade 41135 202608: total=159 rows=159 신규=159 갱신=0 원문변경=1/1
+2026-09-30 06:13:53,192 INFO realestate.ingest: trade 41135 202609: total=81 rows=81 신규=81 갱신=0 원문변경=1/1
+2026-09-30 06:13:54,178 INFO realestate.ingest: rent 11740 202607: total=1088 rows=1088 신규=8 갱신=1080 원문변경=2/2
+2026-09-30 06:13:54,401 INFO realestate.ingest: rent 11740 202608: total=769 rows=769 신규=7 갱신=762 원문변경=1/1
+2026-09-30 06:13:54,769 INFO realestate.ingest: rent 11740 202609: total=649 rows=649 신규=80 갱신=569 원문변경=1/1
+2026-09-30 06:13:54,963 INFO realestate.ingest: rent 41133 202607: total=214 rows=214 신규=0 갱신=214 원문변경=0/1
+2026-09-30 06:13:55,288 INFO realestate.ingest: rent 41133 202608: total=222 rows=222 신규=3 갱신=219 원문변경=1/1
+2026-09-30 06:13:55,653 INFO realestate.ingest: rent 41133 202609: total=191 rows=191 신규=24 갱신=167 원문변경=1/1
+2026-09-30 06:13:56,160 INFO realestate.ingest: rent 41450 202607: total=732 rows=732 신규=4 갱신=728 원문변경=1/1
+2026-09-30 06:13:56,498 INFO realestate.ingest: rent 41450 202608: total=681 rows=681 신규=3 갱신=678 원문변경=1/1
+2026-09-30 06:13:56,836 INFO realestate.ingest: rent 41450 202609: total=540 rows=540 신규=58 갱신=482 원문변경=1/1
+2026-09-30 06:13:57,544 INFO realestate.ingest: rent 41135 202310: total=1660 rows=1660 신규=1660 갱신=0 원문변경=2/2
+2026-09-30 06:13:58,237 INFO realestate.ingest: rent 41135 202311: total=1772 rows=1772 신규=1772 갱신=0 원문변경=2/2
+2026-09-30 06:13:58,983 INFO realestate.ingest: rent 41135 202312: total=1852 rows=1852 신규=1852 갱신=0 원문변경=2/2
+2026-09-30 06:13:59,687 INFO realestate.ingest: rent 41135 202401: total=1763 rows=1763 신규=1763 갱신=0 원문변경=2/2
+2026-09-30 06:14:00,858 INFO realestate.ingest: rent 41135 202402: total=1473 rows=1473 신규=1473 갱신=0 원문변경=2/2
+2026-09-30 06:14:01,529 INFO realestate.ingest: rent 41135 202403: total=1424 rows=1424 신규=1424 갱신=0 원문변경=2/2
+2026-09-30 06:14:02,080 INFO realestate.ingest: rent 41135 202404: total=1209 rows=1209 신규=1209 갱신=0 원문변경=2/2
+2026-09-30 06:14:02,836 INFO realestate.ingest: rent 41135 202405: total=1369 rows=1369 신규=1369 갱신=0 원문변경=2/2
+2026-09-30 06:14:03,564 INFO realestate.ingest: rent 41135 202406: total=1358 rows=1358 신규=1358 갱신=0 원문변경=2/2
+2026-09-30 06:14:04,177 INFO realestate.ingest: rent 41135 202407: total=1401 rows=1401 신규=1401 갱신=0 원문변경=2/2
+2026-09-30 06:14:04,779 INFO realestate.ingest: rent 41135 202408: total=1146 rows=1146 신규=1146 갱신=0 원문변경=2/2
+2026-09-30 06:14:05,478 INFO realestate.ingest: rent 41135 202409: total=1042 rows=1042 신규=1042 갱신=0 원문변경=2/2
+2026-09-30 06:14:06,284 INFO realestate.ingest: rent 41135 202410: total=1739 rows=1739 신규=1739 갱신=0 원문변경=2/2
+2026-09-30 06:14:06,986 INFO realestate.ingest: rent 41135 202411: total=1358 rows=1358 신규=1358 갱신=0 원문변경=2/2
+2026-09-30 06:14:07,703 INFO realestate.ingest: rent 41135 202412: total=1543 rows=1543 신규=1543 갱신=0 원문변경=2/2
+2026-09-30 06:14:08,281 INFO realestate.ingest: rent 41135 202501: total=1230 rows=1230 신규=1230 갱신=0 원문변경=2/2
+2026-09-30 06:14:09,066 INFO realestate.ingest: rent 41135 202502: total=1833 rows=1833 신규=1833 갱신=0 원문변경=2/2
+2026-09-30 06:14:09,983 INFO realestate.ingest: rent 41135 202503: total=1579 rows=1579 신규=1579 갱신=0 원문변경=2/2
+2026-09-30 06:14:10,647 INFO realestate.ingest: rent 41135 202504: total=1478 rows=1478 신규=1478 갱신=0 원문변경=2/2
+2026-09-30 06:14:11,273 INFO realestate.ingest: rent 41135 202505: total=1689 rows=1689 신규=1689 갱신=0 원문변경=2/2
+2026-09-30 06:14:11,907 INFO realestate.ingest: rent 41135 202506: total=1675 rows=1675 신규=1675 갱신=0 원문변경=2/2
+2026-09-30 06:14:12,557 INFO realestate.ingest: rent 41135 202507: total=1561 rows=1561 신규=1561 갱신=0 원문변경=2/2
+2026-09-30 06:14:13,245 INFO realestate.ingest: rent 41135 202508: total=1151 rows=1151 신규=1151 갱신=0 원문변경=2/2
+2026-09-30 06:14:13,989 INFO realestate.ingest: rent 41135 202509: total=1428 rows=1428 신규=1428 갱신=0 원문변경=2/2
+2026-09-30 06:14:14,579 INFO realestate.ingest: rent 41135 202510: total=1477 rows=1477 신규=1477 갱신=0 원문변경=2/2
+2026-09-30 06:14:15,356 INFO realestate.ingest: rent 41135 202511: total=1717 rows=1717 신규=1717 갱신=0 원문변경=2/2
+2026-09-30 06:14:16,164 INFO realestate.ingest: rent 41135 202512: total=1670 rows=1670 신규=1670 갱신=0 원문변경=2/2
+2026-09-30 06:14:16,876 INFO realestate.ingest: rent 41135 202601: total=1634 rows=1634 신규=1634 갱신=0 원문변경=2/2
+2026-09-30 06:14:17,541 INFO realestate.ingest: rent 41135 202602: total=1522 rows=1522 신규=1522 갱신=0 원문변경=2/2
+2026-09-30 06:14:18,175 INFO realestate.ingest: rent 41135 202603: total=1358 rows=1358 신규=1358 갱신=0 원문변경=2/2
+2026-09-30 06:14:18,857 INFO realestate.ingest: rent 41135 202604: total=1115 rows=1115 신규=1115 갱신=0 원문변경=2/2
+2026-09-30 06:14:19,464 INFO realestate.ingest: rent 41135 202605: total=1095 rows=1095 신규=1095 갱신=0 원문변경=2/2
+2026-09-30 06:14:19,880 INFO realestate.ingest: rent 41135 202606: total=979 rows=979 신규=979 갱신=0 원문변경=1/1
+2026-09-30 06:14:20,708 INFO realestate.ingest: rent 41135 202607: total=1101 rows=1101 신규=1101 갱신=0 원문변경=2/2
+2026-09-30 06:14:20,925 INFO realestate.ingest: rent 41135 202608: total=825 rows=825 신규=825 갱신=0 원문변경=1/1
+2026-09-30 06:14:21,254 INFO realestate.ingest: rent 41135 202609: total=671 rows=671 신규=671 갱신=0 원문변경=1/1
+2026-09-30 06:14:21,255 INFO realestate.ingest: 완료: 호출 126회, 성공 90, 실패 0, 건너뜀 0
 ── 아실 매물 목록
 고덕자이: 매물 245건 · 신규 0 · 가격변경 0 · 내려감 0
 고덕센트럴아이파크: 매물 252건 · 신규 0 · 가격변경 0 · 내려감 0
@@ -27,5 +102,5 @@ RuntimeError: DATA_GO_KR_KEY 환경변수가 설정되지 않았습니다 (.env.
 고덕롯데캐슬베네루체: 매물 182건 · 신규 0 · 가격변경 0 · 내려감 0
 yatap_jangmi8_hyundai: 실패 — AsilOfferError: 빈 목록 (형식 변경·차단 가능성)
 ── 웹앱 데이터
-변경 없음: web/data/app.json
-요약: 실거래 실패(대상 90건) · 매물 실패 1곳 · 웹앱 성공 · DB 커밋 False · 문제: 실거래 수집 · 아실 매물 목록: yatap_jangmi8_hyundai
+저장: web/data/app.json (404,017 bytes) · 실거래 2026-09-18 · 매물 2026-09-28 · 덤프 적재 1개
+요약: 실거래 성공(대상 90건) · 매물 실패 1곳 · 웹앱 성공 · DB 커밋 True · 문제: 아실 매물 목록: yatap_jangmi8_hyundai
