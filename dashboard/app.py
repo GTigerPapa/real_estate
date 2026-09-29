@@ -128,9 +128,10 @@ st.title("관심 단지 실거래 동향")
 # ───── 필터 (한 줄) ─────
 all_months = metrics.month_range(trades_all["deal_ym"].min(), trades_all["deal_ym"].max())
 f1, f2, f3 = st.columns([1.3, 3, 2.7])
-BANDS = ["59", "74", "84"]
+BANDS = [str(b["band"]) for b in settings.get("size_bands", [])] or ["84"]   # settings.yaml 평형 구간 순서
 q_band = st.query_params.get("band", "84")
-band = f1.radio("평형", BANDS, index=BANDS.index(q_band) if q_band in BANDS else 2, horizontal=True)
+band = f1.radio("평형", BANDS, index=BANDS.index(q_band) if q_band in BANDS else BANDS.index("84") if "84" in BANDS else 0,
+                horizontal=True)
 avail = [c for c in order if band in bands_of[c]]
 sel = f2.multiselect("단지", avail, default=avail, format_func=names.get)
 start, end = f3.select_slider("기간", options=all_months, value=(all_months[0], all_months[-1]))

@@ -51,7 +51,11 @@ jobs:
             echo "::warning::DATA_GO_KR_KEY 시크릿이 없어 실거래 수집을 건너뜁니다 (Settings → Secrets and variables → Actions)"
             exit 0
           fi
-          python -m realestate.ingest || echo "::warning::일부 월 수집 실패 — 다음 실행에서 자동 재시도"
+          python -m realestate.ingest 2>&1 | tee ingest.log
+          [ "${PIPESTATUS[0]}" = "0" ] || echo "::warning::일부 월 수집 실패 — 다음 실행에서 자동 재시도"
+          # 새 시군구 백필처럼 평소(최근 3개월 재수집)보다 훨씬 많이 받은 날은 DB도 커밋해 다음 실행이 다시 받지 않게 한다
+          n=$(grep -oE '대상 [0-9]+건' ingest.log | grep -oE '[0-9]+' | head -1)
+          if [ "${n:-0}" -gt 40 ]; then echo "BACKFILLED=true" >> "$GITHUB_ENV"; fi
 
       - name: 아실 일별 매물 수 수집 (최근 3개월 재수집, 단지당 1회 요청)
         id: asil
@@ -69,9 +73,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add web/data/app.json data/listings/asil/
-          # DB(45MB)는 매월 1일(KST) 또는 수동 요청 때만 커밋해 저장소 용량을 관리한다.
+          # DB(45MB)는 매월 1일(KST)·수동 요청·대량 백필 때만 커밋해 저장소 용량을 관리한다.
           # 매 실행이 최근 3개월을 재수집하므로 그 사이 데이터가 빠지지 않는다.
-          if [ "$(TZ=Asia/Seoul date +%d)" = "01" ] || [ "$COMMIT_DB" = "true" ]; then
+          if [ "$(TZ=Asia/Seoul date +%d)" = "01" ] || [ "$COMMIT_DB" = "true" ] || [ "${BACKFILLED:-}" = "true" ]; then
             git add data/realestate.db
           fi
           if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi

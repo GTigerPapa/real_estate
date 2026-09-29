@@ -59,7 +59,11 @@ def test_screens_render_without_errors(server, scheme):
 
         pg.goto(server + "#/compare")
         pg.wait_for_selector(".cmp")
-        assert pg.locator(".cmp tbody tr").count() == n84
+        assert pg.locator(".cmp:not(.otr) tbody tr").count() == n84
+        # 매물 수 추이: 단지별 매매(실선)·전월세(점선), 단지 수만큼 요약 줄
+        trend = pg.locator(".section", has_text="매물 수 추이")
+        assert trend.locator("path[style*='stroke-dasharray']").count() == n84
+        assert trend.locator(".cmp.otr tbody tr").count() == n84
         pg.goto(server + "#/info")
         pg.wait_for_selector(".info")
         b.close()

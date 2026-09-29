@@ -4,7 +4,7 @@
 
 // ───── 유틸 ─────
 const $ = (sel, el = document) => el.querySelector(sel);
-const SLOT = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s4)", "var(--s5)"];
+const SLOT = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s4)", "var(--s5)", "var(--s6)"];
 const WIDE = window.matchMedia("(min-width: 1024px)");  // app.css 의 PC 레이아웃 기준과 같게 유지
 const store = {
   get(k, d) { try { const v = localStorage.getItem("re." + k); return v === null ? d : v; } catch (e) { return d; } },
@@ -50,7 +50,9 @@ const fmtYMD = (t) => { const d = new Date(t); return `${d.getUTCFullYear()}.${S
 const dotted = (s) => (s || "").replaceAll("-", ".");
 
 // ───── 차트 (SVG) ─────
-// series: {name, color, kind: line|dots|bar, pts: [{t, v, n?, tip?}], shape?, width?}
+// series: {name, color, kind: line|dots|bar, pts: [{t, v, n?, tip?}], shape?, width?, dash?, group?}
+// dash: 점선. group: 같은 group 의 선들은 툴팁에서 한 줄로 묶는다 (예: 단지별 매매 / 전월세).
+// opts.legendItems: [{name, color, kind, dash?}] 로 범례를 직접 지정 (단지 색 + 선 모양 설명 따로 보여줄 때)
 // 선은 값이 없는 달을 건너뛰어 앞뒤를 직선으로 잇는다. 막대는 같은 t 끼리 누적.
 function niceTicks(lo, hi, count = 4) {
   if (!(hi > lo)) { hi = lo + 1; }
@@ -64,9 +66,14 @@ function Chart(opts) {
   const wrap = h("div", { class: "chart" });
   const series = opts.series.filter((se) => se.pts.some((p) => p.v !== null && p.v !== undefined));
   if (!series.length) { wrap.append(h("div", { class: "empty" }, opts.emptyText || "표시할 데이터가 없습니다")); return wrap; }
-  if (series.length > 1 || opts.legend) {
+  const legendIcon = (se) => se.dash ? h("i", { class: "dl", style: `border-color:${se.color}` })
+    : h("i", { class: se.kind === "line" ? "l" : se.kind === "bar" ? "b" : "d", style: `background:${se.color}` });
+  if (opts.legendItems) {
+    wrap.append(h("div", { class: "legend" }, opts.legendItems.map((it) => it.sep ? h("span", { class: "sep" })
+      : h("span", {}, legendIcon(it), it.name))));
+  } else if (series.length > 1 || opts.legend) {
     wrap.append(h("div", { class: "legend" }, series.filter((se) => !se.noLegend).map((se) =>
-      h("span", {}, h("i", { class: se.kind === "line" ? "l" : se.kind === "bar" ? "b" : "d", style: `background:${se.color}` }), se.name))));
+      h("span", {}, legendIcon(se), se.name))));
   }
   const holder = h("div", { style: "position:relative" });
   wrap.append(holder);
@@ -151,7 +158,8 @@ function Chart(opts) {
       const pts = se.pts.filter((p) => p.v !== null && p.v !== undefined && p.t >= t0 && p.t <= t1);
       if (!pts.length) continue;
       const d = pts.map((p, i) => `${i ? "L" : "M"}${X(p.t).toFixed(1)} ${Y(p.v).toFixed(1)}`).join("");
-      svg.append(s("path", { d, style: `fill:none;stroke:${se.color};stroke-width:${se.width || 2};stroke-linejoin:round;stroke-linecap:round` }));
+      svg.append(s("path", { d, style: `fill:none;stroke:${se.color};stroke-width:${se.width || 2};stroke-linejoin:round;stroke-linecap:${se.dash ? "butt" : "round"}` +
+        (se.dash ? `;stroke-dasharray:${se.dash === true ? "5 4" : se.dash}` : "") }));
       if (se.endDot !== false) {
         const last = pts[pts.length - 1];
         svg.append(s("circle", { cx: X(last.t), cy: Y(last.v), r: 3.5, style: `fill:${se.color};stroke:var(--card);stroke-width:2` }));
@@ -183,12 +191,23 @@ function Chart(opts) {
         for (const k of keyT) if (Math.abs(X(k) - px) < Math.abs(X(t) - px)) t = k;
         anchorX = X(t);
         tip.append(h("div", { class: "t" }, (opts.tipDate || fmtYM)(t)));
+        const groups = new Map();   // group 이 있는 선은 한 줄에 "값1 / 값2 이름"
         for (const se of series.filter((x) => x.kind !== "dots")) {
           const p = se.pts.find((q) => q.t === t);
           if (!p || p.v === null || p.v === undefined) continue;
+          const txt = (se.fmt || opts.tipFmt || yf)(p.v);
+          if (se.group) {
+            const g = groups.get(se.group);
+            if (g) { g.b.textContent += " / " + txt; continue; }
+            const b = h("b", {}, txt);
+            groups.set(se.group, { b });
+            tip.append(h("div", { class: "row" }, h("i", { style: `background:${se.color}` }), b, h("span", {}, se.group)));
+            continue;
+          }
           tip.append(h("div", { class: "row" }, h("i", { style: `background:${se.color}` }),
-            h("b", {}, (se.fmt || opts.tipFmt || yf)(p.v)), h("span", {}, se.name + (p.n !== undefined ? ` (n=${p.n})` : ""))));
+            h("b", {}, txt), h("span", {}, se.name + (p.n !== undefined ? ` (n=${p.n})` : ""))));
         }
+        if (opts.tipNote) tip.append(h("div", { class: "t" }, opts.tipNote));
       } else return;
       xh.setAttribute("x1", anchorX); xh.setAttribute("x2", anchorX); xh.setAttribute("visibility", "visible");
       tip.hidden = false;
@@ -235,7 +254,8 @@ function Spark(values, color) {
 }
 
 // ───── 데이터 ─────
-const state = { data: null, band: store.get("band", "84"), range: store.get("range", "36"), offerKind: "all", offerCx: "all", error: null };
+const state = { data: null, band: store.get("band", "84"), range: store.get("range", "36"), offerKind: "all", offerCx: "all",
+  cmpView: store.get("cmpView", "all"), cmpDeal: store.get("cmpDeal", "both"), error: null };
 async function loadData(force) {
   try {
     const res = await fetch("data/app.json", { cache: force ? "reload" : "no-cache" });
@@ -533,6 +553,76 @@ function Detail(id, band) {
       wide(OfferFeed(id, band))));
 }
 
+// 단지 비교: 아실 매물 수 추이. 매매 = 실선, 전월세(전세+월세) = 점선, 색 = 단지.
+// 보기: 단지 전체(아실 일별 매물 수, 2023.09~) / 선택 평형(아실 매물 목록 추적으로 센 수, 추적 시작일~).
+// 아실은 평형별 과거 추이를 주지 않으므로 3년 추세는 단지 전체 값이고, 평형 필터는 '그 평형이 있는 단지'를 고른다.
+function OfferTrend(list, band) {
+  const view = state.cmpView === "band" ? "band" : "all", deal = ["sale", "rent"].includes(state.cmpDeal) ? state.cmpDeal : "both";
+  const pick = (k, v) => () => { state[k] = v; store.set(k, v); render(); };
+  const serOf = (c) => view === "band" ? bandSer(c, band) : (c.asil && c.asil.d.length ? c.asil : null);
+  const have = list.filter((c) => serLast(serOf(c)));
+  const chips = h("div", {},
+    h("div", { class: "chips" }, [["all", "단지 전체 · 3년"], ["band", `${band}형만 · 추적분`]].map(([v, t]) =>
+      h("button", { "aria-pressed": String(view === v), onclick: pick("cmpView", v) }, t))),
+    h("div", { class: "chips" }, [["both", "매매 + 전월세"], ["sale", "매매"], ["rent", "전월세"]].map(([v, t]) =>
+      h("button", { "aria-pressed": String(deal === v), onclick: pick("cmpDeal", v) }, t))));
+  const title = view === "band" ? `${band}형 매물 수 추이` : "매물 수 추이 · 단지 전체";
+  const note = view === "band"
+    ? `아실 매물 목록에서 ${band}형만 센 일별 수(같은 물건 1개) · 추적을 시작한 날부터 매일 쌓임 · 실선 매매, 점선 전월세(전세+월세)`
+    : `아실 일별 매물 수(2023.09~, 같은 물건 1개)의 7일 평균 · 아실이 평형별 과거 추이를 주지 않아 단지 전체 면적 합계 · ` +
+      `${band}형이 있는 단지만 표시 · 실선 매매, 점선 전월세(전세+월세) · 아래 표는 최근일 실제 값`;
+  if (!have.length) return Section(title, note, chips, h("div", { class: "empty" }, view === "band"
+    ? `${band}형 매물 기록이 아직 없습니다. 매일 아침 매물 목록 수집으로 쌓입니다.` : "아실 매물 기록이 없습니다"));
+  const rentPts = (A) => A.d.map((d, i) => ({ t: dDate(d), v: (A.j[i] ?? 0) + (A.w[i] ?? 0) }));
+  // 3년 보기는 하루 단위 흔들림이 커서 7일 평균(그날 포함 직전 7일)으로 그린다. 표의 숫자는 원래 값.
+  const smooth = view === "all";
+  const avg7 = (pts) => {
+    if (!smooth) return pts;
+    return pts.map((p, i) => {
+      let sum = 0, n = 0;
+      for (let k = i; k >= 0 && pts[k].t > p.t - 7 * 864e5; k--) { sum += pts[k].v; n++; }
+      return { t: p.t, v: Math.round(sum / n * 10) / 10 };
+    });
+  };
+  const series = [];
+  for (const c of have) {
+    const A = serOf(c), col = colorOf(c);
+    if (deal !== "rent") series.push({ name: `${c.short} 매매`, group: c.short, kind: "line", color: col, width: 1.6, endDot: false, pts: avg7(serPts(A, "s")) });
+    if (deal !== "sale") series.push({ name: `${c.short} 전월세`, group: c.short, kind: "line", color: col, width: 1.6, dash: true, endDot: false, pts: avg7(rentPts(A)) });
+  }
+  const t1 = Math.max(...have.map((c) => dDate(serLast(serOf(c)).d)));
+  let xDom, xTicks, xFmt;
+  if (view === "band") {
+    const t0 = Math.min(...have.map((c) => dDate(serOf(c).d[0]))), span = Math.max(14, (t1 - t0) / 864e5);  // 쌓인 날이 적어도 2주 폭
+    xDom = [t1 - span * 864e5 - 864e5, t1 + 864e5]; xTicks = dayTicks; xFmt = fmtMD;
+  } else {
+    const first = Math.min(...have.map((c) => dDate(serOf(c).d[0])));
+    const t0 = Math.max(first, t1 - (state.range === "12" ? 365 : 3 * 365 + 1) * 864e5);
+    const pad = Math.max(2, (t1 - t0) / 864e5 * 0.02) * 864e5;
+    xDom = [t0 - pad, t1 + pad];
+  }
+  const legendItems = [...have.map((c) => ({ name: c.short, kind: "line", color: colorOf(c) })), { sep: true },
+    ...(deal !== "rent" ? [{ name: "매매", kind: "line", color: "var(--ink2)" }] : []),
+    ...(deal !== "sale" ? [{ name: "전월세", kind: "line", dash: true, color: "var(--ink2)" }] : [])];
+  const chart = Chart({
+    label: title, xDomain: xDom, height: 230, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => (smooth ? String(Math.round(v)) : v) + "건",
+    xTicks, xFmt, tipDate: fmtYMD, series, legendItems,
+    tipNote: (deal === "both" ? "매매 / 전월세" : deal === "sale" ? "매매" : "전월세") + (smooth ? " · 7일 평균" : ""),
+  });
+  // 최근일 · 1주 전 대비 한 줄 요약 (색 대신 이름으로도 읽히게)
+  const rows = have.map((c) => {
+    const A = serOf(c), L = serLast(A), r = (L.jeonse ?? 0) + (L.wolse ?? 0);
+    const ds = serDelta(A, "s"), dj = serDelta(A, "j"), dw = serDelta(A, "w");
+    const dr = dj === null || dw === null ? null : dj + dw;
+    return h("tr", {}, h("td", {}, h("span", { class: "dot", style: `display:inline-block;margin-right:6px;background:${colorOf(c)}` }), c.short),
+      h("td", {}, String(L.sale), dtxt(ds)), h("td", {}, String(r), dtxt(dr)), h("td", {}, md(L.d)));
+  });
+  const table = h("table", { class: "cmp otr" },
+    h("thead", {}, h("tr", {}, h("th", {}, "단지"), h("th", {}, "매매 (1주)"), h("th", {}, "전월세 (1주)"), h("th", {}, "기준일"))),
+    h("tbody", {}, rows));
+  return Section(title, note, chips, chart, table);
+}
+
 function Compare() {
   const d = state.data, band = d.bands.includes(state.band) ? state.band : "84";
   const list = d.complexes.filter((c) => c.bands.includes(band)), months = monthsView(), X = xDomain(months);
@@ -545,18 +635,7 @@ function Compare() {
     label: "단지별 전세가율", xDomain: X, height: 190, yFmt: (v) => v + "%", tipFmt: (v) => v.toFixed(1) + "%",
     series: list.map((c) => ({ name: c.short, kind: "line", color: colorOf(c), pts: seriesPts(c.b[band].ratio_3m, months, d.months) })),
   });
-  const withB = list.filter((c) => serLast(bandSer(c, band)));
-  let offers = null;
-  if (withB.length) {
-    const t1 = Math.max(...withB.map((c) => dDate(serLast(bandSer(c, band)).d)));
-    const t0 = Math.min(...withB.map((c) => dDate(bandSer(c, band).d[0])));
-    const span = Math.max(14, (t1 - t0) / 864e5);
-    offers = Chart({
-      label: `단지별 ${band}형 매매 매물 수`, xDomain: [t1 - span * 864e5 - 864e5, t1 + 864e5], height: 200, yMin: 0,
-      yFmt: (v) => String(v), tipFmt: (v) => v + "건", xTicks: dayTicks, xFmt: fmtMD, tipDate: fmtYMD,
-      series: withB.map((c) => ({ name: c.short, kind: "line", color: colorOf(c), width: 1.8, pts: serPts(bandSer(c, band), "s") })),
-    });
-  }
+  const offers = OfferTrend(list, band);
   const table = h("table", { class: "cmp" },
     h("thead", {}, h("tr", {}, h("th", {}, "단지"), h("th", {}, "중앙값"), h("th", {}, "1년"), h("th", {}, "전세율"),
       h("th", {}, "매물"), h("th", {}, "1주"))),
@@ -573,7 +652,7 @@ function Compare() {
     h("div", { class: "sections" },
       Section(`${band}형 매매 3개월 중앙값`, null, med),
       Section(`${band}형 전세가율`, "전세 3개월 중앙값 ÷ 매매 3개월 중앙값", ratio),
-      offers ? wide(Section(`${band}형 매매 매물 수`, "아실 매물 목록에서 평형별로 센 일별 수(같은 물건 1개) · 추적 시작일부터 쌓임", offers)) : null,
+      wide(offers),
       wide(Section("요약", `중앙값 = 3개월 매매 중앙값 · 전세율 = 전세가율 · 매물 = ${band}형 아실 매매 매물 수(최근일) · 1주 = 1주 전 대비`, table))));
 }
 
@@ -586,13 +665,13 @@ function Info() {
     h("ul", {},
       h("li", {}, "3개월 중앙값: 그 달 포함 직전 3개월의 개별 매매를 모은 중앙값. 해제·직거래 제외. n은 거래 수(3건 미만은 ⚠)."),
       h("li", {}, "전세: 신규 계약만(갱신은 5% 인상 상한 때문에 제외). 전세가율 = 전세 ÷ 매매 (같은 3개월 창)."),
-      h("li", {}, "평형: 전용 59형 57~62㎡ · 74형 72~77㎡ · 84형 82~87㎡."),
+      h("li", {}, "평형: 전용 59형 57~62㎡ · 74형 72~77㎡ · 84형 82~87㎡ · 93형 90~97㎡ · 101형 97~107㎡ · 118형 112~125㎡."),
       h("li", {}, `매수 상한 ${eok(d.cap)} (설정 파일 config/settings.yaml).`),
       h("li", {}, "최근 1~2개월은 신고 기한(30일)이 남아 거래 수가 늘어날 수 있습니다.")),
     h("h2", {}, "출처"),
     h("ul", {},
       h("li", {}, "국토교통부 아파트 매매·전월세 실거래가 (공공데이터포털) — 매일 06:30 자동 갱신"),
-      h("li", {}, "아실(asil.kr) 일별 매물 수(매매·전세·월세) — 2023.09부터, 매일 06:30 자동 갱신. 여러 중개사가 올린 같은 물건은 1건."),
+      h("li", {}, "아실(asil.kr) 일별 매물 수(매매·전세·월세) — 2023.09부터, 매일 06:30 자동 갱신. 여러 중개사가 올린 같은 물건은 1건. 단지 전체 면적 합계(평형 구분 없음)."),
       h("li", {}, "네이버페이 부동산 매매 최저 호가 — 북마클릿으로 수집한 날만 기록")),
     h("h2", {}, "홈 화면에 추가"),
     h("ul", {},

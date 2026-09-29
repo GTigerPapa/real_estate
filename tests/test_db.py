@@ -42,6 +42,14 @@ def test_views_match_and_band(conn, fixture_text):
     db.sync_complexes(conn, [{"id": "x", "name": "테스트", "sgg_cd": "11740", "umd_nm": "상일동",
                               "apt_seq": ["11740-9999"], "fallback": [{"jibun": "100", "apt_nm": "테스트자이"}]}])
     assert conn.execute("SELECT COUNT(*) FROM v_trade").fetchone()[0] == 3
+    # 단지명 없이 법정동+지번만 준 보조 키 (실거래 단지명 표기를 아직 모를 때)
+    db.sync_complexes(conn, [{"id": "y", "name": "지번만", "sgg_cd": "11740", "umd_nm": "상일동",
+                              "apt_seq": [], "fallback": [{"jibun": "100"}]}])
+    assert conn.execute("SELECT apt_nm FROM complex_key").fetchone()[0] is None
+    assert conn.execute("SELECT COUNT(*) FROM v_trade WHERE complex_id='y'").fetchone()[0] == 3
+    db.sync_complexes(conn, [{"id": "z", "name": "다른지번", "sgg_cd": "11740", "umd_nm": "상일동",
+                              "apt_seq": [], "fallback": [{"jibun": "999"}]}])
+    assert conn.execute("SELECT COUNT(*) FROM v_trade").fetchone()[0] == 0
 
 
 def test_sync_config_noop_when_unchanged(conn):

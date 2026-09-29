@@ -68,13 +68,15 @@ def test_bookmarklet_runs_in_real_chromium(tmp_path, conn):
     assert re.fullmatch(r"naver_listings_\d{8}_\d{4}\.json", path.name)
     assert any("성공" in m for m in dialogs), dialogs
     d = listings.load_dump(path)
-    assert [c["naver_id"] for c in d["complexes"]] == [121977, 118210, 102283, 111028]
+    import yaml
+    expected = [int(c["naver_id"]) for c in yaml.safe_load((ROOT / "config" / "complexes.yaml").read_text(encoding="utf-8"))["complexes"]]
+    assert [c["naver_id"] for c in d["complexes"]] == expected
     keys = [r["key"] for r in d["complexes"][0]["responses"]]
     # pyeongList, stats, asking-price × (A1,B1) × (3,5), marketPrice × (3,5)
     assert keys.count("asking_price") == 4 and keys.count("market_price_recent") == 2
     assert {"pyeong_list", "article_stats"} <= set(keys)
     assert len(d["discovery"]) == 5 and all(not r["ok"] for r in d["discovery"])
-    assert sum(1 for u in calls if "front-api" in u) == 4 * 8 + 5
+    assert sum(1 for u in calls if "front-api" in u) == len(expected) * 8 + 5
 
     r = listings.ingest_file(conn, path)
     assert r["loaded"] and r["metrics"] > 0

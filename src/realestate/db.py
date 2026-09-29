@@ -150,7 +150,7 @@ def sync_complexes(conn, complexes: list[dict]) -> None:
         for fb in c.get("fallback", []) or []:
             conn.execute(
                 "INSERT INTO complex_key (complex_id, umd_nm, jibun, apt_nm) VALUES (?,?,?,?)",
-                (c["id"], fb.get("umd_nm", c["umd_nm"]), str(fb["jibun"]), fb["apt_nm"]),
+                (c["id"], fb.get("umd_nm", c["umd_nm"]), str(fb["jibun"]), fb.get("apt_nm") or None),
             )
 
 

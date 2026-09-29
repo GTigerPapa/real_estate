@@ -2,6 +2,7 @@
 # 매칭: apt_seq 우선, 보조로 (umd_nm, jibun, apt_nm) — 전월세 등 aptSeq 누락 대비
 # naver_id: 네이버페이 부동산 단지번호 (지도 URL layer 파라미터에서 확인, 2026-09) = 아실 일별 매물 수(asil.py)의 단지 번호
 # asil_id: 아실 단지 번호 (매물 목록용, 아실 검색 결과의 seq, 2026-09)
+# fallback 의 apt_nm 을 비우면 법정동+지번만으로 매칭한다 (실거래 단지명 표기를 아직 모를 때)
 complexes:
   - id: godeok_xi
     name: 고덕자이
@@ -12,7 +13,7 @@ complexes:
     umd_nm: 상일동
     apt_seq: ["11740-4799"]
     fallback: [{jibun: "521", apt_nm: 고덕자이}]
-    bands: [59, 74, 84]
+    bands: [59, 74, 84, 101, 118]
 
   - id: godeok_central_ipark
     name: 고덕센트럴아이파크
@@ -23,7 +24,7 @@ complexes:
     umd_nm: 상일동
     apt_seq: ["11740-4675"]
     fallback: [{jibun: "513", apt_nm: 고덕센트럴IPARK}]
-    bands: [59, 74, 84]
+    bands: [59, 74, 84, 101]
 
   - id: yeosu_central_town
     name: 센트럴타운
@@ -45,7 +46,7 @@ complexes:
     umd_nm: 풍산동
     apt_seq: ["41450-360"]
     fallback: [{jibun: "486", apt_nm: 미사강변더샵센트럴포레}]
-    bands: [74, 84]
+    bands: [74, 84, 93, 101]
 
   - id: godeok_lotte_castle_venezia
     name: 고덕롯데캐슬베네루체
@@ -57,3 +58,16 @@ complexes:
     apt_seq: ["11740-4672"]
     fallback: [{jibun: "514", apt_nm: 고덕롯데캐슬베네루체}]
     bands: [59, 84]
+
+  # 2026-09-29 추가. 아실 기준: 야탑동 334, 1993.04 사용승인, 2,136세대, 전용 41·59·74·84·101·133㎡
+  # 실거래 aptSeq·단지명 표기는 분당구 첫 수집 뒤 확인해 apt_seq 에 채울 것 (그 전엔 지번 334로 매칭)
+  - id: yatap_jangmi8_hyundai
+    name: 장미마을8단지현대
+    short: 장미8현대
+    naver_id: 2229
+    asil_id: "6334"
+    sgg_cd: "41135"
+    umd_nm: 야탑동
+    apt_seq: []
+    fallback: [{jibun: "334"}]
+    bands: [59, 74, 84, 101]

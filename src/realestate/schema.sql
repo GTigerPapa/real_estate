@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS complex (
     target_bands TEXT,                         -- 쉼표 구분, 예: '59,74,84'
     naver_id     INTEGER                       -- 네이버페이 부동산 단지번호
 );
--- 매칭 키: apt_seq 우선, 보조로 (umd_nm, jibun, apt_nm)
+-- 매칭 키: apt_seq 우선, 보조로 (umd_nm, jibun, apt_nm) — apt_nm NULL 이면 법정동+지번만
 CREATE TABLE IF NOT EXISTS complex_key (
     complex_id TEXT NOT NULL REFERENCES complex (complex_id) ON DELETE CASCADE,
     apt_seq    TEXT,
@@ -121,7 +121,7 @@ FROM apt_trade t
 JOIN complex c      ON c.sgg_cd = t.sgg_cd
 JOIN complex_key k  ON k.complex_id = c.complex_id
 WHERE (k.apt_seq IS NOT NULL AND k.apt_seq = t.apt_seq)
-   OR (k.apt_seq IS NULL AND k.umd_nm = t.umd_nm AND k.jibun = t.jibun AND k.apt_nm = t.apt_nm);
+   OR (k.apt_seq IS NULL AND k.umd_nm = t.umd_nm AND k.jibun = t.jibun AND (k.apt_nm IS NULL OR k.apt_nm = t.apt_nm));
 
 DROP VIEW IF EXISTS v_rent_match;
 CREATE VIEW v_rent_match AS
@@ -130,7 +130,7 @@ FROM apt_rent r
 JOIN complex c      ON c.sgg_cd = r.sgg_cd
 JOIN complex_key k  ON k.complex_id = c.complex_id
 WHERE (k.apt_seq IS NOT NULL AND k.apt_seq = r.apt_seq)
-   OR (k.apt_seq IS NULL AND k.umd_nm = r.umd_nm AND k.jibun = r.jibun AND k.apt_nm = r.apt_nm);
+   OR (k.apt_seq IS NULL AND k.umd_nm = r.umd_nm AND k.jibun = r.jibun AND (k.apt_nm IS NULL OR k.apt_nm = r.apt_nm));
 
 -- 관심 단지 거래 + 평형 구간 (구간 밖 면적은 size_band NULL)
 DROP VIEW IF EXISTS v_trade;
