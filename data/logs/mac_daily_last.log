@@ -1,40 +1,40 @@
-[2026-09-30 07:13] Mac 매일 작업 · python 3.9.6 · .env 있음
+[2026-10-01 07:13] Mac 매일 작업 · python 3.9.6 · .env 있음
 ── 실거래 수집
 /Users/chan/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
   warnings.warn(
-2026-09-30 07:13:07,062 INFO realestate.ingest: 대상 24건 (api=['trade', 'rent'], lawd=['11740', '41133', '41450', '41135'], 202310~202609)
-2026-09-30 07:13:07,521 INFO realestate.ingest: trade 11740 202607: total=277 rows=277 신규=0 갱신=277 원문변경=0/1
-2026-09-30 07:13:07,605 INFO realestate.ingest: trade 11740 202608: total=169 rows=169 신규=0 갱신=169 원문변경=0/1
-2026-09-30 07:13:08,018 INFO realestate.ingest: trade 11740 202609: total=66 rows=66 신규=0 갱신=66 원문변경=0/1
-2026-09-30 07:13:08,470 INFO realestate.ingest: trade 41133 202607: total=160 rows=160 신규=0 갱신=160 원문변경=0/1
-2026-09-30 07:13:08,849 INFO realestate.ingest: trade 41133 202608: total=114 rows=114 신규=0 갱신=114 원문변경=0/1
-2026-09-30 07:13:09,293 INFO realestate.ingest: trade 41133 202609: total=53 rows=53 신규=0 갱신=53 원문변경=0/1
-2026-09-30 07:13:09,753 INFO realestate.ingest: trade 41450 202607: total=313 rows=313 신규=0 갱신=313 원문변경=0/1
-2026-09-30 07:13:10,162 INFO realestate.ingest: trade 41450 202608: total=246 rows=246 신규=0 갱신=246 원문변경=0/1
-2026-09-30 07:13:10,551 INFO realestate.ingest: trade 41450 202609: total=111 rows=111 신규=0 갱신=111 원문변경=0/1
-2026-09-30 07:13:11,010 INFO realestate.ingest: trade 41135 202607: total=469 rows=469 신규=0 갱신=469 원문변경=0/1
-2026-09-30 07:13:11,396 INFO realestate.ingest: trade 41135 202608: total=159 rows=159 신규=0 갱신=159 원문변경=0/1
-2026-09-30 07:13:11,822 INFO realestate.ingest: trade 41135 202609: total=81 rows=81 신규=0 갱신=81 원문변경=0/1
-2026-09-30 07:13:12,902 INFO realestate.ingest: rent 11740 202607: total=1088 rows=1088 신규=0 갱신=1088 원문변경=0/2
-2026-09-30 07:13:13,092 INFO realestate.ingest: rent 11740 202608: total=769 rows=769 신규=0 갱신=769 원문변경=0/1
-2026-09-30 07:13:13,457 INFO realestate.ingest: rent 11740 202609: total=649 rows=649 신규=0 갱신=649 원문변경=0/1
-2026-09-30 07:13:13,707 INFO realestate.ingest: rent 41133 202607: total=214 rows=214 신규=0 갱신=214 원문변경=0/1
-2026-09-30 07:13:14,127 INFO realestate.ingest: rent 41133 202608: total=222 rows=222 신규=0 갱신=222 원문변경=0/1
-2026-09-30 07:13:14,466 INFO realestate.ingest: rent 41133 202609: total=191 rows=191 신규=0 갱신=191 원문변경=0/1
-2026-09-30 07:13:15,005 INFO realestate.ingest: rent 41450 202607: total=732 rows=732 신규=0 갱신=732 원문변경=0/1
-2026-09-30 07:13:15,352 INFO realestate.ingest: rent 41450 202608: total=681 rows=681 신규=0 갱신=681 원문변경=0/1
-2026-09-30 07:13:15,626 INFO realestate.ingest: rent 41450 202609: total=540 rows=540 신규=0 갱신=540 원문변경=0/1
-2026-09-30 07:13:16,324 INFO realestate.ingest: rent 41135 202607: total=1101 rows=1101 신규=0 갱신=1101 원문변경=0/2
-2026-09-30 07:13:16,770 INFO realestate.ingest: rent 41135 202608: total=825 rows=825 신규=0 갱신=825 원문변경=0/1
-2026-09-30 07:13:17,192 INFO realestate.ingest: rent 41135 202609: total=671 rows=671 신규=0 갱신=671 원문변경=0/1
-2026-09-30 07:13:17,193 INFO realestate.ingest: 완료: 호출 26회, 성공 24, 실패 0, 건너뜀 0
+2026-10-01 07:13:09,925 INFO realestate.ingest: 대상 24건 (api=['trade', 'rent'], lawd=['11740', '41133', '41450', '41135'], 202310~202610)
+2026-10-01 07:13:10,064 INFO realestate.ingest: trade 11740 202608: total=170 rows=170 신규=1 갱신=169 원문변경=1/1
+2026-10-01 07:13:10,437 INFO realestate.ingest: trade 11740 202609: total=72 rows=72 신규=6 갱신=66 원문변경=1/1
+2026-10-01 07:13:10,843 INFO realestate.ingest: trade 11740 202610: total=0 rows=0 신규=0 갱신=0 원문변경=1/1
+2026-10-01 07:13:11,273 INFO realestate.ingest: trade 41133 202608: total=114 rows=114 신규=0 갱신=114 원문변경=0/1
+2026-10-01 07:13:11,690 INFO realestate.ingest: trade 41133 202609: total=58 rows=58 신규=5 갱신=53 원문변경=1/1
+2026-10-01 07:13:12,093 INFO realestate.ingest: trade 41133 202610: total=0 rows=0 신규=0 갱신=0 원문변경=1/1
+2026-10-01 07:13:12,597 INFO realestate.ingest: trade 41450 202608: total=246 rows=246 신규=0 갱신=246 원문변경=0/1
+2026-10-01 07:13:13,025 INFO realestate.ingest: trade 41450 202609: total=123 rows=123 신규=12 갱신=111 원문변경=1/1
+2026-10-01 07:13:13,437 INFO realestate.ingest: trade 41450 202610: total=0 rows=0 신규=0 갱신=0 원문변경=1/1
+2026-10-01 07:13:13,917 INFO realestate.ingest: trade 41135 202608: total=160 rows=160 신규=1 갱신=159 원문변경=1/1
+2026-10-01 07:13:14,354 INFO realestate.ingest: trade 41135 202609: total=95 rows=95 신규=14 갱신=81 원문변경=1/1
+2026-10-01 07:13:14,751 INFO realestate.ingest: trade 41135 202610: total=0 rows=0 신규=0 갱신=0 원문변경=1/1
+2026-10-01 07:13:15,379 INFO realestate.ingest: rent 11740 202608: total=774 rows=774 신규=6 갱신=768 원문변경=1/1
+2026-10-01 07:13:15,765 INFO realestate.ingest: rent 11740 202609: total=687 rows=687 신규=38 갱신=649 원문변경=1/1
+2026-10-01 07:13:16,090 INFO realestate.ingest: rent 11740 202610: total=0 rows=0 신규=0 갱신=0 원문변경=1/1
+2026-10-01 07:13:16,500 INFO realestate.ingest: rent 41133 202608: total=223 rows=223 신규=1 갱신=222 원문변경=1/1
+2026-10-01 07:13:16,915 INFO realestate.ingest: rent 41133 202609: total=202 rows=202 신규=11 갱신=191 원문변경=1/1
+2026-10-01 07:13:17,320 INFO realestate.ingest: rent 41133 202610: total=0 rows=0 신규=0 갱신=0 원문변경=1/1
+2026-10-01 07:13:17,905 INFO realestate.ingest: rent 41450 202608: total=684 rows=684 신규=3 갱신=681 원문변경=1/1
+2026-10-01 07:13:18,187 INFO realestate.ingest: rent 41450 202609: total=571 rows=571 신규=31 갱신=540 원문변경=1/1
+2026-10-01 07:13:18,500 INFO realestate.ingest: rent 41450 202610: total=0 rows=0 신규=0 갱신=0 원문변경=1/1
+2026-10-01 07:13:19,064 INFO realestate.ingest: rent 41135 202608: total=833 rows=833 신규=8 갱신=825 원문변경=1/1
+2026-10-01 07:13:19,498 INFO realestate.ingest: rent 41135 202609: total=719 rows=719 신규=49 갱신=670 원문변경=1/1
+2026-10-01 07:13:19,817 INFO realestate.ingest: rent 41135 202610: total=0 rows=0 신규=0 갱신=0 원문변경=1/1
+2026-10-01 07:13:19,818 INFO realestate.ingest: 완료: 호출 24회, 성공 24, 실패 0, 건너뜀 0
 ── 아실 매물 목록
-고덕자이: 매물 246건 · 신규 16 · 가격변경 0 · 내려감 15
-고덕센트럴아이파크: 매물 254건 · 신규 15 · 가격변경 0 · 내려감 13
+고덕자이: 매물 245건 · 신규 81 · 가격변경 0 · 내려감 82
+고덕센트럴아이파크: 매물 262건 · 신규 87 · 가격변경 0 · 내려감 79
 센트럴타운: 매물 8건 · 신규 0 · 가격변경 0 · 내려감 0
-미사강변더샵센트럴포레스트: 매물 13건 · 신규 0 · 가격변경 0 · 내려감 0
-고덕롯데캐슬베네루체: 매물 185건 · 신규 8 · 가격변경 0 · 내려감 5
+미사강변더샵센트럴포레스트: 매물 14건 · 신규 3 · 가격변경 0 · 내려감 2
+고덕롯데캐슬베네루체: 매물 177건 · 신규 39 · 가격변경 0 · 내려감 47
 yatap_jangmi8_hyundai: asil_id 없음 → 건너뜀
 ── 웹앱 데이터
-저장: web/data/app.json (404,316 bytes) · 실거래 2026-09-18 · 매물 2026-09-28 · 덤프 적재 1개
-요약: 실거래 성공(대상 24건) · 매물 실패 0곳 · 웹앱 성공 · DB 커밋 False
+저장: web/data/app.json (449,114 bytes) · 실거래 2026-09-18 · 매물 2026-09-28 · 덤프 적재 1개
+요약: 실거래 성공(대상 24건) · 매물 실패 0곳 · 웹앱 성공 · DB 커밋 True
