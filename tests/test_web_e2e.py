@@ -64,6 +64,12 @@ def test_screens_render_without_errors(server, scheme):
         trend = pg.locator(".section", has_text="매물 수 추이")
         assert trend.locator("path[style*='stroke-dasharray']").count() == n84
         assert trend.locator(".cmp.otr tbody tr").count() == n84
+        pg.goto(server + "#/overlap")
+        pg.wait_for_selector(".llbar")
+        assert pg.locator(".section .chart svg").count() >= 4
+        assert pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+        pg.get_by_role("button", name="단지", exact=True).last.click()
+        pg.wait_for_selector(".llbar")
         pg.goto(server + "#/info")
         pg.wait_for_selector(".info")
         b.close()

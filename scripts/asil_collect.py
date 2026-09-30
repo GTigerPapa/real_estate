@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from realestate import asil, config  # noqa: E402
 
 OUT = ROOT / "data" / "listings" / "asil" / "asil_offer_counts.csv"
+REGION_OUT = ROOT / "data" / "listings" / "asil" / "asil_region_counts.csv"   # 지역(시군구·동) 일별 매물 수
 
 
 def month_start(s: str) -> date:
@@ -38,6 +39,13 @@ def main(argv=None) -> int:
     print(f"아실 매물 수 수집: {start:%Y-%m} ~ {end:%Y-%m} · 단지 {len(complexes)}개")
     failed = asil.collect(complexes, OUT, start, end)
     print(f"저장: {OUT.relative_to(ROOT)}")
+    regions = config.load_settings().get("regions", [])
+    if regions:
+        # 지역 파일이 아직 없으면 3년치부터 받는다
+        r_start = start if REGION_OUT.exists() else min(start, date(today.year - 3, today.month, 1))
+        print(f"지역 매물 수: {r_start:%Y-%m} ~ {end:%Y-%m} · 지역 {len(regions)}곳")
+        failed += asil.collect_regions(regions, REGION_OUT, r_start, end)
+        print(f"저장: {REGION_OUT.relative_to(ROOT)}")
     if failed:
         print(f"실패 단지: {', '.join(failed)}")
         return 1

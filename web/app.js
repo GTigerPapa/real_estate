@@ -255,7 +255,8 @@ function Spark(values, color) {
 
 // ───── 데이터 ─────
 const state = { data: null, band: store.get("band", "84"), range: store.get("range", "36"), offerKind: "all", offerCx: "all",
-  cmpView: store.get("cmpView", "all"), cmpDeal: store.get("cmpDeal", "both"), dtlView: "band", error: null };
+  cmpView: store.get("cmpView", "all"), cmpDeal: store.get("cmpDeal", "both"), dtlView: "band",
+  ovMode: store.get("ovMode", "region"), ovRegion: store.get("ovRegion", "gangdong"), ovCx: store.get("ovCx", ""), error: null };
 async function loadData(force) {
   try {
     const res = await fetch("data/app.json", { cache: force ? "reload" : "no-cache" });
@@ -668,6 +669,133 @@ function Compare() {
       wide(Section("요약", `중앙값 = 3개월 매매 중앙값 · 전세율 = 전세가율 · 매물 = ${band}형 아실 매매 매물 수(최근일) · 1주 = 1주 전 대비`, table))));
 }
 
+// ───── 매물 × 가격 ─────
+// 매물(아실 일별 매물 수)과 가격(실거래)을 같은 시간축에 둔다. 한 차트에 축 두 개를 겹치지 않고,
+// 겹쳐 보기는 둘 다 시작 달=100 으로 맞춘 지수로 그린다.
+const pctChg = (a, b) => (a && b) ? (b / a - 1) * 100 : null;
+function lastValid(arr, upto) { for (let i = Math.min(upto ?? arr.length - 1, arr.length - 1); i >= 0; i--) if (arr[i] !== null && arr[i] !== undefined) return i; return -1; }
+function weeklyFromDaily(A) {   // 단지 일별 → 주(일요일 끝) 7일 평균 {d, s, r}
+  const out = { d: [], s: [], r: [] };
+  if (!A || !A.d.length) return out;
+  let bucket = null, ss = 0, rr = 0, n = 0;
+  const flush = () => { if (n) { out.d.push(bucket); out.s.push(Math.round(ss / n * 10) / 10); out.r.push(Math.round(rr / n * 10) / 10); } };
+  A.d.forEach((d, i) => {
+    const t = dDate(d), dow = new Date(t).getUTCDay(), end = new Date(t + ((7 - dow) % 7) * 864e5).toISOString().slice(0, 10);
+    if (end !== bucket) { flush(); bucket = end; ss = rr = n = 0; }
+    ss += A.s[i]; rr += (A.j[i] ?? 0) + (A.w[i] ?? 0); n++;
+  });
+  flush();
+  return out;
+}
+function LeadLag(ll, what) {
+  if (!ll || ll.r.every((x) => x === null)) return h("div", { class: "empty" }, "상관을 계산할 표본이 부족합니다");
+  const rows = ll.k.map((k, i) => {
+    const r = ll.r[i];
+    const w = r === null ? 0 : Math.min(50, Math.abs(r) * 50);
+    const bar = h("div", { class: "llbar" }, h("span", { class: "mid" }),
+      r === null ? null : h("i", { class: r < 0 ? "neg" : "pos", style: r < 0 ? `right:50%;width:${w}%` : `left:50%;width:${w}%` }));
+    return h("tr", { class: k === ll.best ? "best" : "" }, h("td", {}, k === 0 ? "같은 달" : `${k}개월 뒤`), h("td", { class: "llcell" }, bar),
+      h("td", { class: "r" }, r === null ? "–" : (r > 0 ? "+" : r < 0 ? "−" : "") + Math.abs(r).toFixed(2)));
+  });
+  const bi = ll.k.indexOf(ll.best), br = bi >= 0 ? ll.r[bi] : null;
+  const verdict = br === null ? "" : Math.abs(br) < 0.3 ? "뚜렷한 관계 없음"
+    : br < 0 ? `매물이 늘면 약 ${ll.best}개월 뒤 가격이 약해지는 경향 (r ${br.toFixed(2)})`
+      : `매물과 가격이 ${ll.best ? ll.best + "개월 시차로 " : ""}같은 방향 (r +${br.toFixed(2)}) — 오를 때 매물도 느는 활황형`;
+  return h("div", {},
+    h("p", { class: "llverdict" }, h("b", {}, what + " · "), verdict),
+    h("table", { class: "cmp ll" }, h("thead", {}, h("tr", {}, h("th", {}, "가격 시점"), h("th", { class: "llhead" }, h("span", {}, "− 매물↑ 가격↓"), h("span", {}, "매물↑ 가격↑ +")), h("th", {}, "상관"))),
+      h("tbody", {}, rows)),
+    h("p", { class: "note" }, `매물(월평균 매매 매물)의 3개월 변화와 그 k개월 뒤 가격(84㎡ 환산 3개월 중앙값)의 3개월 변화 사이 상관 · ` +
+      `짝 ${ll.n[0]}개월(3개월 변화끼리 겹쳐 실제 독립 표본은 더 적음) · 신고 기한이 남은 최근 2개월 가격 제외 · 참고용`));
+}
+function Overlap() {
+  const d = state.data, O = d.overlap;
+  if (!O || !O.regions) return h("div", {}, header("매물 × 가격", updatedLine()), h("div", { class: "empty" }, "분석 데이터가 아직 없습니다"));
+  const mode = state.ovMode === "cx" ? "cx" : "region";
+  const pick = (k, v) => () => { state[k] = v; store.set(k, v); render(); };
+  const months = monthsView(), all = d.months, X = xDomain(months), mi = months.map((m) => all.indexOf(m));
+  let title, wk, lstM, priceV, priceN, priceLabel, vol, ll, color = "var(--s1)", controls;
+  if (mode === "region") {
+    const R = O.regions.find((r) => r.id === state.ovRegion) || O.regions[0];
+    title = R.name; wk = R.wk; lstM = R.lst_m; priceV = R.p84.v; priceN = R.p84.n; vol = R.p84.vol; ll = R.ll;
+    priceLabel = "84㎡ 환산 3개월 중앙값";
+    const chip = (r) => h("button", { "aria-pressed": String(r.id === R.id), onclick: pick("ovRegion", r.id) }, r.short);
+    controls = h("div", {},
+      h("div", { class: "chips wrap" }, h("span", { class: "chl" }, "구·시"), O.regions.filter((r) => r.level === "sgg").map(chip)),
+      h("div", { class: "chips wrap" }, h("span", { class: "chl" }, "동"), O.regions.filter((r) => r.level === "dong").map(chip)));
+  } else {
+    const c = cx(state.ovCx) || d.complexes[0], C = O.complexes[c.id] || {};
+    const band = c.bands.includes(state.band) ? state.band : (c.bands.includes("84") ? "84" : c.bands[c.bands.length - 1]);
+    title = `${c.name} · ${band}형`; color = colorOf(c); wk = weeklyFromDaily(c.asil); lstM = C.lst_m || []; ll = C.ll;
+    priceV = c.b[band].trade_3m.v; priceN = c.b[band].trade_3m.n; priceLabel = `${band}형 3개월 중앙값`;
+    vol = all.map((_, i) => (c.b[band].volume.broker[i] || 0) + (c.b[band].volume.direct[i] || 0));
+    controls = h("div", {},
+      h("div", { class: "chips wrap" }, d.complexes.map((x) => h("button", { "aria-pressed": String(x.id === c.id), onclick: pick("ovCx", x.id) },
+        h("span", { class: "cname" }, h("span", { class: "dot", style: `background:${colorOf(x)}` }), x.short)))),
+      bandSeg(c.bands, band, (b) => { state.band = b; store.set("band", b); render(); }));
+  }
+  // ① 겹쳐 보기: 보이는 기간 첫 달(둘 다 값 있는 달) = 100
+  const base = mi.find((i) => lstM[i] && priceV[i]);
+  const idx = (arr) => months.map((m, j) => ({ t: ymDate(m), v: base !== undefined && arr[mi[j]] ? Math.round(arr[mi[j]] / arr[base] * 1000) / 10 : null }));
+  const ov = Chart({
+    label: "매물과 가격 지수", xDomain: X, height: 230, yFmt: (v) => String(v), tipFmt: (v) => v.toFixed(1),
+    refs: [{ v: 100, label: "시작=100", left: true }],
+    series: [
+      { name: "매매 매물 (월평균)", kind: "line", color: "var(--s2)", width: 2, pts: idx(lstM) },
+      { name: `가격 (${priceLabel})`, kind: "line", color: "var(--ink)", width: 2, pts: idx(priceV) },
+    ],
+  });
+  const li = lastValid(lstM), pi = lastValid(priceV, all.length - 3);
+  const lchg = li >= 3 ? pctChg(lstM[li - 3], lstM[li]) : null, pchg = pi >= 3 ? pctChg(priceV[pi - 3], priceV[pi]) : null;
+  // ② 매물 수 (주별 7일 평균): 매매 실선, 전월세 점선
+  const wt = wk.d.map(dDate), t1 = wt.length ? wt[wt.length - 1] : X[1];
+  const t0 = Math.max(wt.length ? wt[0] : X[0], t1 - (state.range === "12" ? 365 : 3 * 365 + 1) * 864e5);
+  const lstChart = Chart({
+    label: "매물 수", xDomain: [t0 - 10 * 864e5, t1 + 10 * 864e5], height: 180, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => Math.round(v) + "건",
+    tipDate: (t) => fmtYMD(t) + " 주",
+    series: [
+      { name: "매매", kind: "line", color, width: 1.8, endDot: false, pts: wk.d.map((x, i) => ({ t: wt[i], v: wk.s[i] })) },
+      { name: "전월세", kind: "line", color, width: 1.6, dash: true, endDot: false, pts: wk.d.map((x, i) => ({ t: wt[i], v: wk.r[i] })) },
+    ],
+  });
+  // ③ 가격 · ④ 거래량
+  const priceChart = Chart({
+    label: priceLabel, xDomain: X, height: 180, yFmt: (v) => eok(v, 0), tipFmt: (v) => eok(v),
+    refs: mode === "cx" ? [{ v: d.cap, label: `상한 ${eok(d.cap)}` }] : [],
+    series: [{ name: priceLabel, kind: "line", color: "var(--ink)", pts: months.map((m, j) => ({ t: ymDate(m), v: priceV[mi[j]], n: priceN[mi[j]] })) }],
+  });
+  const volChart = Chart({
+    label: "월별 거래량", xDomain: X, height: 120, yMin: 0, yTicks: 3, yFmt: (v) => String(v), tipFmt: (v) => v + "건",
+    series: [{ name: "거래", kind: "bar", color: "var(--broker)", pts: months.map((m, j) => ({ t: ymDate(m), v: vol[mi[j]] })) }],
+  });
+  // ⑤ 지역 요약표 (지역 모드)
+  const table = mode === "region" ? h("table", { class: "cmp" },
+    h("thead", {}, h("tr", {}, h("th", {}, "지역"), h("th", {}, "매물 3개월"), h("th", {}, "가격 3개월"), h("th", {}, "가장 강한 관계"))),
+    h("tbody", {}, O.regions.map((r) => {
+      const a = lastValid(r.lst_m), b = lastValid(r.p84.v, all.length - 3);
+      const bi = r.ll.k.indexOf(r.ll.best), br = bi >= 0 ? r.ll.r[bi] : null;
+      return h("tr", { onclick: pick("ovRegion", r.id), class: r.id === state.ovRegion ? "sel" : "" },
+        h("td", {}, r.short), h("td", {}, pctSigned(a >= 3 ? pctChg(r.lst_m[a - 3], r.lst_m[a]) : null)),
+        h("td", {}, pctSigned(b >= 3 ? pctChg(r.p84.v[b - 3], r.p84.v[b]) : null)),
+        h("td", {}, br === null ? "–" : `${r.ll.best ? r.ll.best + "개월 뒤" : "같은 달"} ${(br > 0 ? "+" : "−") + Math.abs(br).toFixed(2)}`));
+    }))) : null;
+  return h("div", {},
+    header("매물 × 가격", updatedLine()),
+    h("div", { class: "seg", role: "group", "aria-label": "단위" }, [["region", "지역"], ["cx", "단지"]].map(([v, t]) =>
+      h("button", { "aria-pressed": String(mode === v), onclick: pick("ovMode", v) }, t))),
+    controls, rangeChips(),
+    h("div", { class: "sections" },
+      wide(Section(`${title} · 겹쳐 보기`, `둘 다 보이는 기간 첫 달 = 100 · 최근 3개월 매물 ${pctSigned(lchg)} · 가격 ${pctSigned(pchg)}` +
+        ` (가격은 신고가 덜 끝난 최근 2개월 제외) · 최근 1~2개월 가격은 거래 신고가 늘며 바뀔 수 있음`, ov)),
+      Section("매물 수 · 주별 7일 평균", mode === "region" ? "아실 지역 일별 매물 수(같은 물건 1건) · 실선 매매, 점선 전월세" :
+        "아실 단지 일별 매물 수(평형 구분 없음) · 실선 매매, 점선 전월세", lstChart),
+      Section(`가격 · ${priceLabel}`, mode === "region" ? "지역 전체 아파트 매매(해제 제외)의 ㎡당 가격 × 84 · 그 달 포함 직전 3개월 거래" :
+        "해제·직거래 제외 · 그 달 포함 직전 3개월 거래", priceChart),
+      Section("선행 관계", mode === "cx" ? "단지 가격은 모든 평형의 84㎡ 환산가로 계산 (표본 확보)" : null, LeadLag(ll, title)),
+      Section("월별 거래량", mode === "region" ? "지역 전체 아파트 매매 (해제 제외)" : `${title} (해제 제외)`, volChart),
+      table ? wide(Section("지역 한눈에", "매물·가격 = 최근 3개월 변화 · 가장 강한 관계 = 매물 변화 뒤 가격 변화와 상관이 가장 큰 시차 · 줄을 누르면 위 차트가 바뀜", table)) : null));
+}
+
 function Info() {
   const d = state.data;
   return h("div", { class: "info" },
@@ -679,11 +807,12 @@ function Info() {
       h("li", {}, "전세: 신규 계약만(갱신은 5% 인상 상한 때문에 제외). 전세가율 = 전세 ÷ 매매 (같은 3개월 창)."),
       h("li", {}, "평형: 전용 59형 57~62㎡ · 74형 72~77㎡ · 84형 82~87㎡ · 93형 90~97㎡ · 101형 97~107㎡ · 118형 112~125㎡."),
       h("li", {}, `매수 상한 ${eok(d.cap)} (설정 파일 config/settings.yaml).`),
-      h("li", {}, "최근 1~2개월은 신고 기한(30일)이 남아 거래 수가 늘어날 수 있습니다.")),
+      h("li", {}, "최근 1~2개월은 신고 기한(30일)이 남아 거래 수가 늘어날 수 있습니다."),
+      h("li", {}, "매물×가격: 지역 가격 = 지역 전체 아파트 매매의 ㎡당 가격 × 84(84㎡ 환산) 3개월 중앙값. 선행 관계 = 매물 3개월 변화와 k개월 뒤 가격 3개월 변화의 상관(참고용).")),
     h("h2", {}, "출처"),
     h("ul", {},
       h("li", {}, "국토교통부 아파트 매매·전월세 실거래가 (공공데이터포털) — 매일 06:30 자동 갱신"),
-      h("li", {}, "아실(asil.kr) 일별 매물 수(매매·전세·월세) — 2023.09부터, 매일 06:30 자동 갱신. 여러 중개사가 올린 같은 물건은 1건. 단지 전체 면적 합계(평형 구분 없음)."),
+      h("li", {}, "아실(asil.kr) 일별 매물 수(매매·전세·월세) — 단지·지역(구·동), 2023.09부터, 매일 06:30 자동 갱신. 여러 중개사가 올린 같은 물건은 1건. 평형 구분 없음."),
       h("li", {}, "네이버페이 부동산 매매 최저 호가 — 북마클릿으로 수집한 날만 기록")),
     h("h2", {}, "홈 화면에 추가"),
     h("ul", {},
@@ -696,7 +825,7 @@ function Info() {
 function render() {
   const app = $("#app");
   const route = (location.hash || "#/").slice(1).split("/").filter(Boolean);
-  const tab = route[0] === "compare" ? "compare" : route[0] === "info" ? "info" : "home";
+  const tab = route[0] === "compare" ? "compare" : route[0] === "info" ? "info" : route[0] === "overlap" ? "overlap" : "home";
   document.querySelectorAll(".tabbar a").forEach((a) => {
     if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
@@ -709,6 +838,7 @@ function render() {
   if (route[0] === "c") view = Detail(route[1], route[2] || state.band);
   else if (tab === "compare") view = Compare();
   else if (tab === "info") view = Info();
+  else if (tab === "overlap") view = Overlap();
   else view = Home();
   if (state.error) view.prepend(h("div", { class: "banner" }, state.error + " (저장된 데이터를 표시 중)"));
   app.replaceChildren(view);

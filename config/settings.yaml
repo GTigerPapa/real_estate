@@ -46,3 +46,15 @@ listing_metrics:
   lease_min_ask: {endpoint: article_stats, paths: ['^result\.price\.rentMinPrice$']}         # 전세 최저 호가(원)
   lease_max_ask: {endpoint: article_stats, paths: ['^result\.price\.rentMaxPrice$']}
   # 평형별 호가(asking_price, pyeongTypeNumber별)는 2차 덤프에서 구조 확인 후 추가
+
+# 매물×가격 분석 지역 (2026-09-30). asil_area = 아실 지역 코드(시군구 5자리 / 법정동 10자리),
+# 가격은 같은 지역의 전체 아파트 매매 실거래(해제 제외)로 계산 — 시군구는 sgg_cd 전체, 동은 sgg_cd + umd_nm.
+regions:
+  - {id: gangdong,  name: 강동구,        short: 강동구, asil_area: "11740",      sgg_cd: "11740"}
+  - {id: sangil,    name: 강동구 상일동, short: 상일동, asil_area: "1174010300", sgg_cd: "11740", umd_nm: 상일동}
+  - {id: bundang,   name: 성남 분당구,   short: 분당구, asil_area: "41135",      sgg_cd: "41135"}
+  - {id: yatap,     name: 분당구 야탑동, short: 야탑동, asil_area: "4113510700", sgg_cd: "41135", umd_nm: 야탑동}
+  - {id: jungwon,   name: 성남 중원구,   short: 중원구, asil_area: "41133",      sgg_cd: "41133"}
+  - {id: yeosu,     name: 중원구 여수동, short: 여수동, asil_area: "4113310600", sgg_cd: "41133", umd_nm: 여수동}
+  - {id: hanam,     name: 하남시,        short: 하남시, asil_area: "41450",      sgg_cd: "41450"}
+  - {id: pungsan,   name: 하남 풍산동,   short: 풍산동, asil_area: "4145011000", sgg_cd: "41450", umd_nm: 풍산동}

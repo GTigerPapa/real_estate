@@ -15,7 +15,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from . import config, listings, metrics
+from . import config, listings, metrics, overlap
 
 FORMAT = 1
 MONTHS_SHOWN = 36
@@ -41,6 +41,7 @@ def _series(df: pd.DataFrame, months: list[str], value: str, n: str = "n", nd: i
 
 
 ASIL_CSV = config.DATA_DIR / "listings" / "asil" / "asil_offer_counts.csv"
+REGION_CSV = config.DATA_DIR / "listings" / "asil" / "asil_region_counts.csv"
 OFFERS_CSV = config.DATA_DIR / "listings" / "asil" / "asil_offers.csv"
 RECENT_TRADES = 600   # 홈 '최근 실거래' 표에 싣는 건수 (전체 단지·전체 면적, 앱에서 평형으로 거름)
 OFFERS_MAX = 400      # 홈 '매물' 표에 싣는 물건 수
@@ -154,7 +155,7 @@ def load_asil(path=ASIL_CSV) -> dict:
 
 
 def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | None = None,
-                  asil_csv=ASIL_CSV, offers_csv=OFFERS_CSV) -> dict:
+                  asil_csv=ASIL_CSV, offers_csv=OFFERS_CSV, region_csv=REGION_CSV) -> dict:
     now = now or config.now_kst()
     asil = load_asil(asil_csv)
     offers = load_offers(offers_csv, settings.get("size_bands"))
@@ -277,6 +278,8 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
         "trades_recent": recent_trades(conn, complexes),
         # 최초 백필 날짜: 이 날 받은 거래는 '새로 공개'로 표시하지 않는다
         "trades_since": (conn.execute("SELECT substr(min(first_seen_at), 1, 10) FROM apt_trade").fetchone() or [None])[0],
+        # 매물 × 가격 (지역·단지): 같은 months 축의 월별 매물·84㎡ 환산가, 주별 매물, 선행 상관
+        "overlap": overlap.build(conn, settings, complexes, months, region_csv, asil_csv),
         "offers": offers["items"],
         "offers_since": offers["since"],
         "offers_through": offers["through"],
@@ -286,7 +289,7 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
 # 실거래에서 나오는 항목. 공공데이터포털은 해외(GitHub Actions)에서 막혀 실거래는 국내 Mac이 받는다.
 # Mac은 매일 app.json 을 새로 만들지만 DB는 매월만 커밋하므로, Actions 가 저장소의 (오래된) DB로 다시 내보내면
 # 실거래가 뒤로 돌아간다. 그래서 기존 app.json 의 실거래가 더 새 것이면 그 부분은 그대로 둔다.
-TRADE_TOP = ("data_through", "trades_fetched_at", "months", "trades_recent", "trades_since")
+TRADE_TOP = ("data_through", "trades_fetched_at", "months", "trades_recent", "trades_since", "overlap")
 
 
 def keep_newer_trades(new: dict, old: dict | None) -> bool:

@@ -30,15 +30,16 @@ class AsilError(RuntimeError):
     pass
 
 
-def build_url(apt_id: int, start: date, end: date) -> str:
-    q = {"apt": apt_id, "area": "", "c_apt": "", "c_area": "", "c_apt2": "", "c_area2": "",
+def build_url(apt_id, start: date, end: date, area: str = "") -> str:
+    """apt_id 로 단지, 또는 apt_id="" + area(시군구 5자리·법정동 10자리)로 지역 전체 일별 매물 수."""
+    q = {"apt": apt_id, "area": area, "c_apt": "", "c_area": "", "c_apt2": "", "c_area2": "",
          "deal": "123", "mode": "2", "sSize": "", "eSize": "",
          "sY": start.year, "sM": start.month, "eY": end.year, "eM": end.month}
     return BASE + "?" + urllib.parse.urlencode(q)
 
 
-def fetch(apt_id: int, start: date, end: date, timeout: float = 30) -> str:
-    req = urllib.request.Request(build_url(apt_id, start, end),
+def fetch(apt_id, start: date, end: date, timeout: float = 60, area: str = "") -> str:
+    req = urllib.request.Request(build_url(apt_id, start, end, area),
                                  headers={"User-Agent": USER_AGENT, "Referer": REFERER})
     with urllib.request.urlopen(req, timeout=timeout) as r:
         if r.status != 200:
@@ -121,4 +122,59 @@ def collect(complexes: list[dict], out: Path, start: date, end: date,
         log(f"{c.get('name', cid)}: {len(parsed)}일 ({parsed[0]['date']}~{last['date']}) · 추가 {a} · 수정 {ch} · "
             f"최근 매매 {last['sale']} 전세 {last['jeonse']} 월세 {last['wolse']}")
     write_csv(out, rows)
+    return failed
+
+
+# ───── 지역(시군구·법정동) 일별 매물 수 ─────
+REGION_FIELDS = ["date", "region_id", "area", "sale", "jeonse", "wolse", "total"]
+
+
+def read_region_csv(path: Path) -> dict:
+    rows = {}
+    if path.exists():
+        with path.open(encoding="utf-8", newline="") as f:
+            for r in csv.DictReader(f):
+                rows[(r["date"], r["region_id"])] = r
+    return rows
+
+
+def write_region_csv(path: Path, rows: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    ordered = sorted(rows.values(), key=lambda r: (r["region_id"], r["date"]))
+    tmp = path.with_suffix(".tmp")
+    with tmp.open("w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=REGION_FIELDS, lineterminator="\n")
+        w.writeheader()
+        for r in ordered:
+            w.writerow({k: r[k] for k in REGION_FIELDS})
+    tmp.replace(path)
+
+
+def collect_regions(regions: list[dict], out: Path, start: date, end: date,
+                    fetcher=None, pause: float = 2.0, log=print) -> list[str]:
+    """지역마다 1회 요청해 CSV에 병합 (새 값으로 덮어씀). 실패한 지역 id 목록 반환."""
+    fetcher = fetcher or (lambda area, s, e: fetch("", s, e, area=area))
+    rows = read_region_csv(out)
+    failed = []
+    for i, r in enumerate(regions):
+        rid, area = r["id"], str(r.get("asil_area") or "")
+        if not area:
+            continue
+        if i:
+            time.sleep(pause)
+        try:
+            parsed = parse(fetcher(area, start, end))
+            if not parsed:
+                raise AsilError("빈 응답 (형식 변경 또는 차단 가능성)")
+        except Exception as e:  # noqa: BLE001
+            log(f"{rid}: 실패 — {type(e).__name__}: {e}")
+            failed.append(rid)
+            continue
+        for p in parsed:
+            rows[(p["date"], rid)] = {"date": p["date"], "region_id": rid, "area": area,
+                                      "sale": str(p["sale"]), "jeonse": str(p["jeonse"]), "wolse": str(p["wolse"]),
+                                      "total": str(p["sale"] + p["jeonse"] + p["wolse"])}
+        last = parsed[-1]
+        log(f"{r.get('name', rid)}: {len(parsed)}일 ({parsed[0]['date']}~{last['date']}) · 최근 매매 {last['sale']} 전세 {last['jeonse']} 월세 {last['wolse']}")
+    write_region_csv(out, rows)
     return failed
