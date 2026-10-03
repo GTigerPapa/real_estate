@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import math
+import re
 from datetime import datetime
 
 import pandas as pd
@@ -59,6 +60,23 @@ def band_of(ar, size_bands) -> str | None:
     return None
 
 
+# 매물 설명(중개사가 쓴 문구)으로 세안고 / 입주 가능을 가린다. 아실 원본에 임대 여부·입주가능일 같은 칸은 없다
+# (2026-10-04 원본 항목 확인). 언급이 없는 매물이 절반 넘어서 '세안고 수'는 하한값으로 봐야 한다.
+_TENANT = re.compile(r"세\s*(?:안고|끼고|낀)|세안\b|세안\s*매매|전세\s*(?:안고|끼고|승계|낀)|세입자\s*(?:있|승계|거주)|임대\s*(?:중|승계)"
+                     r"|월세\s*(?:안고|끼고)|임차인|갭\s*투자")
+_MOVEIN = re.compile(r"즉시\s*입주|즉입|공실|바로\s*입주|입주\s*가능|입주\s*매매|정상\s*입주|주인\s*거주|실입주|입주\s*협의")
+
+
+def tenant_kind(*descs: str) -> str | None:
+    """'t' = 세안고, 'm' = 입주 가능(실입주), None = 언급 없음. 같은 물건의 설명 중 하나라도 세안고면 세안고."""
+    text = " ".join(d for d in descs if d)
+    if _TENANT.search(text):
+        return "t"
+    if _MOVEIN.search(text):
+        return "m"
+    return None
+
+
 def offer_band_counts(path=OFFERS_CSV, size_bands=None) -> dict:
     """아실 매물 추적 파일 → 단지·평형별 일별 매물 수 {cid: {band: {"d","s","j","w"}}}.
 
@@ -79,13 +97,19 @@ def offer_band_counts(path=OFFERS_CSV, size_bands=None) -> dict:
     days = [(d0 + timedelta(n)).isoformat() for n in range((d1 - d0).days + 1)]
     key = df["deal"] + "|" + df["dong"] + "|" + df["floor"] + "|" + df["excl_area"] + "|" + df["price"] + "|" + df["rent"]
     df = df.assign(key=key)
+    # 같은 물건(key)의 설명을 모두 모아 세안고 여부를 정한다
+    kinds = {k: tenant_kind(*g["desc"]) for k, g in df.groupby("key")}
+    df["ten"] = df["key"].map(kinds)
     out = {}
     for (cid, band), g in df.groupby(["complex_id", "band"]):
-        ser = {"d": days, "s": [], "j": [], "w": []}
+        ser = {"d": days, "s": [], "j": [], "w": [], "st": [], "sm": []}
         for day in days:
             on = g[(g["first_seen"] <= day) & (g["last_seen"] >= day)]
             for deal, k in (("sale", "s"), ("jeonse", "j"), ("wolse", "w")):
                 ser[k].append(int(on.loc[on["deal"] == deal, "key"].nunique()))
+            sale = on[on["deal"] == "sale"]
+            ser["st"].append(int(sale.loc[sale["ten"] == "t", "key"].nunique()))   # 매매 중 세안고
+            ser["sm"].append(int(sale.loc[sale["ten"] == "m", "key"].nunique()))   # 매매 중 입주 가능
         out.setdefault(cid, {})[str(band)] = ser
     return out
 
@@ -121,6 +145,7 @@ def load_offers(path=OFFERS_CSV, size_bands=None) -> dict:
             "chg": chg["price_changed"].iloc[-1] if not chg.empty else None,
             "prev": int(chg["prev_price"].iloc[-1]) if not chg.empty and chg["prev_price"].iloc[-1] else None,
             "desc": desc[:60],
+            "ten": tenant_kind(*g["desc"]),   # t 세안고 · m 입주 가능 · None 언급 없음 (설명 문구 기준)
         })
     items.sort(key=lambda x: (x["reg"] or "", x["upd"] or "", x["seen"] or ""), reverse=True)
     return {"items": items[:OFFERS_MAX], "since": since, "through": through}

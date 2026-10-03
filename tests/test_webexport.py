@@ -74,7 +74,7 @@ def test_payload_recent_trades_and_grouped_offers(conn, tmp_path):
     head = "uid,complex_id,deal,price,rent,dong,floor,excl_area,supply_area,desc,broker,posted,first_seen,last_seen,price_changed,prev_price,active\n"
     offers.write_text(head +
         "1,x,sale,185000,,105,저,59.93,83.3,로얄동,A,2026-09-21,2026-09-29,2026-09-30,,,1\n"
-        "2,x,sale,185000,,105,저,59.93,83.3,,B,2026-09-28,2026-09-29,2026-09-30,,,1\n"          # 같은 물건, 다른 중개사
+        "2,x,sale,185000,,105,저,59.93,83.3,세안고매매,B,2026-09-28,2026-09-29,2026-09-30,,,1\n"   # 같은 물건, 다른 중개사
         "3,x,wolse,30000,300,110,중,84.44,110.4,,C,2026-09-29,2026-09-30,2026-09-30,2026-09-30,35000,1\n"
         "4,x,sale,200000,,101,고,84.9,110,,D,2026-09-25,2026-09-29,2026-09-29,,,0\n", encoding="utf-8")  # 내려간 매물
     db.upsert_rows(conn, "apt_trade", _rows_fixture(), "t")
@@ -93,7 +93,8 @@ def test_payload_recent_trades_and_grouped_offers(conn, tmp_path):
     assert webexport.band_of("90", SETTINGS["size_bands"]) is None
     # 평형별 일별 매물 수: 59형 매매는 같은 물건 2중개사 → 1개, 84형 월세 1개(09.30부터), 내려간 매물(90㎡)은 구간 밖
     ab = d["complexes"][0]["asil_b"]
-    assert ab["59"] == {"d": ["2026-09-29", "2026-09-30"], "s": [1, 1], "j": [0, 0], "w": [0, 0]}
+    assert ab["59"] == {"d": ["2026-09-29", "2026-09-30"], "s": [1, 1], "j": [0, 0], "w": [0, 0], "st": [1, 1], "sm": [0, 0]}
+    assert o[1]["ten"] == "t" and o[0]["ten"] is None       # 두 중개사 중 하나라도 세안고라고 쓰면 세안고
     assert ab["84"]["w"] == [0, 1] and ab["84"]["s"] == [1, 0]   # 84.9㎡ 매매는 09.29만 보이고 내려감
     json.dumps(d, allow_nan=False)
 
@@ -116,3 +117,11 @@ def test_keep_newer_trades_preserves_mac_export():
     newer = {"trades_fetched_at": "2026-10-01T07:00:00+09:00", "data_through": "2026-09-30", "complexes": []}
     assert webexport.keep_newer_trades(newer, old) is False and newer["data_through"] == "2026-09-30"
     assert webexport.keep_newer_trades(dict(newer), None) is False
+
+
+def test_tenant_kind():
+    t = webexport.tenant_kind
+    assert t("세안고매매 정남향") == "t" and t("전세 끼고 매매") == "t" and t("임차인 거주중") == "t"
+    assert t("입주매매,올확장") == "m" and t("즉시입주 가능") == "m" and t("공실") == "m"
+    assert t("트인뷰 세대창고") is None and t("") is None
+    assert t("입주가능", "세안고") == "t"                    # 설명이 엇갈리면 세안고 우선

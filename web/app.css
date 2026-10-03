@@ -301,3 +301,5 @@ button { font: inherit; color: inherit; }
 .llbar i { position: absolute; top: 1px; bottom: 1px; border-radius: 3px; }
 .llbar i.neg { background: var(--s1); } .llbar i.pos { background: var(--s2); }
 .llverdict { margin: 2px 0 8px; font-size: 14px; }
+.tag.ten-t { color: var(--s2); border-color: currentColor; }
+.tag.ten-m { color: var(--s1); border-color: currentColor; }

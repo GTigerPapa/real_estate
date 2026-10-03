@@ -367,18 +367,27 @@ function OfferFeed(fixedId, band) {
   const kKey = fixedId ? "offerKindCx" : "offerKind";
   const kind = state[kKey] || "all", cid = fixedId || state.offerCx || "all";
   const byCx = all.filter((o) => cid === "all" || o.c === cid);
-  const O = byCx.filter((o) => kind === "all" || o.t === kind);
+  const tKey = fixedId ? "offerTenCx" : "offerTen", ten = state[tKey] || "all";
+  const byKind = byCx.filter((o) => kind === "all" || o.t === kind);
+  const tenOf = (o) => o.ten || "none";
+  const O = byKind.filter((o) => ten === "all" || (o.t === "sale" && tenOf(o) === ten));
   const since = d.offers_since;
   const cxIds = d.complexes.map((c) => c.id).filter((id) => all.some((o) => o.c === id));
   const pick = (k, v) => () => { state[k] = v; render(); };
   const kindChips = h("div", { class: "chips" }, [["all", "전체"], ["sale", "매매"], ["jeonse", "전세"], ["wolse", "월세"]].map(([v, t]) =>
     h("button", { "aria-pressed": String(kind === v), onclick: pick(kKey, v) },
       t + (v === "all" ? "" : ` ${byCx.filter((o) => o.t === v).length}`))));
-  const chips = fixedId ? kindChips : h("div", {},
+  // 매매 매물의 세안고 / 입주 가능 / 언급 없음 (중개사 설명 문구 기준)
+  const saleList = byCx.filter((o) => o.t === "sale");
+  const tenChips = (kind === "all" || kind === "sale") && saleList.length ? h("div", { class: "chips" },
+    [["all", "매매 전체"], ["t", "세안고"], ["m", "입주 가능"], ["none", "언급 없음"]].map(([v, t]) =>
+      h("button", { "aria-pressed": String(ten === v), onclick: pick(tKey, v) },
+        t + (v === "all" ? "" : ` ${saleList.filter((o) => tenOf(o) === v).length}`)))) : null;
+  const chips = fixedId ? h("div", {}, kindChips, tenChips) : h("div", {},
     h("div", { class: "chips" }, [["all", "전체 단지", all.length], ...cxIds.map((id) => [id, cx(id).short, all.filter((o) => o.c === id).length])].map(([v, t, n]) =>
       h("button", { "aria-pressed": String(cid === v), onclick: pick("offerCx", v) },
         v === "all" ? t : h("span", { class: "cname" }, h("span", { class: "dot", style: `background:${colorOf(cx(v))}` }), `${t} ${n}`)))),
-    kindChips);
+    kindChips, tenChips);
   const rows = O.map((o) => {
     const down = o.prev && o.p < o.prev, up = o.prev && o.p > o.prev;
     const fresh = since && o.seen > since;   // 추적 시작 뒤 처음 나타난 매물 = 실제 신규 등록
@@ -388,12 +397,15 @@ function OfferFeed(fixedId, band) {
         o.chg ? h("span", { class: `badge ${down ? "dn" : up ? "upb" : ""}` }, `${down ? "▼" : up ? "▲" : "변경"} ${md(o.chg)}`) : null),
       h("td", {}, h("span", { class: "sub2" }, `${o.dong ? o.dong + "동 " : ""}${o.f ? o.f + "층" : ""}${o.ar ? " · " + o.ar + "㎡" : ""}`),
         o.n > 1 ? h("span", { class: "tag" }, `${o.n}곳`) : null,
+        o.t === "sale" && o.ten === "t" ? h("span", { class: "tag ten-t" }, "세안고") : null,
+        o.t === "sale" && o.ten === "m" ? h("span", { class: "tag ten-m" }, "입주 가능") : null,
         fixedId && o.desc ? h("div", { class: "desc" }, o.desc) : null),
       h("td", { class: "nw" }, fresh ? h("span", {}, md(o.seen), h("span", { class: "badge new" }, "신규")) : md(o.reg)));
   });
   const note = (fixedId ? `이 단지 아실 매물 · ${band}형 · ` : `아실 매물 목록 · ${band}형 · `) +
     `최근 날짜순 · 같은 물건을 여러 중개사가 올리면 1줄(N곳) · ▼▲ 가격 변경일. ` +
-    `날짜: '신규'는 ${md(since)} 추적 시작 뒤 처음 나타난 날(실제 등록일), 그 외는 아실 게시일(중개사가 광고를 다시 올린 날이라 최근 날짜에 몰림)`;
+    `날짜: '신규'는 ${md(since)} 추적 시작 뒤 처음 나타난 날(실제 등록일), 그 외는 아실 게시일(중개사가 광고를 다시 올린 날이라 최근 날짜에 몰림) · ` +
+    `세안고·입주 가능은 중개사 설명 문구로 가린 것(언급 없는 매물이 절반 넘음)`;
   const head = [{ t: "가격" }, { t: fixedId ? "동·층·전용 · 특징" : "동·층·전용" }, { t: "게시일" }];
   const anyOffers = (d.offers || []).length > 0;
   return Feed(fixedId ? "offers-" + fixedId : "offers", `최근 매물 · ${band}형`,
@@ -488,9 +500,10 @@ function Detail(id, band) {
   let bandChart = null;
   if (BL) {
     const t0 = dDate(B.d[0]), t1 = dDate(BL.d), span = Math.max(14, (t1 - t0) / 864e5);  // 쌓인 날이 적어도 2주 폭으로
+    const tenSeries = B.st ? [{ name: "매매 중 세안고", kind: "line", color: "var(--ink)", width: 1.5, dash: true, endDot: false, pts: serPts(B, "st") }] : [];
     bandChart = Chart({
       label: `${band}형 아실 매물 수`, xDomain: [t1 - span * 864e5 - 864e5, t1 + 864e5], height: 170, yMin: 0,
-      yFmt: (v) => String(v), tipFmt: (v) => v + "건", xTicks: dayTicks, xFmt: fmtMD, tipDate: fmtYMD, series: lineSeries(B),
+      yFmt: (v) => String(v), tipFmt: (v) => v + "건", xTicks: dayTicks, xFmt: fmtMD, tipDate: fmtYMD, series: [...lineSeries(B), ...tenSeries],
     });
   }
   let allChart = null;
@@ -518,6 +531,7 @@ function Detail(id, band) {
     dView === "band"
       ? `${dotted(BL.d)} 매매 ${BL.sale}${wkTxt(B, "s")} · 전세 ${BL.jeonse}${wkTxt(B, "j")} · 월세 ${BL.wolse}${wkTxt(B, "w")} · ` +
         `아실 매물 목록에서 ${band}형만 센 수(같은 물건 1개) · ${dotted(B.d[0])}부터 매일 쌓임 · 괄호는 1주 전 대비` +
+        (B.st ? ` · 매매 중 세안고 ${B.st[B.st.length - 1]} · 입주 가능 ${B.sm[B.sm.length - 1]} (설명 문구 기준, 점선 = 세안고)` : "") +
         (cover !== null ? ` · 이 목록은 아실 제휴 중개사 매물만이라 단지 전체 매매 ${AL.sale}건 중 약 ${cover}%를 잡음` : "")
       : (!BL ? noBandMsg + " · " : "") + `아실 일별 매물 수 · 2023.09부터 · 전체 면적 합계(아실이 평형별 과거 값을 주지 않음)` +
         (AL ? ` · ${dotted(AL.d)} 매매 ${AL.sale}${wkTxt(c.asil, "s")} · 전세 ${AL.jeonse} · 월세 ${AL.wolse}` : ""),
