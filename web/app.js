@@ -465,7 +465,14 @@ function Detail(id, band) {
   const d = state.data, c = cx(id);
   if (!c) return h("div", { class: "empty" }, "단지를 찾을 수 없습니다");
   if (!c.bands.includes(band)) band = c.bands[c.bands.length - 1];
-  const b = c.b[band], sm = b.summary, months = monthsView(), all = d.months, X = xDomain(months);
+  const b = c.b[band], sm = b.summary, months = monthsView(), all = d.months;
+  // 가격·전세·거래량·단지 전체 매물 차트가 같은 시간축을 쓰도록 실거래 월 범위와 아실 일별 범위를 합친다
+  const X = (() => {
+    const [a0, a1] = xDomain(months), A = c.asil && c.asil.d.length ? c.asil : null;
+    if (!A) return [a0, a1];
+    const t1 = dDate(A.d[A.d.length - 1]), t0 = Math.max(dDate(A.d[0]), t1 - (state.range === "12" ? 365 : 3 * 365 + 1) * 864e5);
+    return [Math.min(a0, t0 - 5 * 864e5), Math.max(a1, t1 + 5 * 864e5)];
+  })();
   const cap = d.cap;
   const back = h("div", { class: "back" },
     h("button", { class: "iconbtn", "aria-label": "뒤로", onclick: () => { history.length > 1 ? history.back() : (location.hash = "#/"); } },
@@ -525,10 +532,8 @@ function Detail(id, band) {
   }
   let allChart = null;
   if (AL) {
-    const t1 = dDate(AL.d), t0 = Math.max(dDate(c.asil.d[0]), t1 - (state.range === "12" ? 365 : 3 * 365 + 1) * 864e5);
-    const pad = Math.max(2, (t1 - t0) / 864e5 * 0.02) * 864e5;
     allChart = Chart({
-      label: "단지 전체 아실 일별 매물 수", xDomain: [t0 - pad, t1 + pad], height: 150, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => v + "건",
+      label: "단지 전체 아실 일별 매물 수", xDomain: X, height: 150, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => v + "건",
       tipDate: fmtYMD, series: lineSeries(c.asil),
     });
   }
@@ -589,10 +594,11 @@ function Detail(id, band) {
     h("div", { class: "sections" },
       wide(Section("매매 실거래", "점: 개별 거래 · 선: 3개월 중앙값(해제·직거래 제외)", tradeChart)),
       wide(listingSec),  // 가격 바로 아래에 같은 폭으로 두어 매물 증감과 가격 흐름을 위아래로 비교
-      Section("매매 vs 전세", "3개월 중앙값 · 전세는 갱신 계약 제외", tjChart),
-      Section("전세가율 · 갱신 비율", "갱신 비율↑ = 신규 전세 공급 감소 신호 (3개월 표본 5건 이상만)", ratioChart),
-      Section("월별 거래량", null, volChart),
-      askSec,
+      // 아래 셋도 한 줄 전체 폭 + 같은 시간축 → 위 가격·매물 차트와 세로로 맞춰 비교
+      wide(Section("매매 vs 전세", "3개월 중앙값 · 전세는 갱신 계약 제외", tjChart)),
+      wide(Section("전세가율 · 갱신 비율", "갱신 비율↑ = 신규 전세 공급 감소 신호 (3개월 표본 5건 이상만)", ratioChart)),
+      wide(Section("월별 거래량", null, volChart)),
+      askSec ? wide(askSec) : null,
       wide(Section(`최근 거래 · ${band}형`, sm.last_deal ? `최근 정상 거래 ${dotted(sm.last_deal.d)} · ${eok(sm.last_deal.p)}` : null, table)),
       wide(OfferFeed(id, band))));
 }
