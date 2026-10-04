@@ -4,7 +4,7 @@
 
 // ───── 유틸 ─────
 const $ = (sel, el = document) => el.querySelector(sel);
-const SLOT = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s4)", "var(--s5)", "var(--s6)"];
+const SLOT = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s4)", "var(--s5)", "var(--s6)", "var(--s7)", "var(--s8)"];  // 8색 검증 (dataviz validate_palette, 라이트·다크)
 const WIDE = window.matchMedia("(min-width: 1024px)");  // app.css 의 PC 레이아웃 기준과 같게 유지
 const store = {
   get(k, d) { try { const v = localStorage.getItem("re." + k); return v === null ? d : v; } catch (e) { return d; } },

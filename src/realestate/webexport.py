@@ -10,6 +10,7 @@
 """
 from __future__ import annotations
 
+import json
 import math
 import re
 from datetime import datetime
@@ -284,7 +285,7 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
                             "sale_min": g("sale_min_ask", True), "sale_max": g("sale_max_ask", True),
                             "lease_min": g("lease_min_ask", True)})
 
-        out_complexes.append({"id": cid, "name": c["name"], "short": c.get("short") or c["name"], "slot": idx, "bands": [str(b) for b in c.get("bands", [])],
+        out_complexes.append({"id": cid, "name": c["name"], "short": c.get("short") or c["name"], "slot": int(c.get("slot", idx)), "bands": [str(b) for b in c.get("bands", [])],
                               "area": f"{c['umd_nm']}", "b": bands_out, "listings": lst,
                               "asil": asil.get(cid, {"d": [], "s": [], "j": [], "w": []}),
                               # 평형별 일별 매물 수 (아실 매물 목록 추적에서 계산, 추적 시작일부터)
@@ -334,9 +335,33 @@ def keep_newer_trades(new: dict, old: dict | None) -> bool:
     if (new.get("trades_fetched_at") or "") >= old["trades_fetched_at"]:
         return False
     same_months = old.get("months") == new.get("months")
+    new_ov = new.get("overlap") or {}
+    new_ov_months = list(new.get("months") or [])
     for k in TRADE_TOP:
         if k in old:
             new[k] = old[k]
+    # 매물×가격: 새로 추가한 지역·단지는 DB 값으로 덧붙인다 (기간 축이 같을 때만)
+    if "overlap" in old and new_ov:
+        ov = new["overlap"] = json.loads(json.dumps(old["overlap"]))
+        have = {r["id"] for r in ov.get("regions", [])}
+        order = [r["id"] for r in new_ov.get("regions", [])]
+        nm, om = new_ov_months, old.get("months") or []
+
+        def remap(arr):   # 새 기간 축 값 → 기존 기간 축 (달 이름으로 맞춤)
+            by = dict(zip(nm, arr))
+            return [by.get(m) for m in om]
+        added = []
+        for r in new_ov.get("regions", []):
+            if r["id"] in have:
+                continue
+            if nm != om:
+                r = {**r, "lst_m": remap(r["lst_m"]), "p84": {k: remap(v) for k, v in r["p84"].items()}}
+            added.append(r)
+        ov["regions"] = sorted(ov.get("regions", []) + added,
+                               key=lambda r: order.index(r["id"]) if r["id"] in order else 99)
+        for cid, v in (new_ov.get("complexes") or {}).items():
+            if cid not in ov.setdefault("complexes", {}):
+                ov["complexes"][cid] = v if nm == om else {**v, "lst_m": remap(v["lst_m"]), "p84": {k: remap(x) for k, x in v["p84"].items()}}
     olds = {c["id"]: c for c in old.get("complexes", [])}
     for c in new.get("complexes", []):
         o = olds.get(c["id"])

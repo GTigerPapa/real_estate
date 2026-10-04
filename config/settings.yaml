@@ -23,11 +23,14 @@ buy_cap_manwon: 140000        # 매수 상한 (만원) = 14억
 #   93: 미사더샵 93.06~93.36 / 101: 고덕자이 101.04·101.99, 고덕아이파크 102.85, 미사더샵 101.82, 장미8단지 101
 #   118: 고덕자이 118.45 (고덕아이파크 120.37은 전월세만 있어 단지 평형에는 넣지 않음)
 size_bands:
+  - {band: "55", min: 52.0, max: 57.0}     # 2026-10-04 삼익그린2차 54.81
   - {band: "59", min: 57.0, max: 62.0}
+  - {band: "67", min: 64.0, max: 70.0}     # 2026-10-04 삼익그린2차 66.87
   - {band: "74", min: 72.0, max: 77.0}
   - {band: "84", min: 82.0, max: 87.0}
   - {band: "93", min: 90.0, max: 97.0}
   - {band: "101", min: 97.0, max: 107.0}
+  - {band: "107", min: 107.0, max: 110.0}  # 2026-10-04 삼익그린2차 107.56
   - {band: "118", min: 112.0, max: 125.0}
 
 # 검증: 이상치 = 같은 단지·평형 ±1개월(3개월 창) 중앙값 대비 편차가 기준 이상
@@ -52,12 +55,14 @@ listing_metrics:
 regions:
   - {id: gangdong,  name: 강동구,        short: 강동구, asil_area: "11740",      sgg_cd: "11740"}
   - {id: sangil,    name: 강동구 상일동, short: 상일동, asil_area: "1174010300", sgg_cd: "11740", umd_nm: 상일동}
+  - {id: myeongil,  name: 강동구 명일동, short: 명일동, asil_area: "1174010100", sgg_cd: "11740", umd_nm: 명일동}
   - {id: bundang,   name: 성남 분당구,   short: 분당구, asil_area: "41135",      sgg_cd: "41135"}
   - {id: yatap,     name: 분당구 야탑동, short: 야탑동, asil_area: "4113510700", sgg_cd: "41135", umd_nm: 야탑동}
   - {id: jungwon,   name: 성남 중원구,   short: 중원구, asil_area: "41133",      sgg_cd: "41133"}
   - {id: yeosu,     name: 중원구 여수동, short: 여수동, asil_area: "4113310600", sgg_cd: "41133", umd_nm: 여수동}
   - {id: hanam,     name: 하남시,        short: 하남시, asil_area: "41450",      sgg_cd: "41450"}
   - {id: pungsan,   name: 하남 풍산동,   short: 풍산동, asil_area: "4145011000", sgg_cd: "41450", umd_nm: 풍산동}
+  - {id: mangwol,   name: 하남 망월동,   short: 망월동, asil_area: "4145010900", sgg_cd: "41450", umd_nm: 망월동}
 
 # 한국은행 ECOS 지표 (2026-10-04). 키 = 환경변수 ECOS_KEY (GitHub Secrets·.env). 월별, 2013-01부터.
 # item2 는 2단계 항목 코드(없으면 생략). ytd: true 면 ECOS 값이 연중 누계라 월별로 풀어서 쓴다

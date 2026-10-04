@@ -1,6 +1,6 @@
 (async function () {
   try {
-  var COMPLEXES = [{"id":"godeok_xi","naver_id":121977,"name":"고덕자이"},{"id":"godeok_central_ipark","naver_id":118210,"name":"고덕센트럴아이파크"},{"id":"yeosu_central_town","naver_id":102283,"name":"센트럴타운"},{"id":"misa_thesharp_central_forest","naver_id":111028,"name":"미사강변더샵센트럴포레스트"},{"id":"godeok_lotte_castle_venezia","naver_id":117309,"name":"고덕롯데캐슬베네루체"},{"id":"yatap_jangmi8_hyundai","naver_id":2229,"name":"장미마을8단지현대"}];
+  var COMPLEXES = [{"id":"godeok_xi","naver_id":121977,"name":"고덕자이"},{"id":"godeok_central_ipark","naver_id":118210,"name":"고덕센트럴아이파크"},{"id":"yeosu_central_town","naver_id":102283,"name":"센트럴타운"},{"id":"misa_thesharp_central_forest","naver_id":111028,"name":"미사강변더샵센트럴포레스트"},{"id":"godeok_lotte_castle_venezia","naver_id":117309,"name":"고덕롯데캐슬베네루체"},{"id":"yatap_jangmi8_hyundai","naver_id":2229,"name":"장미마을8단지현대"},{"id":"myeongil_samik_green2","naver_id":1308,"name":"삼익그린2차"},{"id":"misa_golden_centro","naver_id":105286,"name":"미사강변골든센트로"},{"id":"misa_central_xi","naver_id":109215,"name":"미사강변센트럴자이"}];
   var GAP = 400;
   var host = "fin.land.naver.com";
   if (location.hostname !== host) {

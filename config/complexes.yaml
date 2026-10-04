@@ -74,3 +74,40 @@ complexes:
     apt_seq: ["41135-139"]
     fallback: [{jibun: "334", apt_nm: 장미마을(현대)}]
     bands: [59, 74, 84, 101]
+
+  # 2026-10-04 추가 (실거래·아실로 확인). slot = 단지 색 번호(0~7). 8색을 넘으면 같은 평형에 함께 나오지 않는 단지와 색을 나눈다
+  - id: myeongil_samik_green2
+    name: 삼익그린2차
+    short: 삼익그린2
+    naver_id: 1308
+    asil_id: "1538"
+    sgg_cd: "11740"
+    umd_nm: 명일동
+    apt_seq: ["11740-7"]
+    fallback: [{jibun: "15", apt_nm: 삼익그린2차}]
+    bands: [55, 67, 84, 107]   # 실거래 전용 42.93 · 54.81 · 66.87 · 84.75 · 107.56 · 128.16 (2,400세대)
+    slot: 6
+
+  - id: misa_golden_centro
+    name: 미사강변골든센트로
+    short: 골든센트로
+    naver_id: 105286
+    asil_id: "20305302"
+    sgg_cd: "41450"
+    umd_nm: 망월동
+    apt_seq: ["41450-298"]
+    fallback: [{jibun: "1162", apt_nm: 미사강변 골든 센트로}]
+    bands: [59, 74, 84]        # 실거래 전용 59.59~59.96 · 74.96 · 84.62~84.98 (1,541세대)
+    slot: 7
+
+  - id: misa_central_xi
+    name: 미사강변센트럴자이
+    short: 미사센트럴자이
+    naver_id: 109215
+    asil_id: "20348388"
+    sgg_cd: "41450"
+    umd_nm: 풍산동
+    apt_seq: ["41450-344"]
+    fallback: [{jibun: "480", apt_nm: 미사강변센트럴자이}]
+    bands: [93, 101]           # 실거래 전용 91.45 · 96.39~96.99 · 101.79 (84형 없음, 1,222세대)
+    slot: 4                    # 베네루체(59·84형)와 같은 평형에 함께 나오지 않아 색을 나눠 씀
