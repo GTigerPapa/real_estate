@@ -168,6 +168,8 @@ def relevant(title: str, desc: str, topic: dict, F: dict) -> bool:
         return False
     if any(w in text for w in topic.get("not") or []):
         return False
+    if topic.get("any") and not any(w in text for w in topic["any"]):   # 지역 단어 중 하나는 있어야 (전국 급매 글 거르기)
+        return False
     return all(m in title for m in topic.get("must") or [])
 
 

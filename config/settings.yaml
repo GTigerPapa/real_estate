@@ -115,7 +115,7 @@ sentiment:
       - {tag: 미사,   query: 미사강변 아파트, must: [미사]}
       - {tag: 분당,   query: 분당 야탑 아파트, must: [야탑]}
       - {tag: 세안고, query: 세안고 매매, must: [세안고]}
-      - {tag: 급매,   query: 아파트 급매, must: [급매]}
+      - {tag: 급매,   query: 아파트 급매, must: [급매], any: [강동, 고덕, 명일, 상일, 미사, 하남, 분당, 야탑, 서울]}
     per_topic: 3
     max_items: 12
     news_hours: 48
