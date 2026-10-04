@@ -121,7 +121,11 @@ python3 scripts/mac_daily.py --no-push            # 수동 실행 (커밋·push 
 
 `web/` 은 설치형 웹앱(PWA): 단지 카드(3개월 중앙값·1년 대비·상한 대비·전세가율·네이버 매물),
 단지 상세 차트, 단지 비교, 오프라인 보기, 라이트/다크.
-'지표' 탭은 한국은행 ECOS 월별 지표(기준금리·주담대 금리·국고채 3년, 주택가격전망·금리수준전망 CSI, KB 서울 아파트
+`시장` 탭은 [거시 지표 | 심리] 두 화면이다. 심리 화면: 요약 카드(탐욕/공포·CSI·급매 검색·유튜브 새 영상), 주요 글(뉴스·카페·유튜브
+제목·링크·미리보기 문구), 심리와 가격 겹쳐 보기, 네이버 검색량(데이터랩 2016년~), 선행 관계, 카페·뉴스 하루 새 글 수, 유튜브 새 영상 수.
+수집: `python scripts/sentiment_collect.py` (NAVER API HUB 키 `NAVER_CLIENT_ID`/`NAVER_CLIENT_SECRET`, `YOUTUBE_API_KEY`,
+GitHub Actions 가 매일 실행) → `data/sentiment/`. 키워드·주제는 settings.yaml `sentiment`. 키 점검: '키 점검' 워크플로.
+거시 지표 화면은 한국은행 ECOS 월별 지표(기준금리·주담대 금리·국고채 3년, 주택가격전망·금리수준전망 CSI, KB 서울 아파트
 매매·전세지수, 주택관련대출 순증, 수도권 미분양, 서울·경기 인허가 12개월 합)를 2013년부터 보여 주고, 지표 3개월 변화와 k개월 뒤
 KB 서울 아파트 매매지수 변화의 상관(선행 관계)을 계산한다. 수집: `python scripts/ecos_collect.py` (키 = `ECOS_KEY`,
 GitHub Actions 가 매일 실행) → `data/macro/ecos_monthly.csv`. 지표 목록은 settings.yaml `ecos.series`.

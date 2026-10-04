@@ -16,7 +16,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from . import config, listings, macro, metrics, overlap
+from . import config, listings, macro, metrics, mood, overlap
 
 FORMAT = 1
 MONTHS_SHOWN = 36
@@ -44,6 +44,7 @@ def _series(df: pd.DataFrame, months: list[str], value: str, n: str = "n", nd: i
 ASIL_CSV = config.DATA_DIR / "listings" / "asil" / "asil_offer_counts.csv"
 REGION_CSV = config.DATA_DIR / "listings" / "asil" / "asil_region_counts.csv"
 ECOS_CSV = config.DATA_DIR / "macro" / "ecos_monthly.csv"
+SENTIMENT_DIR = config.DATA_DIR / "sentiment"
 OFFERS_CSV = config.DATA_DIR / "listings" / "asil" / "asil_offers.csv"
 RECENT_TRADES = 600   # 홈 '최근 실거래' 표에 싣는 건수 (전체 단지·전체 면적, 앱에서 평형으로 거름)
 OFFERS_MAX = 400      # 홈 '매물' 표에 싣는 물건 수
@@ -181,7 +182,8 @@ def load_asil(path=ASIL_CSV) -> dict:
 
 
 def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | None = None,
-                  asil_csv=ASIL_CSV, offers_csv=OFFERS_CSV, region_csv=REGION_CSV, ecos_csv=ECOS_CSV) -> dict:
+                  asil_csv=ASIL_CSV, offers_csv=OFFERS_CSV, region_csv=REGION_CSV, ecos_csv=ECOS_CSV,
+                  sentiment_dir=SENTIMENT_DIR) -> dict:
     now = now or config.now_kst()
     asil = load_asil(asil_csv)
     offers = load_offers(offers_csv, settings.get("size_bands"))
@@ -308,6 +310,8 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
         "overlap": overlap.build(conn, settings, complexes, months, region_csv, asil_csv),
         # 한국은행 ECOS 월별 지표 (금리·심리·KB 지수·대출·공급) + 선행 관계
         "macro": macro.build(ecos_csv, settings),
+        # 심리: 네이버 데이터랩 검색량·카페/뉴스 글 수·주요 글(뉴스·카페·유튜브)
+        "sentiment": mood.build(sentiment_dir, settings, ecos_csv),
         "offers": offers["items"],
         "offers_since": offers["since"],
         "offers_through": offers["through"],

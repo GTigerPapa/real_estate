@@ -257,7 +257,7 @@ function Spark(values, color) {
 // ───── 데이터 ─────
 const state = { data: null, band: store.get("band", "84"), range: store.get("range", "36"), offerKind: "all", offerCx: "all",
   cmpView: store.get("cmpView", "all"), cmpDeal: store.get("cmpDeal", "both"), dtlView: "band",
-  macroRange: store.get("macroRange", "36"), ovMode: store.get("ovMode", "region"), ovRegion: store.get("ovRegion", "gangdong"), ovCx: store.get("ovCx", ""), error: null };
+  macroRange: store.get("macroRange", "36"), marketView: store.get("marketView", "mood"), feedKind: "news", ovMode: store.get("ovMode", "region"), ovRegion: store.get("ovRegion", "gangdong"), ovCx: store.get("ovCx", ""), error: null };
 async function loadData(force) {
   try {
     const res = await fetch("data/app.json", { cache: force ? "reload" : "no-cache" });
@@ -811,10 +811,115 @@ function Overlap() {
       table ? wide(Section("지역 한눈에", "매물·가격 = 최근 3개월 변화 · 가장 강한 관계 = 매물 변화 뒤 가격 변화와 상관이 가장 큰 시차 · 줄을 누르면 위 차트가 바뀜", table)) : null));
 }
 
-// ───── 시장 지표 (한국은행 ECOS) ─────
+// ───── 시장 > 심리 (네이버 검색량·카페/뉴스·유튜브 + 한국은행 CSI) ─────
+function Tile(label, value, sub, tone) {
+  return h("div", { class: "stile" }, h("span", { class: "sl" }, label), h("b", { class: tone ? "t-" + tone : "" }, value), h("span", { class: "ss" }, sub));
+}
+const avgN = (a, n) => a.map((_, i) => { const w = a.slice(Math.max(0, i - n + 1), i + 1).filter((x) => x !== null && x !== undefined); return w.length ? w.reduce((x, y) => x + y, 0) / w.length : null; });
+function Sentiment() {
+  const d = state.data, S = d.sentiment, M = d.macro || { months: [], v: {} };
+  if (!S || !S.wk) return h("div", { class: "empty" }, "심리 데이터가 아직 없습니다. 다음 자동 갱신(매일 아침) 때 채워집니다.");
+  const W = S.wk, wt = W.d.map(dDate), hasW = wt.length > 0;
+  const span = state.macroRange === "all" ? Infinity : 3 * 365;
+  const tEnd = hasW ? wt[wt.length - 1] : Date.now(), t0 = hasW ? Math.max(wt[0], tEnd - span * 864e5) : tEnd - span * 864e5;
+  const XW = [t0 - 10 * 864e5, tEnd + 10 * 864e5];
+  const g4 = W.greed ? avgN(W.greed, 4) : [];
+  const gLast = g4.length ? g4[g4.length - 1] : null;
+  const gTop = gLast === null ? null : Math.round(g4.filter((x) => x !== null && x >= gLast).length / g4.filter((x) => x !== null).length * 100);
+  const s4 = W.sell ? avgN(W.sell, 4) : [];
+  const sChg = s4.length > 13 && s4[s4.length - 13] ? Math.round((s4[s4.length - 1] / s4[s4.length - 13] - 1) * 100) : null;
+  const yn = (S.yt || {}).n || [], yLast = yn.length ? yn[yn.length - 1] : null;
+  const yAvg = yn.length > 1 ? Math.round(yn.slice(0, -1).reduce((a, b) => a + b, 0) / (yn.length - 1)) : null;
+  const csiArr = (M.v.csi_house || []).filter((x) => x !== null), csi = csiArr.length ? csiArr[csiArr.length - 1] : null;
+  const tiles = h("div", { class: "stiles" },
+    Tile("탐욕 / 공포", gLast === null ? "–" : gLast.toFixed(2), gLast === null ? "검색량 수집 전" : `상승÷하락 검색 · 2016년 이후 상위 ${gTop}%`, gLast === null ? "" : gLast > 1 ? "up" : "dn"),
+    Tile("주택가격전망CSI", csi === null ? "–" : String(csi), "100 초과 = 오른다 우세", csi === null ? "" : csi > 100 ? "up" : "dn"),
+    Tile("급매 검색", sChg === null ? "–" : (sChg > 0 ? "+" : "") + sChg + "%", "최근 4주 vs 3개월 전", sChg === null ? "" : sChg > 0 ? "dn" : "up"),
+    Tile("유튜브 새 영상", yLast === null ? "–" : yLast.toLocaleString() + "개", yAvg ? `전날 · 평균 ${yAvg.toLocaleString()}개` : "전날 올라온 부동산 영상 (추정치) · 수집 시작", ""));
+
+  // 주요 글
+  const F = S.feed || {}, fk = ["news", "cafe", "yt"].includes(state.feedKind) ? state.feedKind : "news";
+  const list = F[fk] || [];
+  const feedChips = h("div", { class: "chips" }, [["news", "뉴스"], ["cafe", "카페"], ["yt", "유튜브"]].map(([v, t]) =>
+    h("button", { "aria-pressed": String(fk === v), onclick: () => { state.feedKind = v; render(); } }, `${t} ${(F[v] || []).length}`)));
+  const items = list.length ? h("ul", { class: "flist" }, list.map((x) => h("li", {},
+    h("a", { href: x.u, class: "ft", target: "_blank", rel: "noopener noreferrer" }, x.t),
+    h("div", { class: "fm" }, x.g ? h("span", { class: "tag" }, x.g) : null, x.s ? h("span", {}, x.s) : null, x.d ? h("span", {}, x.d) : null,
+      x.v ? h("span", {}, "조회 " + (x.v >= 10000 ? (x.v / 10000).toFixed(1) + "만" : x.v.toLocaleString())) : null),
+    x.x ? h("p", { class: "fx" }, x.x) : null))) : h("div", { class: "empty" }, "아직 모은 글이 없습니다");
+  const feedSec = wide(Section("주요 글", `네이버 뉴스·카페 검색과 유튜브에서 매일 아침 고른 글${F.generated_at ? " · " + F.generated_at.replace("T", " ").slice(5) + " 기준" : ""} · ` +
+    "제목을 누르면 원문으로 이동 · 요약은 각 서비스가 주는 미리보기 문구 · 유튜브는 전날 올라온 영상 중 조회수 상위", feedChips, items));
+
+  // 심리와 가격
+  const rb = (arr) => { const b = arr.find((p) => p.v !== null && p.v !== undefined); return arr.map((p) => ({ t: p.t, v: b && p.v !== null && p.v !== undefined ? Math.round(p.v / b.v * 1000) / 10 : null })); };
+  const mPts = (id) => (M.months || []).map((m, i) => ({ t: ymDate(m), v: (M.v[id] || [])[i] })).filter((p) => p.t >= t0 - 20 * 864e5);
+  const over = Chart({ label: "가격과 CSI", xDomain: XW, height: 180, yFmt: (v) => String(v), tipFmt: (v) => v.toFixed(1),
+    refs: [{ v: 100, label: "시작=100", left: true }], series: [
+      { name: "KB 서울 아파트 매매 (시작=100)", kind: "line", color: "var(--ink)", width: 2.2, pts: rb(mPts("kb_seoul_apt")) },
+      { name: "주택가격전망CSI (시작=100)", kind: "line", color: "var(--s1)", width: 1.6, dash: true, endDot: false, pts: rb(mPts("csi_house")) }] });
+  const greed = g4.length ? Chart({ label: "탐욕/공포", xDomain: XW, height: 130, yFmt: (v) => v.toFixed(1), tipFmt: (v) => v.toFixed(2), tipDate: fmtYMD, yTicks: 3,
+    refs: [{ v: 1, label: "1 = 상승·하락 검색 같음", left: true }], series: [
+      { name: "탐욕/공포 (상승÷하락 검색, 4주 평균)", kind: "line", color: "var(--s2)", width: 1.8, pts: wt.map((t, i) => ({ t, v: g4[i] === null ? null : Math.round(g4[i] * 100) / 100 })).filter((p) => p.t >= t0) }] }) : null;
+  const overSec = wide(Section("심리와 가격 겹쳐 보기", "위: KB 서울 아파트 매매지수와 주택가격전망CSI (각 선 시작 = 100) · 아래: 탐욕/공포 = 네이버 '상승 기대' ÷ '하락 기대' 검색량 " +
+    "(1 초과 = 오른다는 검색이 더 많음) · 같은 시간축", over, greed));
+
+  // 네이버 검색량 (묶음별 각자 최댓값=100)
+  const COL = { up: "var(--s2)", down: "var(--s1)", buy: "var(--s3)", sell: "var(--s5)", area: "var(--s4)" };
+  const gk = Object.keys(S.groups || {}).filter((k) => W[k]);
+  const search = gk.length ? Chart({ label: "네이버 검색량", xDomain: XW, height: 210, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => v.toFixed(0), tipDate: fmtYMD,
+    series: gk.map((k) => { const a = avgN(W[k], 4); return { name: S.groups[k].name, kind: "line", color: COL[k] || "var(--s6)", width: 1.6, endDot: false,
+      pts: wt.map((t, i) => ({ t, v: a[i] })).filter((p) => p.t >= t0) }; }) }) : h("div", { class: "empty" }, "검색량 수집 전");
+  const groupNote = gk.map((k) => `${S.groups[k].name}(${S.groups[k].kw.join("·")})`).join(" · ");
+
+  // 선행 관계
+  const llRows = (S.ll || []).map((L) => {
+    const bi = L.k.indexOf(L.best), r = bi >= 0 ? L.r[bi] : null, w = r === null ? 0 : Math.min(50, Math.abs(r) * 50);
+    return h("tr", {}, h("td", {}, L.label), h("td", {}, L.best === null ? "–" : L.best ? `${L.best}개월 뒤` : "같은 달"),
+      h("td", { class: "llcell" }, h("div", { class: "llbar" }, h("span", { class: "mid" }), r === null ? null :
+        h("i", { class: r < 0 ? "neg" : "pos", style: r < 0 ? `right:50%;width:${w}%` : `left:50%;width:${w}%` }))),
+      h("td", { class: "r" }, r === null ? "–" : (r > 0 ? "+" : "−") + Math.abs(r).toFixed(2)));
+  });
+  const ll = llRows.length ? h("table", { class: "cmp ll" }, h("thead", {}, h("tr", {}, h("th", {}, "검색 지표"), h("th", {}, "시차"),
+    h("th", { class: "llhead" }, h("span", {}, "−"), h("span", {}, "+")), h("th", {}, "상관"))), h("tbody", {}, llRows)) : h("div", { class: "empty" }, "검색량 수집 전");
+
+  // 카페·뉴스 일별 글 수 / 유튜브 일별 새 영상
+  const D = S.daily || { d: [] }, dt = D.d.map(dDate);
+  const sum = (...ids) => D.d.map((_, i) => { const xs = ids.map((id) => (D[id] || [])[i]); return xs.some((x) => x === null || x === undefined) ? null : xs.reduce((a, b) => a + b, 0); });
+  const nDays = (D.cafe_sell || []).filter((x) => x !== null).length;
+  const XD = dt.length ? [dt[0] - 864e5, dt[dt.length - 1] + 864e5] : XW;
+  const cafe = nDays >= 2 ? Chart({ label: "카페·뉴스 글 수", xDomain: XD, height: 170, yMin: 0, xTicks: dayTicks, xFmt: fmtMD, tipDate: fmtYMD, yFmt: (v) => String(v), tipFmt: (v) => v + "건", series: [
+    { name: "카페 '급매'+'세안고'", kind: "line", color: "var(--s5)", width: 1.8, pts: dt.map((t, i) => ({ t, v: sum("cafe_sell", "cafe_seango")[i] })) },
+    { name: "카페 '집값 폭락'", kind: "line", color: "var(--s1)", width: 1.8, pts: dt.map((t, i) => ({ t, v: (D.cafe_crash || [])[i] })) },
+    { name: "카페 '집값 폭등'", kind: "line", color: "var(--s2)", width: 1.8, pts: dt.map((t, i) => ({ t, v: (D.cafe_surge || [])[i] })) },
+    { name: "뉴스 '부동산 대책'", kind: "line", color: "var(--s3)", width: 1.6, dash: true, pts: dt.map((t, i) => ({ t, v: (D.news_policy || [])[i] })) }] })
+    : h("div", { class: "empty" }, `하루 새 글 수는 이틀째부터 계산됩니다 (어제와 오늘 검색 결과 총수의 차이) · ${D.d.length ? dotted(D.d[0]) + " 수집 시작" : "수집 전"}`);
+  const Y = S.yt || { d: [], n: [] }, yd = Y.d.map(dDate);
+  const ytc = Y.d.length ? Chart({ label: "유튜브 새 영상", xDomain: [yd[0] - 864e5 * (yd.length < 7 ? 7 : 1), yd[yd.length - 1] + 864e5], height: 150, yMin: 0,
+    xTicks: dayTicks, xFmt: fmtMD, tipDate: fmtYMD, yFmt: (v) => String(v), tipFmt: (v) => v.toLocaleString() + "개",
+    series: [{ name: "부동산 주제 새 영상 (유튜브 추정치)", kind: "bar", color: "var(--broker)", pts: yd.map((t, i) => ({ t, v: Y.n[i] })) }] }) : h("div", { class: "empty" }, "수집 전");
+
+  return h("div", { class: "sections" },
+    wide(h("section", { class: "section" }, tiles)),
+    feedSec, overSec,
+    Section("네이버 검색량 (주별, 4주 평균)", "데이터랩 검색어트렌드 · 묶음마다 2016년 이후 최댓값 = 100 (묶음끼리 높이 비교는 의미 없음, 흐름만) · " + groupNote, search),
+    Section("선행 관계 (2016년~)", "검색 지표(월평균) 3개월 변화 vs k(0~12)개월 뒤 KB 서울 아파트 3개월 변화의 상관 중 가장 큰 시차 · 과거 패턴, 예측 아님", ll),
+    Section("카페·뉴스 글 수 (일별)", "네이버 카페·뉴스 검색의 하루 새 글 수 (검색 결과 총수의 전일 대비 증가) · 수집 시작일부터 쌓임", cafe),
+    Section("유튜브 새 영상 (일별)", "전날 올라온 '부동산·아파트·집값' 영상 수 · 유튜브 검색이 주는 추정치라 흐름만 볼 것", ytc));
+}
+function Market() {
+  const sub = state.marketView === "mood" ? "mood" : "macro";
+  const seg = h("div", { class: "seg", role: "group", "aria-label": "시장 화면" }, [["macro", "거시 지표"], ["mood", "심리"]].map(([v, t]) =>
+    h("button", { "aria-pressed": String(sub === v), onclick: () => { state.marketView = v; store.set("marketView", v); render(); } }, t)));
+  if (sub === "macro") { const m = Macro(); m.children[0].after(seg); return m; }
+  const range = h("div", { class: "chips" }, [["36", "3년"], ["all", "전체"]].map(([v, t]) =>
+    h("button", { "aria-pressed": String((state.macroRange || "36") === v), onclick: () => { state.macroRange = v; store.set("macroRange", v); render(); } }, t)));
+  return h("div", {}, header("시장", "심리 · 네이버 검색량·카페·뉴스 · 유튜브 · 한국은행 CSI"), seg, range, Sentiment());
+}
+
+// ───── 시장 > 거시 지표 (한국은행 ECOS) ─────
 function Macro() {
   const d = state.data, M = d.macro;
-  if (!M || !M.months) return h("div", {}, header("시장 지표", updatedLine()),
+  if (!M || !M.months) return h("div", {}, header("시장", updatedLine()),
     h("div", { class: "empty" }, "한국은행 지표가 아직 없습니다. GitHub Secrets 에 ECOS_KEY 를 넣으면 다음 갱신 때 채워집니다."));
   const span = state.macroRange === "all" ? M.months.length : 36;
   const mm = M.months.slice(Math.max(0, M.months.length - span)), off = M.months.length - mm.length;
@@ -860,7 +965,7 @@ function Macro() {
   const ll = h("table", { class: "cmp ll" }, h("thead", {}, h("tr", {}, h("th", {}, "지표 변화"), h("th", {}, "가장 강한 시차"),
     h("th", { class: "llhead" }, h("span", {}, "−"), h("span", {}, "+")), h("th", {}, "상관"), h("th", {}, "방향"))), h("tbody", {}, llRows));
   return h("div", {},
-    header("시장 지표", `한국은행 ECOS · 기준금리 ${lastTxt("base_rate", "%")} · 주택가격전망CSI ${lastTxt("csi_house", "", 0)}`),
+    header("시장", `거시 지표 · 한국은행 ECOS · 기준금리 ${lastTxt("base_rate", "%")} · 주택가격전망CSI ${lastTxt("csi_house", "", 0)}`),
     rangeSeg,
     h("div", { class: "sections" },
       wide(Section("가격 겹쳐 보기", "KB 서울 아파트 지수(한국은행 수록)와 관심 지역 실거래 84㎡ 환산가(3개월 중앙값, 2023.10~) · " +
@@ -903,7 +1008,7 @@ function Info() {
 function render() {
   const app = $("#app");
   const route = (location.hash || "#/").slice(1).split("/").filter(Boolean);
-  const tab = route[0] === "compare" ? "compare" : route[0] === "info" ? "info" : route[0] === "overlap" ? "overlap" : route[0] === "macro" ? "macro" : "home";
+  const tab = route[0] === "compare" ? "compare" : route[0] === "info" ? "info" : route[0] === "overlap" ? "overlap" : (route[0] === "market" || route[0] === "macro") ? "market" : "home";
   document.querySelectorAll(".tabbar a").forEach((a) => {
     if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
@@ -917,7 +1022,7 @@ function render() {
   else if (tab === "compare") view = Compare();
   else if (tab === "info") view = Info();
   else if (tab === "overlap") view = Overlap();
-  else if (tab === "macro") view = Macro();
+  else if (tab === "market") { if (route[0] === "macro") state.marketView = "macro"; view = Market(); }
   else view = Home();
   if (state.error) view.prepend(h("div", { class: "banner" }, state.error + " (저장된 데이터를 표시 중)"));
   app.replaceChildren(view);

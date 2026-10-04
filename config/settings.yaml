@@ -75,3 +75,46 @@ ecos:
     - {id: unsold_capital, name: 미분양 주택(수도권), group: supply, stat: 901Y074, item: I410R, unit: "호"}
     - {id: permit_seoul,   name: 주택 인허가(서울),   group: supply, stat: 901Y105, item: SEO, unit: "호", ytd: true}   # 연중 누계값
     - {id: permit_gyeonggi, name: 주택 인허가(경기),  group: supply, stat: 901Y105, item: GYE, unit: "호", ytd: true}
+
+# 심리 (2026-10-04). 키: NAVER_CLIENT_ID/SECRET (NAVER API HUB), YOUTUBE_API_KEY. GitHub Actions 가 매일 수집.
+sentiment:
+  datalab_start: "2016-01-01"
+  # 데이터랩은 한 요청 안에서만 비교 가능(최댓값=100) → '상승·하락'은 같은 요청(비율 = 탐욕/공포), 나머지는 묶음별 요청
+  ratio_pair: [up, down]
+  groups:
+    up:   {name: 상승 기대, keywords: [집값 상승, 집값 폭등, 아파트값 상승, 집값 오른다, 부동산 막차]}
+    down: {name: 하락 기대, keywords: [집값 하락, 집값 폭락, 아파트값 하락, 부동산 거품, 하락장]}
+    buy:  {name: 매수 행동, keywords: [갭투자, 영끌, 내집마련, 주담대, 아파트 매수]}
+    sell: {name: 매도·급매, keywords: [급매, 급매물, 매물 증가, 손절, 세안고]}
+    area: {name: 관심 지역, keywords: [고덕 아파트, 미사 아파트, 분당 아파트, 고덕자이, 미사강변]}
+  # 하루 새 글 수 = 오늘 검색 결과 총수 − 어제 총수 (네이버 검색 API는 날짜별 건수를 주지 않음)
+  counts:
+    - {id: cafe_sell,   source: cafe, query: 급매}
+    - {id: cafe_seango, source: cafe, query: 세안고}
+    - {id: cafe_crash,  source: cafe, query: 집값 폭락}
+    - {id: cafe_surge,  source: cafe, query: 집값 폭등}
+    - {id: news_policy, source: news, query: 부동산 대책}
+    - {id: news_rate,   source: news, query: 주담대 금리}
+    - {id: news_house,  source: news, query: 집값}
+  feed:
+    news:
+      - {tag: 정책,   query: 부동산 대책}
+      - {tag: 금리,   query: 주담대 금리}
+      - {tag: 급매,   query: 아파트 급매}
+      - {tag: 토허제, query: 토지거래허가 아파트}
+      - {tag: 강동,   query: 강동구 아파트}
+      - {tag: 분당,   query: 분당 아파트}
+      - {tag: 하남,   query: 하남 미사 아파트}
+    cafe:
+      - {tag: 고덕,   query: 고덕 아파트}
+      - {tag: 미사,   query: 미사 아파트}
+      - {tag: 분당,   query: 분당 야탑 아파트}
+      - {tag: 세안고, query: 세안고 매매}
+      - {tag: 급매,   query: 아파트 급매}
+    per_topic: 3
+    max_items: 12
+    news_hours: 48
+    ad_words: [분양, 모델하우스, 홍보관, 상담, 문의, 특별공급, 선착순, 무료, 이벤트, 오픈, 견본주택]
+  youtube:
+    query: "부동산|아파트|집값"
+    top: 5

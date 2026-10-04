@@ -15,6 +15,7 @@ on:
       - "src/realestate/**"
       - "scripts/export_web.py"
       - "scripts/ecos_collect.py"
+      - "scripts/sentiment_collect.py"
   workflow_dispatch:
 
 permissions:
@@ -58,6 +59,14 @@ jobs:
           if [ -z "$ECOS_KEY" ]; then echo "::warning::ECOS_KEY 시크릿이 없어 한국은행 지표를 건너뜁니다"; exit 0; fi
           python scripts/ecos_collect.py
 
+      - name: 심리 지표 (네이버 검색량·카페/뉴스·주요 글, 유튜브)
+        continue-on-error: true
+        env:
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python scripts/sentiment_collect.py
+
       - name: 웹앱 데이터 생성
         run: python scripts/export_web.py
 
@@ -65,7 +74,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/data/app.json data/listings/asil/ data/macro/
+          git add -A web/data/app.json data/listings/asil/ data/macro/ data/sentiment/
           # DB는 실거래를 받는 Mac 만 커밋한다 (scripts/mac_daily.py)
           if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
           git commit -q -m "데이터 갱신 $(TZ=Asia/Seoul date +'%Y-%m-%d %H:%M') KST"
