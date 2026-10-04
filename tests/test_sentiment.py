@@ -70,8 +70,12 @@ def test_mood_build(tmp_path):
                     [{"date": "2026-10-04", "id": "cafe_sell", "total": 1060}])
     (base / "feed").mkdir()
     (base / "feed" / "latest.json").write_text(json.dumps({"news": [{"t": "a", "ts": "x"}], "cafe": [], "yt": []}), encoding="utf-8")
+    st.upsert_daily(base / "youtube_weekly.csv", ["week", "total_results"], ("week",),
+                    [{"week": "2026-05-04", "total_results": 700}, {"week": "2026-04-27", "total_results": 630}])
     m = mood.build(base, {"sentiment": CFG}, tmp_path / "none.csv")
     assert m["wk"]["greed"] == [2.0]
+    assert m["ytw"] == {"d": ["2026-04-27", "2026-05-04"], "n": [630, 700]}
+    assert m["yt"] == {"d": [], "n": []}
     assert m["daily"]["cafe_sell"] == [None, 60]
     assert "ts" not in m["feed"]["news"][0]
     json.dumps(m, allow_nan=False)
@@ -92,3 +96,22 @@ def test_relevant_must_and_not():
     assert not st.relevant("평택 고덕 아파트", "", t, F)
     assert not st.relevant("고덕 아파트 인테리어 후기", "", t, F)
     assert not st.relevant("미사 아파트", "", t, F)
+
+
+def test_youtube_backfill_plan():
+    import importlib.util
+    from datetime import date
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location("ytb", Path(__file__).resolve().parents[1] / "scripts" / "youtube_backfill.py")
+    ytb = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ytb)
+    today = date(2026, 10, 4)
+    jobs = ytb.plan(today, set(), set())
+    daily = [d for k, d in jobs if k == "d"]
+    weekly = [d for k, d in jobs if k == "w"]
+    assert len(daily) == 90 and daily[0] == date(2026, 10, 3)            # 최근부터
+    assert all(w.weekday() == 0 for w in weekly)                          # 월요일 시작
+    assert weekly[0] + timedelta(days=7) <= min(daily)                    # 하루 단위 구간과 겹치지 않음
+    assert weekly[-1] >= today - timedelta(days=366)
+    done = ytb.plan(today, {d.isoformat() for d in daily}, {w.isoformat() for w in weekly})
+    assert done == []

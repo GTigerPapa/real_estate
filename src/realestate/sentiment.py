@@ -96,6 +96,11 @@ class YouTube:
              "publishedBefore": before.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "key": self.key}
         return self.call(f"{YT}/search?{urllib.parse.urlencode(p)}")
 
+    def count(self, q: str, after: datetime, before: datetime) -> int:
+        """기간 안에 올라온 영상 수 (유튜브 검색 추정치). 호출당 100단위."""
+        d = self.search(q, after, before, n=1)
+        return int((d.get("pageInfo") or {}).get("totalResults") or 0)
+
     def views(self, ids: list[str]) -> dict:
         if not ids:
             return {}

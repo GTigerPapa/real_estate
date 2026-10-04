@@ -16,6 +16,7 @@ on:
       - "scripts/export_web.py"
       - "scripts/ecos_collect.py"
       - "scripts/sentiment_collect.py"
+      - "scripts/youtube_backfill.py"
       - ".github/workflows/update.yml"
   workflow_dispatch:
 
@@ -67,6 +68,12 @@ jobs:
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: python scripts/sentiment_collect.py
+
+      - name: 유튜브 새 영상 수 백필 (다 채우면 건너뜀)
+        continue-on-error: true
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: python scripts/youtube_backfill.py
 
       - name: 웹앱 데이터 생성
         run: python scripts/export_web.py

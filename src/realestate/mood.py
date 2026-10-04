@@ -82,6 +82,11 @@ def build(base: Path, settings: dict, ecos_csv: Path) -> dict:
     counts = [c["id"] for c in cfg.get("counts") or []]
     daily = daily_counts(base / "search_totals.csv", counts)
     yt = pd.read_csv(base / "youtube_daily.csv", dtype={"date": str}) if (base / "youtube_daily.csv").exists() else pd.DataFrame()
+    ytw = pd.read_csv(base / "youtube_weekly.csv", dtype={"week": str}) if (base / "youtube_weekly.csv").exists() else pd.DataFrame()
+    if not yt.empty:
+        yt = yt.sort_values("date")
+    if not ytw.empty:
+        ytw = ytw.sort_values("week")
     feed = {}
     fp = base / "feed" / "latest.json"
     if fp.exists():
@@ -101,6 +106,8 @@ def build(base: Path, settings: dict, ecos_csv: Path) -> dict:
         "daily": daily,
         "counts": {c["id"]: {"source": c["source"], "query": c["query"]} for c in cfg.get("counts") or []},
         "yt": {"d": yt["date"].tolist(), "n": [int(x) for x in yt["total_results"]]} if not yt.empty else {"d": [], "n": []},
+        # 주 단위 백필(월요일 시작, 7일 합계) — 하루 단위 구간 이전 1년치
+        "ytw": {"d": ytw["week"].tolist(), "n": [int(x) for x in ytw["total_results"]]} if not ytw.empty else {"d": [], "n": []},
         "feed": feed,
         "ll": lead_lags(W, MW),
     }

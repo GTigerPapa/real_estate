@@ -829,13 +829,13 @@ function Sentiment() {
   const s4 = W.sell ? avgN(W.sell, 4) : [];
   const sChg = s4.length > 13 && s4[s4.length - 13] ? Math.round((s4[s4.length - 1] / s4[s4.length - 13] - 1) * 100) : null;
   const yn = (S.yt || {}).n || [], yLast = yn.length ? yn[yn.length - 1] : null;
-  const yAvg = yn.length > 1 ? Math.round(yn.slice(0, -1).reduce((a, b) => a + b, 0) / (yn.length - 1)) : null;
+  const y30 = yn.slice(-31, -1), yAvg = y30.length ? Math.round(y30.reduce((a, b) => a + b, 0) / y30.length) : null;
   const csiArr = (M.v.csi_house || []).filter((x) => x !== null), csi = csiArr.length ? csiArr[csiArr.length - 1] : null;
   const tiles = h("div", { class: "stiles" },
     Tile("탐욕 / 공포", gLast === null ? "–" : gLast.toFixed(2), gLast === null ? "검색량 수집 전" : `상승÷하락 검색 · 2016년 이후 상위 ${gTop}%`, gLast === null ? "" : gLast > 1 ? "up" : "dn"),
     Tile("주택가격전망CSI", csi === null ? "–" : String(csi), "100 초과 = 오른다 우세", csi === null ? "" : csi > 100 ? "up" : "dn"),
     Tile("급매 검색", sChg === null ? "–" : (sChg > 0 ? "+" : "") + sChg + "%", "최근 4주 vs 3개월 전", sChg === null ? "" : sChg > 0 ? "dn" : "up"),
-    Tile("유튜브 새 영상", yLast === null ? "–" : yLast.toLocaleString() + "개", yAvg ? `전날 · 평균 ${yAvg.toLocaleString()}개` : "전날 올라온 부동산 영상 (추정치) · 수집 시작", ""));
+    Tile("유튜브 새 영상", yLast === null ? "–" : yLast.toLocaleString() + "개", yAvg ? `전날 · 30일 평균 ${yAvg.toLocaleString()}개` : "전날 올라온 부동산 영상 (추정치) · 수집 시작", ""));
 
   // 주요 글
   const F = S.feed || {}, fk = ["news", "cafe", "yt"].includes(state.feedKind) ? state.feedKind : "news";
@@ -893,10 +893,22 @@ function Sentiment() {
     { name: "카페 '집값 폭등'", kind: "line", color: "var(--s2)", width: 1.8, pts: dt.map((t, i) => ({ t, v: (D.cafe_surge || [])[i] })) },
     { name: "뉴스 '부동산 대책'", kind: "line", color: "var(--s3)", width: 1.6, dash: true, pts: dt.map((t, i) => ({ t, v: (D.news_policy || [])[i] })) }] })
     : h("div", { class: "empty" }, `하루 새 글 수는 이틀째부터 계산됩니다 (어제와 오늘 검색 결과 총수의 차이) · ${D.d.length ? dotted(D.d[0]) + " 수집 시작" : "수집 전"}`);
-  const Y = S.yt || { d: [], n: [] }, yd = Y.d.map(dDate);
-  const ytc = Y.d.length ? Chart({ label: "유튜브 새 영상", xDomain: [yd[0] - 864e5 * (yd.length < 7 ? 7 : 1), yd[yd.length - 1] + 864e5], height: 150, yMin: 0,
+  // 유튜브: 최근 90일은 하루 단위 막대, 1년은 주별 '하루 평균' 선 (주 단위 백필 + 하루 단위를 주로 묶은 값)
+  const Y = S.yt || { d: [], n: [] }, YW = S.ytw || { d: [], n: [] };
+  const ycut = Y.d.length ? dDate(Y.d[Y.d.length - 1]) - 90 * 864e5 : 0;
+  const yd = Y.d.map(dDate), yIdx = yd.map((t, i) => i).filter((i) => yd[i] > ycut);
+  const ytc = yIdx.length ? Chart({ label: "유튜브 새 영상 (일별)", xDomain: [yd[yIdx[0]] - 864e5 * (yIdx.length < 7 ? 7 : 1), yd[yd.length - 1] + 864e5], height: 150, yMin: 0,
     xTicks: dayTicks, xFmt: fmtMD, tipDate: fmtYMD, yFmt: (v) => String(v), tipFmt: (v) => v.toLocaleString() + "개",
-    series: [{ name: "부동산 주제 새 영상 (유튜브 추정치)", kind: "bar", color: "var(--broker)", pts: yd.map((t, i) => ({ t, v: Y.n[i] })) }] }) : h("div", { class: "empty" }, "수집 전");
+    series: [{ name: "부동산 주제 새 영상 (유튜브 추정치)", kind: "bar", color: "var(--broker)", pts: yIdx.map((i) => ({ t: yd[i], v: Y.n[i] })) }] }) : h("div", { class: "empty" }, "수집 전");
+  const dW = {};   // 하루 단위 값을 월요일 시작 주로 묶음
+  yd.forEach((t, i) => { const m = t - ((new Date(t).getUTCDay() + 6) % 7) * 864e5; (dW[m] = dW[m] || { s: 0, c: 0 }); dW[m].s += Y.n[i]; dW[m].c += 1; });
+  const wkMap = {};
+  for (const m in dW) if (dW[m].c >= 4) wkMap[m] = dW[m].s / dW[m].c;
+  YW.d.forEach((w, i) => { wkMap[dDate(w)] = YW.n[i] / 7; });   // 주 단위 백필(7일 합계)
+  const wkPts = Object.keys(wkMap).map(Number).sort((a, b) => a - b).map((t) => ({ t: t + 3 * 864e5, v: Math.round(wkMap[t]) }));
+  const ytw = wkPts.length >= 8 ? Chart({ label: "유튜브 새 영상 (주별)", xDomain: [wkPts[0].t - 7 * 864e5, wkPts[wkPts.length - 1].t + 7 * 864e5], height: 150, yMin: 0,
+    tipDate: (t) => fmtYMD(t - 3 * 864e5) + " 주", yFmt: (v) => String(v), tipFmt: (v) => "하루 평균 " + v.toLocaleString() + "개",
+    series: [{ name: "주별 하루 평균 새 영상 (유튜브 추정치)", kind: "line", color: "var(--broker)", width: 1.8, pts: wkPts }] }) : null;
 
   return h("div", { class: "sections" },
     wide(h("section", { class: "section" }, tiles)),
@@ -904,7 +916,8 @@ function Sentiment() {
     Section("네이버 검색량 (주별, 4주 평균)", "데이터랩 검색어트렌드 · 묶음마다 2016년 이후 최댓값 = 100 (묶음끼리 높이 비교는 의미 없음, 흐름만) · " + groupNote, search),
     Section("선행 관계 (2016년~)", "검색 지표(월평균) 3개월 변화 vs k(0~12)개월 뒤 KB 서울 아파트 3개월 변화의 상관 중 가장 큰 시차 · 과거 패턴, 예측 아님", ll),
     Section("카페·뉴스 글 수 (일별)", "네이버 카페·뉴스 검색의 하루 새 글 수 (검색 결과 총수의 전일 대비 증가) · 수집 시작일부터 쌓임", cafe),
-    Section("유튜브 새 영상 (일별)", "전날 올라온 '부동산·아파트·집값' 영상 수 · 유튜브 검색이 주는 추정치라 흐름만 볼 것", ytc));
+    Section("유튜브 새 영상", "'부동산·아파트·집값' 주제로 올라온 영상 수 · 위: 최근 1년 주별 하루 평균, 아래: 최근 90일 하루 단위 · " +
+      "과거 날짜는 올린 날짜로 거슬러 센 값(지금 남아 있는 영상 기준, 지워진 영상은 빠짐) · 유튜브 검색이 주는 추정치라 흐름만 볼 것", ytw, ytc));
 }
 function Market() {
   const sub = state.marketView === "mood" ? "mood" : "macro";
