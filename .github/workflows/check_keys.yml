@@ -1,8 +1,13 @@
-# API 키 점검 (수동 실행). 키 값은 출력하지 않고 각 API가 응답하는지만 확인한다.
+# API 키 점검 (수동 실행, 또는 점검 스크립트가 바뀌어 push 될 때). 키 값은 출력하지 않고 각 API가 응답하는지만 확인한다.
 name: 키 점검
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/check_keys.py"
+      - ".github/workflows/check_keys.yml"
 
 permissions:
   contents: read
