@@ -341,3 +341,6 @@ button { font: inherit; color: inherit; }
 /* 평형이 많을 때 '55형'이 두 줄로 꺾이지 않게 */
 .seg button { white-space: nowrap; min-width: 0; }
 .seg:has(button:nth-child(7)) button { font-size: 12.5px; letter-spacing: -.02em; padding-left: 0; padding-right: 0; }
+/* 가격 차트 바로 아래 붙는 거래량 패널 */
+.volpane { border-top: 1px dashed var(--grid); margin-top: 2px; padding-top: 2px; }
+.volpane .legend { margin: 2px 0 0; font-size: 11px; }

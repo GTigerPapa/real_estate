@@ -53,7 +53,7 @@ def test_screens_render_without_errors(server, scheme):
         ticks = pg.locator(".section >> nth=0").locator("svg text").all_text_contents()
         assert any(t in ("10억", "15억", "20억", "25억") for t in ticks), ticks
         # 차트 탭(터치)하면 툴팁 표시
-        box = pg.locator(".section >> nth=0").locator("svg").bounding_box()
+        box = pg.locator(".section >> nth=0").locator("svg").first.bounding_box()
         pg.mouse.move(box["x"] + box["width"] * 0.7, box["y"] + box["height"] * 0.5)
         assert pg.locator(".tip:not([hidden])").count() >= 1
 

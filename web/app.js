@@ -71,7 +71,7 @@ function Chart(opts) {
   if (opts.legendItems) {
     wrap.append(h("div", { class: "legend" }, opts.legendItems.map((it) => it.sep ? h("span", { class: "sep" })
       : h("span", {}, legendIcon(it), it.name))));
-  } else if (series.length > 1 || opts.legend) {
+  } else if (!opts.noLegend && (series.length > 1 || opts.legend)) {
     wrap.append(h("div", { class: "legend" }, series.filter((se) => !se.noLegend).map((se) =>
       h("span", {}, legendIcon(se), se.name))));
   }
@@ -79,7 +79,7 @@ function Chart(opts) {
   wrap.append(holder);
   const tip = h("div", { class: "tip", hidden: true });
   holder.append(tip);
-  const M = { l: 40, r: 10, t: 10, b: 24 };
+  const M = { l: 40, r: 10, t: opts.padTop ?? 10, b: opts.noXLabels ? 4 : 24 };  // noXLabels: 아래에 붙는 차트와 x축 눈금을 같이 씀
   let H = opts.height || 190;
 
   function draw() {
@@ -117,6 +117,7 @@ function Chart(opts) {
     const xt = opts.xTicks ? opts.xTicks(t0, t1) : monthTicks(t0, t1);
     for (const t of xt) {
       svg.append(s("line", { class: "gl", x1: X(t), x2: X(t), y1: M.t, y2: H - M.b }));
+      if (opts.noXLabels) continue;
       const tx = s("text", { x: X(t), y: H - 6, "text-anchor": "middle" }); tx.textContent = (opts.xFmt || fmtYM)(t); svg.append(tx);
     }
     svg.append(s("line", { class: "ax", x1: M.l, x2: W - M.r, y1: H - M.b, y2: H - M.b }));
@@ -481,7 +482,7 @@ function Detail(id, band) {
 
   const deals = b.deals.filter((x) => months.includes(x.d.slice(0, 7)));
   const tradeChart = Chart({
-    label: "매매 실거래와 3개월 중앙값", xDomain: X, height: 220, yFmt: (v) => eok(v, 0), tipFmt: (v) => eok(v),
+    label: "매매 실거래와 3개월 중앙값", xDomain: X, height: 220, noXLabels: true, yFmt: (v) => eok(v, 0), tipFmt: (v) => eok(v),
     refs: [{ v: cap, label: `상한 ${eok(cap)}` }],
     series: [
       { name: "중개거래", kind: "dots", color: "var(--broker)", pts: deals.filter((x) => !x.x && x.t === "broker").map((x) => ({ t: dDate(x.d), v: x.p, tip: `${x.dong ? x.dong + "동 " : ""}${x.f}층 · ${x.ar}㎡` })) },
@@ -506,7 +507,7 @@ function Detail(id, band) {
     legend: true,
   });
   const volChart = Chart({
-    label: "월별 거래량", xDomain: X, height: 150, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => v + "건", yTicks: 3,
+    label: "월별 거래량", xDomain: X, height: 90, padTop: 6, noLegend: true, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => v + "건", yTicks: 2, tipDate: fmtYM,
     series: [
       { name: "중개", kind: "bar", color: "var(--broker)", pts: months.map((m) => ({ t: ymDate(m), v: b.volume.broker[all.indexOf(m)] })) },
       { name: "직거래", kind: "bar", color: "var(--direct)", pts: months.map((m) => ({ t: ymDate(m), v: b.volume.direct[all.indexOf(m)] })) },
@@ -592,12 +593,12 @@ function Detail(id, band) {
       h("div", {}, h("span", {}, "전세가율"), h("b", {}, pct(sm.ratio)))),
     h("div", { style: "margin-top:14px" }, rangeChips()),
     h("div", { class: "sections" },
-      wide(Section("매매 실거래", "점: 개별 거래 · 선: 3개월 중앙값(해제·직거래 제외)", tradeChart)),
+      // 주식 차트처럼: 위 가격 · 아래 월별 거래량, 같은 시간축 (x축 눈금은 아래 거래량 차트에만)
+      wide(Section("매매 실거래 · 거래량", "위: 점 = 개별 거래 · 선 = 3개월 중앙값(해제·직거래 제외) · 아래: 월별 거래 건수", tradeChart, h("div", { class: "volpane" }, volChart))),
       wide(listingSec),  // 가격 바로 아래에 같은 폭으로 두어 매물 증감과 가격 흐름을 위아래로 비교
       // 아래 셋도 한 줄 전체 폭 + 같은 시간축 → 위 가격·매물 차트와 세로로 맞춰 비교
       wide(Section("매매 vs 전세", "3개월 중앙값 · 전세는 갱신 계약 제외", tjChart)),
       wide(Section("전세가율 · 갱신 비율", "갱신 비율↑ = 신규 전세 공급 감소 신호 (3개월 표본 5건 이상만)", ratioChart)),
-      wide(Section("월별 거래량", null, volChart)),
       askSec ? wide(askSec) : null,
       wide(Section(`최근 거래 · ${band}형`, sm.last_deal ? `최근 정상 거래 ${dotted(sm.last_deal.d)} · ${eok(sm.last_deal.p)}` : null, table)),
       wide(OfferFeed(id, band))));
