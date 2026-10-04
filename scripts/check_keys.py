@@ -12,6 +12,8 @@ import urllib.parse
 import urllib.request
 from datetime import date, timedelta
 
+HUB = "https://naverapihub.apigw.ntruss.com"   # NAVER API HUB (네이버 클라우드 플랫폼)
+
 
 def call(req) -> tuple[int, dict | str]:
     try:
@@ -61,19 +63,21 @@ def main() -> int:
     if not (cid and sec):
         print("네이버    : 키 없음 (NAVER_CLIENT_ID / NAVER_CLIENT_SECRET)"); ok = False
     else:
-        h = {"X-Naver-Client-Id": cid, "X-Naver-Client-Secret": sec, "Content-Type": "application/json"}
+        # 네이버 오픈API는 2026-07-31부터 NAVER API HUB(네이버 클라우드)로 이관: 주소·헤더가 바뀜
+        h = {"X-NCP-APIGW-API-KEY-ID": cid, "X-NCP-APIGW-API-KEY": sec, "Content-Type": "application/json"}
         body = {"startDate": (today - timedelta(days=60)).isoformat(), "endDate": (today - timedelta(days=1)).isoformat(),
                 "timeUnit": "week", "keywordGroups": [{"groupName": "집값", "keywords": ["집값", "아파트값"]}]}
-        code, d = call(urllib.request.Request("https://openapi.naver.com/v1/datalab/search",
+        code, d = call(urllib.request.Request(HUB + "/search-trend/v1/search",
                                               data=json.dumps(body).encode(), headers=h, method="POST"))
         res = (d.get("results") or [{}])[0].get("data") if isinstance(d, dict) else None
         if res:
             print(f"네이버 데이터랩 : 정상 · '집값' 주별 검색 지수 {len(res)}주 (최근 {res[-1]['period']} = {res[-1]['ratio']})")
         else:
             print(f"네이버 데이터랩 : 실패 HTTP {code} · {mask(json.dumps(d, ensure_ascii=False)[:200])}"
-                  + (" → 애플리케이션 '사용 API'에 데이터랩(검색어트렌드) 추가 필요" if code in (401, 403) else "")); ok = False
+                  + (" → NAVER API HUB 앱의 Client ID/Secret 인지, 앱에 '검색어 트렌드'가 선택됐는지 확인" if code in (401, 403) else "")); ok = False
         q = urllib.parse.urlencode({"query": "집값", "display": 1, "sort": "date"})
-        code, d = call(urllib.request.Request(f"https://openapi.naver.com/v1/search/news.json?{q}", headers=h))
+        hg = {k: v for k, v in h.items() if k != "Content-Type"}
+        code, d = call(urllib.request.Request(f"{HUB}/search/v1/news?{q}", headers=hg))
         if isinstance(d, dict) and "total" in d:
             print(f"네이버 검색(뉴스) : 정상 · '집값' 뉴스 {d['total']:,}건")
         else:
