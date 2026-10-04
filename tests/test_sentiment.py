@@ -10,7 +10,7 @@ CFG = {"groups": {"up": {"name": "상승", "keywords": ["집값 상승"]}, "down
        "ratio_pair": ["up", "down"], "counts": [{"id": "cafe_sell", "source": "cafe", "query": "급매"}],
        "feed": {"news": [{"tag": "정책", "query": "부동산 대책"}], "cafe": [{"tag": "고덕", "query": "고덕 아파트"}],
                 "per_topic": 2, "max_items": 5, "news_hours": 48, "ad_words": ["분양"],
-                "housing_words": ["대책", "금리", "고덕", "아파트"], "exclude_words": ["스페인"]},
+                "housing_words": ["대책", "금리", "고덕", "아파트", "세안고", "이사"], "exclude_words": ["스페인"]},
        "youtube": {"query": "부동산", "top": 2}}
 
 
@@ -88,6 +88,7 @@ def test_relevant_must_and_not():
     F = {"housing_words": ["아파트"], "ad_words": ["인테리어"]}
     t = {"must": ["고덕"], "not": ["평택"]}
     assert st.relevant("고덕 아파트 매수 고민", "", t, F)
+    assert not st.relevant("고덕 사진 모임", "아파트 단지 산책", t, F)          # 부동산 단어가 요약에만
     assert not st.relevant("평택 고덕 아파트", "", t, F)
     assert not st.relevant("고덕 아파트 인테리어 후기", "", t, F)
     assert not st.relevant("미사 아파트", "", t, F)

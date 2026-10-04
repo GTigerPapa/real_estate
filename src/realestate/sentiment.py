@@ -163,11 +163,12 @@ def relevant(title: str, desc: str, topic: dict, F: dict) -> bool:
     text = f"{title} {desc}"
     if _is_ad(text, F.get("ad_words") or []) or any(w in text for w in F.get("exclude_words") or []):
         return False
-    if F.get("housing_words") and not any(w in text for w in F["housing_words"]):
+    # 부동산 단어와 주제 필수 단어는 '제목'에 있어야 함 (요약에만 스치듯 나오는 글은 대부분 다른 주제)
+    if F.get("housing_words") and not any(w in title for w in F["housing_words"]):
         return False
     if any(w in text for w in topic.get("not") or []):
         return False
-    return all(m in text for m in topic.get("must") or [])
+    return all(m in title for m in topic.get("must") or [])
 
 
 def collect_feed(nv: Naver, yt: YouTube | None, cfg: dict, now: datetime, log=print) -> dict:
@@ -210,9 +211,11 @@ def collect_feed(nv: Naver, yt: YouTube | None, cfg: dict, now: datetime, log=pr
         n = 0
         for it in items:
             title, desc = clean(it.get("title")), clean(it.get("description"))
-            if not relevant(title, desc, t, F) or any(similar(title, x["t"], 0.6) for x in out["cafe"]):
+            cafename = clean(it.get("cafename"))
+            if (not relevant(title, desc, t, F) or any(w in cafename for w in F.get("exclude_cafes") or [])
+                    or any(similar(title, x["t"], 0.6) for x in out["cafe"])):
                 continue
-            out["cafe"].append({"t": title, "x": desc[:160], "u": it.get("link") or "", "s": clean(it.get("cafename")), "g": t["tag"]})
+            out["cafe"].append({"t": title, "x": desc[:160], "u": it.get("link") or "", "s": cafename, "g": t["tag"]})
             n += 1
             if n >= per:
                 break
@@ -225,7 +228,8 @@ def collect_feed(nv: Naver, yt: YouTube | None, cfg: dict, now: datetime, log=pr
             d = yt.search(Y.get("query", "부동산|아파트|집값"), day0, day0 + timedelta(days=1))
             words = Y.get("title_words") or []
             items = [it for it in d.get("items", []) if (it.get("id") or {}).get("videoId")
-                     and (not words or any(w in clean((it.get("snippet") or {}).get("title")) for w in words))]
+                     and (not words or any(w in clean((it.get("snippet") or {}).get("title")) for w in words))
+                     and not any(w in clean((it.get("snippet") or {}).get("title")) for w in Y.get("exclude_words") or [])]
             top = items[: int(Y.get("top", 5))]
             views = yt.views([it["id"]["videoId"] for it in top])
             for it in top:
