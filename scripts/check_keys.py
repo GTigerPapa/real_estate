@@ -54,6 +54,10 @@ def main() -> int:
             print(f"ECOS      : 실패 HTTP {code} · {mask(json.dumps(d, ensure_ascii=False)[:200])}"); ok = False
 
     cid, sec = os.environ.get("NAVER_CLIENT_ID"), os.environ.get("NAVER_CLIENT_SECRET")
+    for name, v in (("NAVER_CLIENT_ID", cid), ("NAVER_CLIENT_SECRET", sec)):
+        if v and v != v.strip():
+            print(f"네이버    : {name} 앞뒤에 공백·줄바꿈이 있음 (다시 저장 권장)")
+    cid, sec = (cid or "").strip(), (sec or "").strip()
     if not (cid and sec):
         print("네이버    : 키 없음 (NAVER_CLIENT_ID / NAVER_CLIENT_SECRET)"); ok = False
     else:
