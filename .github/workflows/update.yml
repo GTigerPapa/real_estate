@@ -16,6 +16,7 @@ on:
       - "scripts/export_web.py"
       - "scripts/ecos_collect.py"
       - "scripts/sentiment_collect.py"
+      - ".github/workflows/update.yml"
   workflow_dispatch:
 
 permissions:
@@ -79,7 +80,9 @@ jobs:
           if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
           git commit -q -m "데이터 갱신 $(TZ=Asia/Seoul date +'%Y-%m-%d %H:%M') KST"
           for i in 1 2 3; do
-            git pull -q --rebase && git push -q && exit 0
+            # 겹친 실행이 같은 생성 파일을 바꿨으면 이 실행(더 늦게 받은 데이터) 쪽으로 맞춘다
+            git pull -q --rebase -X theirs && git push -q && exit 0
+            git rebase --abort 2>/dev/null || true
             sleep 5
           done
           exit 1
