@@ -57,6 +57,13 @@ def test_screens_render_without_errors(server, scheme):
         pg.mouse.move(box["x"] + box["width"] * 0.7, box["y"] + box["height"] * 0.5)
         assert pg.locator(".tip:not([hidden])").count() >= 1
 
+        pg.goto(server + "#/now")
+        pg.wait_for_selector(".feed .ftable")
+        assert pg.locator(".feed").count() == 1 and "최근 실거래" in pg.locator(".feed h2").inner_text()
+        pg.click(".seg >> nth=0 >> button >> nth=1")
+        assert "최근 매물" in pg.locator(".feed h2").inner_text()
+        assert pg.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+
         pg.goto(server + "#/compare")
         pg.wait_for_selector(".cmp")
         assert pg.locator(".cmp:not(.otr) tbody tr").count() == n84

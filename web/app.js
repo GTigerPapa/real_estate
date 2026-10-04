@@ -255,7 +255,7 @@ function Spark(values, color) {
 }
 
 // ───── 데이터 ─────
-const state = { data: null, band: store.get("band", "84"), range: store.get("range", "36"), offerKind: "all", offerCx: "all",
+const state = { data: null, band: store.get("band", "84"), nowView: store.get("nowView", "trades"), range: store.get("range", "36"), offerKind: "all", offerCx: "all",
   cmpView: store.get("cmpView", "all"), cmpDeal: store.get("cmpDeal", "both"), dtlView: "band",
   macroRange: store.get("macroRange", "36"), marketView: store.get("marketView", "mood"), feedKind: "news", ovMode: store.get("ovMode", "region"), ovRegion: store.get("ovRegion", "gangdong"), ovCx: store.get("ovCx", ""), error: null };
 async function loadData(force) {
@@ -317,15 +317,31 @@ function updatedLine() {
 }
 
 function Home() {
+  // 단지 탭: 관심 단지 목록만 — 누르면 단지 상세로
   const d = state.data, band = d.bands.includes(state.band) ? state.band : "84";
   const list = d.complexes.filter((c) => c.bands.includes(band));
+  const others = d.complexes.filter((c) => !c.bands.includes(band));
   return h("div", {},
     header("관심 단지", updatedLine()),
-    // 평형이 최우선 필터: 탭 하나로 아래 실거래·매물 표와 단지 카드가 모두 바뀐다
     bandSeg(d.bands, band, (b) => { state.band = b; store.set("band", b); render(); }),
-    h("div", { class: "feeds" }, TradeFeed(band), OfferFeed(null, band)),
     h("div", { class: "cards" }, list.map((c) => Card(c, band))),
+    others.length ? h("div", { class: "others" }, h("div", { class: "others-h" }, `${band}형이 없는 단지`),
+      others.map((c) => h("a", { class: "cardmini", href: `#/c/${c.id}/${c.bands[c.bands.length - 1]}` },
+        h("span", { class: "dot", style: `background:${colorOf(c)}` }), h("b", {}, c.name), h("span", { class: "area" }, c.area),
+        h("span", { class: "bands" }, c.bands.map((b) => b + "형").join(" · ")), h("span", { class: "chev", "aria-hidden": "true" }, "›")))) : null,
     h("p", { class: "hero-sub", style: "margin-top:14px" }, "3개월 중앙값: 직전 3개월 매매(해제·직거래 제외)를 모은 중앙값. 매물 수는 선택한 평형의 아실 매물(같은 물건 1개), 괄호는 1주 전 대비."));
+}
+// 현황 탭: 관심 단지 전체의 최근 실거래 · 최근 매물 (행을 누르면 그 단지 상세로)
+function Now() {
+  const d = state.data, band = d.bands.includes(state.band) ? state.band : "84";
+  const sub = state.nowView === "offers" ? "offers" : "trades";
+  const seg = h("div", { class: "seg", role: "group", "aria-label": "보기" }, [["trades", "실거래"], ["offers", "매물"]].map(([v, t]) =>
+    h("button", { "aria-pressed": String(sub === v), onclick: () => { state.nowView = v; store.set("nowView", v); render(); } }, t)));
+  return h("div", {},
+    header("실거래·매물 현황", updatedLine()),
+    seg,
+    bandSeg(d.bands, band, (b) => { state.band = b; store.set("band", b); render(); }),
+    h("div", { class: "feeds one" }, sub === "trades" ? TradeFeed(band) : OfferFeed(null, band)));
 }
 const dtxt = (v) => v === null ? null : h("span", { class: "delta" }, v === 0 ? "±0" : (v > 0 ? "+" : "") + v);
 
@@ -1021,7 +1037,7 @@ function Info() {
 function render() {
   const app = $("#app");
   const route = (location.hash || "#/").slice(1).split("/").filter(Boolean);
-  const tab = route[0] === "compare" ? "compare" : route[0] === "info" ? "info" : route[0] === "overlap" ? "overlap" : (route[0] === "market" || route[0] === "macro") ? "market" : "home";
+  const tab = route[0] === "now" ? "now" : route[0] === "compare" ? "compare" : route[0] === "info" ? "info" : route[0] === "overlap" ? "overlap" : (route[0] === "market" || route[0] === "macro") ? "market" : "home";
   document.querySelectorAll(".tabbar a").forEach((a) => {
     if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
@@ -1032,6 +1048,7 @@ function render() {
   }
   let view;
   if (route[0] === "c") view = Detail(route[1], route[2] || state.band);
+  else if (tab === "now") view = Now();
   else if (tab === "compare") view = Compare();
   else if (tab === "info") view = Info();
   else if (tab === "overlap") view = Overlap();

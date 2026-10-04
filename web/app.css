@@ -322,3 +322,22 @@ button { font: inherit; color: inherit; }
 .flist .ft:hover { text-decoration: underline; }
 .flist .fm { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 12px; color: var(--muted); margin: 4px 0 2px; align-items: center; }
 .flist .fx { margin: 2px 0 0; font-size: 13px; color: var(--ink2); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* 단지 탭: 선택한 평형이 없는 단지 */
+.others { margin-top: 14px; }
+.others-h { color: var(--muted); font-size: 12px; margin: 0 2px 6px; }
+.cardmini { display: flex; align-items: center; gap: 8px; padding: 12px 14px; margin-bottom: 8px; text-decoration: none;
+  background: var(--card); border-radius: 14px; box-shadow: var(--shadow); border: 1px solid var(--ring); flex-wrap: wrap; }
+.cardmini .area { color: var(--muted); font-size: 12px; }
+.cardmini .bands { color: var(--ink2); font-size: 12px; margin-left: auto; }
+.cardmini .chev { color: var(--muted); }
+/* 현황 탭: 표 하나를 화면 높이에 맞춰 길게 */
+.feeds.one .tscroll.fixed { max-height: calc(100vh - 330px); min-height: 280px; }
+@media (min-width: 720px) {
+  .feeds.one { grid-template-columns: minmax(0, 1fr); }
+  .feeds.one > .feed { height: auto; }
+  .feeds.one > .feed .tscroll.fixed { max-height: calc(100vh - 360px); }
+}
+/* 평형이 많을 때 '55형'이 두 줄로 꺾이지 않게 */
+.seg button { white-space: nowrap; min-width: 0; }
+.seg:has(button:nth-child(7)) button { font-size: 12.5px; letter-spacing: -.02em; padding-left: 0; padding-right: 0; }
