@@ -166,7 +166,7 @@ button { font: inherit; color: inherit; }
 
 
 /* 단지 탭 상단: 최근 실거래 · 최근 매물 표 */
-.feeds { display: grid; gap: 12px; margin: 0 0 16px; }
+.feeds { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin: 0 0 16px; }
 .feed { margin-top: 0; }
 .feed-h { display: flex; align-items: baseline; gap: 8px; }
 .feed-h .cnt { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
@@ -303,3 +303,6 @@ button { font: inherit; color: inherit; }
 .llverdict { margin: 2px 0 8px; font-size: 14px; }
 .tag.ten-t { color: var(--s2); border-color: currentColor; }
 .tag.ten-m { color: var(--s1); border-color: currentColor; }
+.ll td:first-child, .ll td:last-child { white-space: normal; }
+.ll { table-layout: auto; }
+@media (max-width: 600px) { .ll td.llcell { width: 30%; } .ll th.llhead span { font-size: 10px; } }

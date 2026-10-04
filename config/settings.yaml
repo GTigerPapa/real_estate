@@ -58,3 +58,20 @@ regions:
   - {id: yeosu,     name: 중원구 여수동, short: 여수동, asil_area: "4113310600", sgg_cd: "41133", umd_nm: 여수동}
   - {id: hanam,     name: 하남시,        short: 하남시, asil_area: "41450",      sgg_cd: "41450"}
   - {id: pungsan,   name: 하남 풍산동,   short: 풍산동, asil_area: "4145011000", sgg_cd: "41450", umd_nm: 풍산동}
+
+# 한국은행 ECOS 지표 (2026-10-04). 키 = 환경변수 ECOS_KEY (GitHub Secrets·.env). 월별, 2013-01부터.
+# item2 는 2단계 항목 코드(없으면 생략). ytd: true 면 ECOS 값이 연중 누계라 월별로 풀어서 쓴다
+ecos:
+  start: "201301"
+  series:
+    - {id: base_rate,   name: 기준금리,             group: rate,   stat: 722Y001, item: "0101000", unit: "%"}
+    - {id: mort_rate,   name: 주택담보대출 금리(신규), group: rate,  stat: 121Y006, item: BECBLA0302, unit: "%"}
+    - {id: ktb3,        name: 국고채 3년,           group: rate,   stat: 721Y001, item: "5020000", unit: "%"}
+    - {id: csi_house,   name: 주택가격전망CSI,      group: mood,   stat: 511Y002, item: FMFB, item2: "99988", unit: ""}
+    - {id: csi_rate,    name: 금리수준전망CSI,      group: mood,   stat: 511Y002, item: FMBG, item2: "99988", unit: ""}
+    - {id: kb_seoul_apt,     name: KB 서울 아파트 매매지수, group: price, stat: 901Y062, item: P63ACA, unit: ""}
+    - {id: kb_seoul_apt_jeonse, name: KB 서울 아파트 전세지수, group: price, stat: 901Y063, item: P64ACA, unit: ""}
+    - {id: house_loan,  name: 주택관련대출 잔액(예금취급기관), group: credit, stat: 151Y005, item: 11100A0, unit: "십억원"}
+    - {id: unsold_capital, name: 미분양 주택(수도권), group: supply, stat: 901Y074, item: I410R, unit: "호"}
+    - {id: permit_seoul,   name: 주택 인허가(서울),   group: supply, stat: 901Y105, item: SEO, unit: "호", ytd: true}   # 연중 누계값
+    - {id: permit_gyeonggi, name: 주택 인허가(경기),  group: supply, stat: 901Y105, item: GYE, unit: "호", ytd: true}

@@ -121,6 +121,10 @@ python3 scripts/mac_daily.py --no-push            # 수동 실행 (커밋·push 
 
 `web/` 은 설치형 웹앱(PWA): 단지 카드(3개월 중앙값·1년 대비·상한 대비·전세가율·네이버 매물),
 단지 상세 차트, 단지 비교, 오프라인 보기, 라이트/다크.
+'지표' 탭은 한국은행 ECOS 월별 지표(기준금리·주담대 금리·국고채 3년, 주택가격전망·금리수준전망 CSI, KB 서울 아파트
+매매·전세지수, 주택관련대출 순증, 수도권 미분양, 서울·경기 인허가 12개월 합)를 2013년부터 보여 주고, 지표 3개월 변화와 k개월 뒤
+KB 서울 아파트 매매지수 변화의 상관(선행 관계)을 계산한다. 수집: `python scripts/ecos_collect.py` (키 = `ECOS_KEY`,
+GitHub Actions 가 매일 실행) → `data/macro/ecos_monthly.csv`. 지표 목록은 settings.yaml `ecos.series`.
 '매물×가격' 탭은 지역(강동구·분당구·중원구·하남시와 상일동·야탑동·여수동·풍산동, settings.yaml `regions`)과 단지별로
 매물 수와 가격을 같은 시간축에 두고(겹쳐 보기는 시작=100 지수, 축 두 개를 겹치지 않음), 매물 3개월 변화 뒤 k개월 가격 변화의
 상관(선행 관계)을 보여 준다. 지역 매물은 아실 지역 일별 매물 수(`data/listings/asil/asil_region_counts.csv`, Actions 매일 수집),

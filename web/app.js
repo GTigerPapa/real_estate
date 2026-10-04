@@ -225,12 +225,13 @@ function Chart(opts) {
   return wrap;
 }
 function monthTicks(t0, t1) {
-  const span = (t1 - t0) / (30.4 * 864e5), every = span > 26 ? 6 : span > 10 ? 3 : 1;
+  const span = (t1 - t0) / (30.4 * 864e5), every = span > 90 ? 24 : span > 40 ? 12 : span > 26 ? 6 : span > 10 ? 3 : 1;
   const out = [], d0 = new Date(t0);
   for (let y = d0.getUTCFullYear(), m = d0.getUTCMonth(); ; m++) {
     const t = Date.UTC(y, m, 1);
     if (t > t1) break;
-    if (t >= t0 && (new Date(t).getUTCMonth()) % every === 0) out.push(t);
+    const dt = new Date(t), mi = dt.getUTCFullYear() * 12 + dt.getUTCMonth();
+    if (t >= t0 && mi % every === 0) out.push(t);   // 12·24개월 간격이면 1월에만 (짝수 해)
   }
   return out;
 }
@@ -256,7 +257,7 @@ function Spark(values, color) {
 // ───── 데이터 ─────
 const state = { data: null, band: store.get("band", "84"), range: store.get("range", "36"), offerKind: "all", offerCx: "all",
   cmpView: store.get("cmpView", "all"), cmpDeal: store.get("cmpDeal", "both"), dtlView: "band",
-  ovMode: store.get("ovMode", "region"), ovRegion: store.get("ovRegion", "gangdong"), ovCx: store.get("ovCx", ""), error: null };
+  macroRange: store.get("macroRange", "36"), ovMode: store.get("ovMode", "region"), ovRegion: store.get("ovRegion", "gangdong"), ovCx: store.get("ovCx", ""), error: null };
 async function loadData(force) {
   try {
     const res = await fetch("data/app.json", { cache: force ? "reload" : "no-cache" });
@@ -810,6 +811,69 @@ function Overlap() {
       table ? wide(Section("지역 한눈에", "매물·가격 = 최근 3개월 변화 · 가장 강한 관계 = 매물 변화 뒤 가격 변화와 상관이 가장 큰 시차 · 줄을 누르면 위 차트가 바뀜", table)) : null));
 }
 
+// ───── 시장 지표 (한국은행 ECOS) ─────
+function Macro() {
+  const d = state.data, M = d.macro;
+  if (!M || !M.months) return h("div", {}, header("시장 지표", updatedLine()),
+    h("div", { class: "empty" }, "한국은행 지표가 아직 없습니다. GitHub Secrets 에 ECOS_KEY 를 넣으면 다음 갱신 때 채워집니다."));
+  const span = state.macroRange === "all" ? M.months.length : 36;
+  const mm = M.months.slice(Math.max(0, M.months.length - span)), off = M.months.length - mm.length;
+  const X = xDomain(mm), V = (id) => (M.v[id] || []).slice(off);
+  const pts = (id, f = (x) => x) => mm.map((m, i) => ({ t: ymDate(m), v: V(id)[i] === null || V(id)[i] === undefined ? null : f(V(id)[i]) }));
+  const name = (id) => (M.meta[id] || {}).name || id;
+  const lastTxt = (id, unit = "", nd = 2) => { const a = M.v[id] || []; for (let i = a.length - 1; i >= 0; i--) if (a[i] !== null) return `${dotted(M.months[i])} ${(+a[i]).toFixed(nd).replace(/\.?0+$/, "")}${unit}`; return "–"; };
+  const rangeSeg = h("div", { class: "chips" }, [["36", "3년"], ["all", "2013년~"]].map(([v, t]) =>
+    h("button", { "aria-pressed": String((state.macroRange || "36") === v), onclick: () => { state.macroRange = v; store.set("macroRange", v); render(); } }, t)));
+  const rate = Chart({ label: "금리", xDomain: X, height: 200, yFmt: (v) => v + "%", tipFmt: (v) => v.toFixed(2) + "%", series: [
+    { name: "기준금리", kind: "line", color: "var(--s1)", pts: pts("base_rate") },
+    { name: "주담대 금리(신규)", kind: "line", color: "var(--s2)", pts: pts("mort_rate") },
+    { name: "국고채 3년", kind: "line", color: "var(--s3)", width: 1.5, pts: pts("ktb3") }] });
+  const mood = Chart({ label: "소비자 심리", xDomain: X, height: 190, yFmt: (v) => String(v), tipFmt: (v) => String(v),
+    refs: [{ v: 100, label: "100 = 오른다·내린다 같음", left: true }], series: [
+      { name: "주택가격전망CSI", kind: "line", color: "var(--s2)", pts: pts("csi_house") },
+      { name: "금리수준전망CSI", kind: "line", color: "var(--s1)", pts: pts("csi_rate") }] });
+  // 가격 겹쳐 보기: 각 선을 보이는 기간에서 처음 값이 있는 달 = 100
+  const rebase = (arr) => { const b = arr.find((p) => p.v !== null && p.v !== undefined); return arr.map((p) => ({ t: p.t, v: b && p.v !== null ? Math.round(p.v / b.v * 1000) / 10 : null })); };
+  const O = d.overlap || {}, reg = (id) => (O.regions || []).find((r) => r.id === id);
+  const regPts = (id) => { const r = reg(id); if (!r) return []; return mm.map((m) => { const i = d.months.indexOf(m); return { t: ymDate(m), v: i >= 0 && i < d.months.length - 2 ? r.p84.v[i] : null }; }); };
+  const price = Chart({ label: "가격 지수", xDomain: X, height: 230, yFmt: (v) => String(v), tipFmt: (v) => v.toFixed(1),
+    refs: [{ v: 100, label: "각 선의 시작=100", left: true }], series: [
+      { name: "KB 서울 아파트 매매", kind: "line", color: "var(--ink)", width: 2.2, pts: rebase(pts("kb_seoul_apt")) },
+      { name: "KB 서울 아파트 전세", kind: "line", color: "var(--ink)", width: 1.6, dash: true, endDot: false, pts: rebase(pts("kb_seoul_apt_jeonse")) },
+      { name: "강동구 실거래(84㎡ 환산)", kind: "line", color: "var(--s1)", width: 1.6, endDot: false, pts: rebase(regPts("gangdong")) },
+      { name: "분당구 실거래", kind: "line", color: "var(--s2)", width: 1.6, endDot: false, pts: rebase(regPts("bundang")) },
+      { name: "하남시 실거래", kind: "line", color: "var(--s3)", width: 1.6, endDot: false, pts: rebase(regPts("hanam")) }] });
+  const loan = Chart({ label: "주택관련대출 월 순증", xDomain: X, height: 150, yFmt: (v) => v + "조", tipFmt: (v) => v.toFixed(1) + "조원", yTicks: 3,
+    series: [{ name: "주택관련대출 월 순증", kind: "bar", color: "var(--broker)", pts: pts("loan_flow").map((p) => ({ ...p, v: p.v === null ? null : Math.max(0, p.v) })) }] });
+  const supply = Chart({ label: "공급", xDomain: X, height: 190, yMin: 0, yFmt: (v) => (v / 10000).toFixed(v % 10000 ? 1 : 0) + "만", tipFmt: (v) => Math.round(v).toLocaleString() + "호", series: [
+    { name: "인허가 서울 (12개월 합)", kind: "line", color: "var(--s1)", pts: pts("permit_seoul_12m") },
+    { name: "인허가 경기 (12개월 합)", kind: "line", color: "var(--s3)", pts: pts("permit_gyeonggi_12m") },
+    { name: "수도권 미분양", kind: "line", color: "var(--s2)", width: 1.6, dash: true, pts: pts("unsold_capital") }] });
+  const llRows = (M.ll || []).map((L) => {
+    const bi = L.k.indexOf(L.best), r = bi >= 0 ? L.r[bi] : null, w = r === null ? 0 : Math.min(50, Math.abs(r) * 50);
+    const txt = r === null ? "–" : Math.abs(r) < 0.3 ? "약함" : (r < 0 ? "오르면 → 집값 둔화" : "오르면 → 집값 상승");
+    return h("tr", {}, h("td", {}, L.label), h("td", {}, L.best === null ? "–" : (L.best ? `${L.best}개월 뒤` : "같은 달")),
+      h("td", { class: "llcell" }, h("div", { class: "llbar" }, h("span", { class: "mid" }), r === null ? null :
+        h("i", { class: r < 0 ? "neg" : "pos", style: r < 0 ? `right:50%;width:${w}%` : `left:50%;width:${w}%` }))),
+      h("td", { class: "r" }, r === null ? "–" : (r > 0 ? "+" : "−") + Math.abs(r).toFixed(2)), h("td", {}, txt));
+  });
+  const ll = h("table", { class: "cmp ll" }, h("thead", {}, h("tr", {}, h("th", {}, "지표 변화"), h("th", {}, "가장 강한 시차"),
+    h("th", { class: "llhead" }, h("span", {}, "−"), h("span", {}, "+")), h("th", {}, "상관"), h("th", {}, "방향"))), h("tbody", {}, llRows));
+  return h("div", {},
+    header("시장 지표", `한국은행 ECOS · 기준금리 ${lastTxt("base_rate", "%")} · 주택가격전망CSI ${lastTxt("csi_house", "", 0)}`),
+    rangeSeg,
+    h("div", { class: "sections" },
+      wide(Section("가격 겹쳐 보기", "KB 서울 아파트 지수(한국은행 수록)와 관심 지역 실거래 84㎡ 환산가(3개월 중앙값, 2023.10~) · " +
+        "각 선을 보이는 기간의 첫 값 = 100 · 실거래는 신고가 덜 끝난 최근 2개월 제외", price)),
+      Section("금리", `기준금리 ${lastTxt("base_rate", "%")} · 주담대(신규) ${lastTxt("mort_rate", "%")} · 국고채 3년 ${lastTxt("ktb3", "%")}`, rate),
+      Section("소비자 심리 (CSI)", "100 초과 = 1년 뒤 오른다고 보는 가구가 더 많음 · " +
+        `주택가격전망 ${lastTxt("csi_house", "", 0)} · 금리수준전망 ${lastTxt("csi_rate", "", 0)}`, mood),
+      Section("주택관련대출 월 순증", `예금취급기관 주택관련대출 잔액의 전월 대비 증가 · 최근 ${lastTxt("loan_flow", "조원", 1)}`, loan),
+      Section("공급", "주택 인허가 12개월 합(서울·경기, 2~4년 뒤 입주 물량의 선행 지표) · 점선 = 수도권 미분양", supply),
+      wide(Section("선행 관계 (2013년~)", "지표의 3개월 변화와 k(0~12)개월 뒤 KB 서울 아파트 매매지수 3개월 변화의 상관 중 가장 큰 시차 · " +
+        "3개월 변화끼리 겹쳐 실제 독립 표본은 더 적음 · 과거 패턴이며 예측이 아님", ll))));
+}
+
 function Info() {
   const d = state.data;
   return h("div", { class: "info" },
@@ -839,7 +903,7 @@ function Info() {
 function render() {
   const app = $("#app");
   const route = (location.hash || "#/").slice(1).split("/").filter(Boolean);
-  const tab = route[0] === "compare" ? "compare" : route[0] === "info" ? "info" : route[0] === "overlap" ? "overlap" : "home";
+  const tab = route[0] === "compare" ? "compare" : route[0] === "info" ? "info" : route[0] === "overlap" ? "overlap" : route[0] === "macro" ? "macro" : "home";
   document.querySelectorAll(".tabbar a").forEach((a) => {
     if (a.dataset.tab === tab) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
   });
@@ -853,6 +917,7 @@ function render() {
   else if (tab === "compare") view = Compare();
   else if (tab === "info") view = Info();
   else if (tab === "overlap") view = Overlap();
+  else if (tab === "macro") view = Macro();
   else view = Home();
   if (state.error) view.prepend(h("div", { class: "banner" }, state.error + " (저장된 데이터를 표시 중)"));
   app.replaceChildren(view);
