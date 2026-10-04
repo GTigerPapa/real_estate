@@ -110,7 +110,13 @@ def collect(complexes: list[dict], out: Path, start: date, end: date,
         if i:
             time.sleep(pause)
         try:
-            parsed = parse(fetcher(int(nid), start, end))
+            try:
+                text = fetcher(int(nid), start, end)
+            except (TimeoutError, OSError) as e:   # 가끔 응답이 늦음 → 한 번만 다시
+                log(f"{cid}: {type(e).__name__} → 5초 뒤 재시도")
+                time.sleep(pause and 5)
+                text = fetcher(int(nid), start, end)
+            parsed = parse(text)
             if not parsed:
                 raise AsilError("빈 응답 (형식 변경 또는 차단 가능성)")
         except Exception as e:  # noqa: BLE001 — 한 단지 실패가 나머지를 막지 않게
