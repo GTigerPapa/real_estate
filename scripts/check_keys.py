@@ -82,6 +82,11 @@ def main() -> int:
             print(f"네이버 검색(뉴스) : 정상 · '집값' 뉴스 {d['total']:,}건")
         else:
             print(f"네이버 검색(뉴스) : 실패 HTTP {code} · {mask(json.dumps(d, ensure_ascii=False)[:200])} (선택 사항)")
+        code, d = call(urllib.request.Request(f"{HUB}/search/v1/cafearticle?{q}", headers=hg))
+        if isinstance(d, dict) and "total" in d:
+            print(f"네이버 검색(카페) : 정상 · '집값' 카페글 {d['total']:,}건")
+        else:
+            print(f"네이버 검색(카페) : 사용 안 함 또는 실패 HTTP {code} (선택 사항)")
 
     yk = os.environ.get("YOUTUBE_API_KEY")
     if not yk:
