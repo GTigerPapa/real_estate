@@ -142,10 +142,13 @@ def collect_datalab(nv: Naver, cfg: dict, end: date) -> list[dict]:
     return rows
 
 
+SOURCE = {"cafe": "cafearticle", "news": "news", "blog": "blog"}   # 설정 이름 → API HUB 경로
+
+
 def collect_totals(nv: Naver, counts: list[dict]) -> dict:
     out = {}
     for c in counts:
-        d = nv.search(c["source"], c["query"], display=1)
+        d = nv.search(SOURCE.get(c["source"], c["source"]), c["query"], display=1)
         out[c["id"]] = int(d.get("total") or 0)
     return out
 
@@ -154,16 +157,28 @@ def _is_ad(text: str, words: list[str]) -> bool:
     return any(w in text for w in words)
 
 
+def relevant(title: str, desc: str, topic: dict, F: dict) -> bool:
+    """제목+요약에 부동산 단어가 하나 이상, 주제의 필수 단어(must)는 모두, 제외 단어는 하나도 없어야 함.
+    네이버 카페·뉴스 검색은 '미사' → '터미사진', '고덕' → 평택 고덕 인테리어 같은 잡음이 많아서."""
+    text = f"{title} {desc}"
+    if _is_ad(text, F.get("ad_words") or []) or any(w in text for w in F.get("exclude_words") or []):
+        return False
+    if F.get("housing_words") and not any(w in text for w in F["housing_words"]):
+        return False
+    if any(w in text for w in topic.get("not") or []):
+        return False
+    return all(m in text for m in topic.get("must") or [])
+
+
 def collect_feed(nv: Naver, yt: YouTube | None, cfg: dict, now: datetime, log=print) -> dict:
     F = cfg.get("feed") or {}
     per, cap = int(F.get("per_topic", 3)), int(F.get("max_items", 12))
-    ads = F.get("ad_words") or []
     cutoff = now - timedelta(hours=int(F.get("news_hours", 48)))
     out = {"generated_at": now.isoformat(timespec="minutes"), "news": [], "cafe": [], "yt": []}
 
     for t in F.get("news") or []:
         try:
-            items = nv.search("news", t["query"], display=30, sort="date").get("items", [])
+            items = nv.search("news", t["query"], display=50, sort="sim").get("items", [])
         except ApiError as e:
             log(f"뉴스 '{t['query']}': {e}")
             continue
@@ -174,7 +189,7 @@ def collect_feed(nv: Naver, yt: YouTube | None, cfg: dict, now: datetime, log=pr
                 pub = parsedate_to_datetime(it.get("pubDate", ""))
             except (TypeError, ValueError):
                 continue
-            if pub < cutoff or _is_ad(title, ads) or any(similar(title, x["t"]) for x in out["news"]):
+            if pub < cutoff or not relevant(title, desc, t, F) or any(similar(title, x["t"]) for x in out["news"]):
                 continue
             link = it.get("originallink") or it.get("link") or ""
             host = urllib.parse.urlparse(link).netloc.removeprefix("www.")
@@ -188,14 +203,14 @@ def collect_feed(nv: Naver, yt: YouTube | None, cfg: dict, now: datetime, log=pr
 
     for t in F.get("cafe") or []:
         try:
-            items = nv.search("cafearticle", t["query"], display=20, sort="date").get("items", [])
+            items = nv.search("cafearticle", t["query"], display=50, sort="date").get("items", [])
         except ApiError as e:
             log(f"카페 '{t['query']}': {e}")
             continue
         n = 0
         for it in items:
             title, desc = clean(it.get("title")), clean(it.get("description"))
-            if _is_ad(title + " " + desc, ads) or any(similar(title, x["t"], 0.6) for x in out["cafe"]):
+            if not relevant(title, desc, t, F) or any(similar(title, x["t"], 0.6) for x in out["cafe"]):
                 continue
             out["cafe"].append({"t": title, "x": desc[:160], "u": it.get("link") or "", "s": clean(it.get("cafename")), "g": t["tag"]})
             n += 1
@@ -208,7 +223,9 @@ def collect_feed(nv: Naver, yt: YouTube | None, cfg: dict, now: datetime, log=pr
         day0 = (now.astimezone(KST) - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
         try:
             d = yt.search(Y.get("query", "부동산|아파트|집값"), day0, day0 + timedelta(days=1))
-            items = [it for it in d.get("items", []) if (it.get("id") or {}).get("videoId")]
+            words = Y.get("title_words") or []
+            items = [it for it in d.get("items", []) if (it.get("id") or {}).get("videoId")
+                     and (not words or any(w in clean((it.get("snippet") or {}).get("title")) for w in words))]
             top = items[: int(Y.get("top", 5))]
             views = yt.views([it["id"]["videoId"] for it in top])
             for it in top:

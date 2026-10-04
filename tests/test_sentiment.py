@@ -9,7 +9,8 @@ KST = timezone(timedelta(hours=9))
 CFG = {"groups": {"up": {"name": "상승", "keywords": ["집값 상승"]}, "down": {"name": "하락", "keywords": ["집값 하락"]}},
        "ratio_pair": ["up", "down"], "counts": [{"id": "cafe_sell", "source": "cafe", "query": "급매"}],
        "feed": {"news": [{"tag": "정책", "query": "부동산 대책"}], "cafe": [{"tag": "고덕", "query": "고덕 아파트"}],
-                "per_topic": 2, "max_items": 5, "news_hours": 48, "ad_words": ["분양"]},
+                "per_topic": 2, "max_items": 5, "news_hours": 48, "ad_words": ["분양"],
+                "housing_words": ["대책", "금리", "고덕", "아파트"], "exclude_words": ["스페인"]},
        "youtube": {"query": "부동산", "top": 2}}
 
 
@@ -33,7 +34,8 @@ class FakeNaver:
                 {"title": "부동산 대책 발표, 공급 확대", "description": "같은 사건", "link": "https://n.news/2", "originallink": "https://b.com/2", "pubDate": fmt(2)},
                 {"title": "신규 분양 단지 소개", "description": "광고", "link": "https://n.news/3", "pubDate": fmt(3)},
                 {"title": "금리 인상 여파", "description": "요약2", "link": "https://n.news/4", "pubDate": fmt(5)},
-                {"title": "오래된 기사", "description": "", "link": "https://n.news/5", "pubDate": fmt(100)}]}
+                {"title": "오래된 기사 금리", "description": "", "link": "https://n.news/5", "pubDate": fmt(100)},
+                {"title": "스페인 주택난 대책 시위", "description": "", "link": "https://n.news/6", "pubDate": fmt(1)}]}
         return {"total": 1234, "items": [{"title": "고덕 84 세안고", "description": "문의", "link": "https://cafe/1", "cafename": "카페A"},
                                          {"title": "고덕 이사 고민", "description": "내용", "link": "https://cafe/2", "cafename": "카페B"}]}
 
@@ -74,3 +76,18 @@ def test_mood_build(tmp_path):
     assert "ts" not in m["feed"]["news"][0]
     json.dumps(m, allow_nan=False)
     assert pd.read_csv(base / "search_totals.csv").shape[0] == 2
+
+
+def test_totals_use_hub_paths():
+    nv = FakeNaver()
+    st.collect_totals(nv, [{"id": "a", "source": "cafe", "query": "급매"}, {"id": "b", "source": "news", "query": "집값"}])
+    assert nv.calls == [("cafearticle", "급매"), ("news", "집값")]
+
+
+def test_relevant_must_and_not():
+    F = {"housing_words": ["아파트"], "ad_words": ["인테리어"]}
+    t = {"must": ["고덕"], "not": ["평택"]}
+    assert st.relevant("고덕 아파트 매수 고민", "", t, F)
+    assert not st.relevant("평택 고덕 아파트", "", t, F)
+    assert not st.relevant("고덕 아파트 인테리어 후기", "", t, F)
+    assert not st.relevant("미사 아파트", "", t, F)
