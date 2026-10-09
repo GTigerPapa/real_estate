@@ -1103,6 +1103,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-10-07,godeok_central_ipark,118210,47,18,14,79
 2026-10-08,godeok_central_ipark,118210,47,18,14,79
 2026-10-09,godeok_central_ipark,118210,44,19,16,79
+2026-10-10,godeok_central_ipark,118210,44,20,16,80
 2023-09-01,godeok_lotte_castle_venezia,117309,71,17,7,95
 2023-09-02,godeok_lotte_castle_venezia,117309,72,16,9,97
 2023-09-03,godeok_lotte_castle_venezia,117309,75,15,8,98
@@ -2207,6 +2208,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-10-07,godeok_lotte_castle_venezia,117309,69,4,7,80
 2026-10-08,godeok_lotte_castle_venezia,117309,69,5,6,80
 2026-10-09,godeok_lotte_castle_venezia,117309,67,5,7,79
+2026-10-10,godeok_lotte_castle_venezia,117309,66,6,6,78
 2023-09-01,godeok_xi,121977,73,21,10,104
 2023-09-02,godeok_xi,121977,78,24,12,114
 2023-09-03,godeok_xi,121977,78,23,12,113
@@ -3311,6 +3313,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-10-07,godeok_xi,121977,64,9,6,79
 2026-10-08,godeok_xi,121977,69,10,6,85
 2026-10-09,godeok_xi,121977,74,10,6,90
+2026-10-10,godeok_xi,121977,70,10,6,86
 2023-09-01,misa_central_xi,109215,70,18,9,97
 2023-09-02,misa_central_xi,109215,68,19,9,96
 2023-09-03,misa_central_xi,109215,68,19,9,96
@@ -4408,6 +4411,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-10-07,misa_central_xi,109215,20,1,2,23
 2026-10-08,misa_central_xi,109215,19,2,2,23
 2026-10-09,misa_central_xi,109215,19,2,1,22
+2026-10-10,misa_central_xi,109215,19,2,2,23
 2023-09-01,misa_golden_centro,105286,87,11,8,106
 2023-09-02,misa_golden_centro,105286,89,11,5,105
 2023-09-03,misa_golden_centro,105286,90,12,6,108
@@ -5505,6 +5509,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-10-07,misa_golden_centro,105286,36,1,1,38
 2026-10-08,misa_golden_centro,105286,35,2,1,38
 2026-10-09,misa_golden_centro,105286,34,2,1,37
+2026-10-10,misa_golden_centro,105286,34,2,2,38
 2023-09-01,misa_thesharp_central_forest,111028,44,4,3,51
 2023-09-02,misa_thesharp_central_forest,111028,44,5,3,52
 2023-09-03,misa_thesharp_central_forest,111028,45,5,3,53
@@ -6602,6 +6607,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-10-07,misa_thesharp_central_forest,111028,19,2,1,22
 2026-10-08,misa_thesharp_central_forest,111028,19,2,1,22
 2026-10-09,misa_thesharp_central_forest,111028,19,2,1,22
+2026-10-10,misa_thesharp_central_forest,111028,19,2,1,22
 2023-09-01,myeongil_samik_green2,1308,67,22,20,109
 2023-09-02,myeongil_samik_green2,1308,70,25,21,116
 2023-09-03,myeongil_samik_green2,1308,69,29,20,118
@@ -7706,6 +7712,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-10-07,myeongil_samik_green2,1308,96,14,12,122
 2026-10-08,myeongil_samik_green2,1308,96,11,12,119
 2026-10-09,myeongil_samik_green2,1308,95,13,12,120
+2026-10-10,myeongil_samik_green2,1308,92,12,11,115
 2023-09-01,yatap_jangmi8_hyundai,2229,67,29,5,101
 2023-09-02,yatap_jangmi8_hyundai,2229,69,29,5,103
 2023-09-03,yatap_jangmi8_hyundai,2229,69,30,4,103
@@ -8805,6 +8812,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-10-07,yatap_jangmi8_hyundai,2229,79,25,14,118
 2026-10-08,yatap_jangmi8_hyundai,2229,81,26,14,121
 2026-10-09,yatap_jangmi8_hyundai,2229,81,27,13,121
+2026-10-10,yatap_jangmi8_hyundai,2229,80,28,14,122
 2023-09-01,yeosu_central_town,102283,22,1,1,24
 2023-09-02,yeosu_central_town,102283,22,0,1,23
 2023-09-03,yeosu_central_town,102283,23,0,1,24
@@ -9904,3 +9912,4 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-10-07,yeosu_central_town,102283,27,8,4,39
 2026-10-08,yeosu_central_town,102283,27,8,4,39
 2026-10-09,yeosu_central_town,102283,28,8,4,40
+2026-10-10,yeosu_central_town,102283,28,8,3,39
