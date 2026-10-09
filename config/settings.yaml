@@ -114,29 +114,29 @@ sentiment:
       - {tag: 현장, query: 아파트 매수 문의 중개업소, any: [서울, 강동, 하남, 미사, 분당, 수도권, 송파]}
       - {tag: 현장, query: 강동구 아파트}
       - {tag: 현장, query: 하남 미사 아파트}
-      - {tag: 경매, query: 아파트 경매 낙찰가율, housing: false, must: [경매]}
+      - {tag: 경매, query: 아파트 경매 낙찰가율, housing: false, must: [경매], any: [서울, 수도권, 경기, 강동, 하남, 미사, 분당, 성남, 송파]}
       - {tag: 공급, query: 하남 교산 신도시, housing: false, must: [교산], allow: [분양]}
       - {tag: 공급, query: 수도권 입주 물량, allow: [분양]}
       - {tag: 공급, query: 3기 신도시 분양 일정, allow: [분양]}
       - {tag: 교통, query: 9호선 연장 강동, housing: false, must: [9호선]}
       - {tag: 교통, query: 강동하남남양주선, housing: false, must_in: text, must: [강동하남남양주]}
       - {tag: 교통, query: 위례신사선, housing: false, must: [위례신사]}
-      - {tag: 하락 근거, query: 집값 하락 전망}
-      - {tag: 하락 근거, query: 아파트 거래량 급감}
-      - {tag: 하락 근거, query: 아파트 매물 적체}
+      - {tag: 하락 근거, query: 집값 하락 전망, any: [하락, 약세, 둔화, 조정, 급감, 적체, 냉랭, 실종, 꺾]}
+      - {tag: 하락 근거, query: 아파트 거래량 급감, any: [하락, 약세, 둔화, 조정, 급감, 적체, 냉랭, 실종, 꺾, 감소]}
+      - {tag: 하락 근거, query: 아파트 매물 적체, any: [하락, 약세, 둔화, 조정, 급감, 적체, 냉랭, 실종, 꺾, 쌓]}
     cafe:   # must: 필수 단어 (기본은 제목, must_in: text 면 제목+요약)
       - {tag: 현장, query: 고덕 아파트, must: [고덕], not: [평택]}
       - {tag: 현장, query: 미사강변 아파트, must: [미사]}
       - {tag: 현장, query: 분당 야탑 아파트, must: [야탑]}
-      - {tag: 현장, query: 세안고 매매, must: [세안고]}
+      - {tag: 현장, query: 세안고 매매, must: [세안고], any: [강동, 고덕, 명일, 상일, 미사, 하남, 분당, 야탑, 여수, 성남]}
       - {tag: 현장, query: 아파트 급매, must: [급매], any: [강동, 고덕, 명일, 상일, 미사, 하남, 분당, 야탑, 서울]}
-      - {tag: 단지, query: 미사강변더샵센트럴포레스트, housing: false, must_in: text, must: [더샵센트럴포레]}
-      - {tag: 단지, query: 미사강변골든센트로, housing: false, must_in: text, must: [골든센트로]}
-      - {tag: 단지, query: 여수동 센트럴타운, housing: false, must_in: text, must: [센트럴타운]}
-      - {tag: 단지, query: 미사강변센트럴자이, housing: false, must_in: text, must: [센트럴자이]}
+      - {tag: 단지, query: 미사강변더샵센트럴포레스트, housing: text, must_in: text, must: [더샵센트럴포레]}
+      - {tag: 단지, query: 미사강변골든센트로, housing: text, must_in: text, must: [골든센트로]}
+      - {tag: 단지, query: 여수동 센트럴타운, housing: text, must_in: text, must: [센트럴타운], any: [여수, 성남, 중원]}
+      - {tag: 단지, query: 미사강변센트럴자이, housing: text, must_in: text, must: [미사강변센트럴자이]}
       - {tag: 교통, query: 9호선 연장 미사, housing: false, must_in: text, must: [9호선]}
       - {tag: 공급, query: 교산 신도시, housing: false, must: [교산], allow: [분양]}
-      - {tag: 하락 근거, query: 집값 하락 이유}
+      - {tag: 하락 근거, query: 집값 하락 이유, any: [서울, 수도권, 강동, 하남, 경기], not: [대구, 부산, 안동, 광주, 대전, 울산]}
     per_topic: 4
     max_items: 40     # 뉴스
     max_cafe: 30
@@ -145,10 +145,10 @@ sentiment:
     tag_map: {정책: 정책·대출, 토허제: 정책·대출, 급매: 현장, 강동: 현장, 분당: 현장, 하남: 현장, 고덕: 현장, 미사: 현장, 세안고: 현장}   # 예전 주제 이름 → 새 주제
     ad_words: [분양, 모델하우스, 홍보관, 상담, 특별공급, 선착순, 무료, 이벤트, 견본주택, 시공, 인테리어, 줄눈, 입주청소, 이사업체, 촬영]
     housing_words: [아파트, 집값, 부동산, 주택, 전세, 매매, 매물, 청약, 주담대, 대출금리, 시세, 급매, 실거래, 갭투자, 재건축, 신고가, 호가, 분양권, 입주, 세안고, 토허, 토지거래허가]
-    exclude_cafes: [사진, 작가, 인테리어, 맘카페 중고, 동탄, 세종, 평택]
-    exclude_words: [스페인, 영국, 미국, 중국, 일본, 호주, 캐나다, 독일, 프랑스, 평택]
+    exclude_cafes: [사진, 작가, 인테리어, 맘카페 중고, 동탄, 세종, 평택, 대구, 부산, 대전, 광주, 울산, 안동, 시흥, 광교, 수원]
+    exclude_words: [스페인, 영국, 미국, 중국, 일본, 호주, 캐나다, 독일, 프랑스, 평택, 과일, 드림, 나눔, 공구, 회원모집, 댄스, 셔틀]
   youtube:
     query: "집값|부동산 시장|아파트값|부동산 전망|급매|청약"
     title_words: [집값, 부동산, 아파트값, 매매, 전세, 청약, 금리, 시세, 급매, 갭투자, 영끌, 하락, 상승, 폭락, 폭등]
-    exclude_words: [전원주택, 펜션, 토지, 땅, 상가, 귀촌, 시골집, 농가, 빌라 경매, 원룸]
+    exclude_words: [전원주택, 펜션, 토지, 땅, 상가, 귀촌, 시골집, 농가, 빌라 경매, 원룸, 다가구, 부산, 대구, 청주, 대전, 광주, 울산, 창원, 천안, 세종]
     top: 10

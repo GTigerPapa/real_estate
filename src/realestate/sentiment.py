@@ -167,7 +167,8 @@ def relevant(title: str, desc: str, topic: dict, F: dict) -> bool:
     네이버 카페·뉴스 검색은 '미사' → '터미사진', '고덕' → 평택 고덕 인테리어 같은 잡음이 많아서.
 
     주제별 옵션:
-      housing: false     — 제목의 부동산 단어 검사를 건너뜀 (교통·단지 생활정보처럼 제목에 '아파트'가 없는 글)
+      housing: false     — 제목의 부동산 단어 검사를 건너뜀 (교통 글처럼 제목에 '아파트'가 없는 글)
+      housing: text      — 부동산 단어를 제목+요약에서 찾음 (단지 생활정보)
       must_in: text      — must 단어를 제목 대신 제목+요약에서 찾음 (단지 이름이 본문 미리보기에만 나오는 카페 글)
       allow: [단어]       — 이 주제에서는 광고·제외 단어 중 이 단어들을 허용 (공급의 '분양', 금리의 '미국')
     """
@@ -177,7 +178,8 @@ def relevant(title: str, desc: str, topic: dict, F: dict) -> bool:
     if _is_ad(text, ads) or any(w in text for w in F.get("exclude_words") or [] if w not in allow):
         return False
     # 부동산 단어와 주제 필수 단어는 기본적으로 '제목'에 있어야 함 (요약에만 스치듯 나오는 글은 대부분 다른 주제)
-    if topic.get("housing", True) and F.get("housing_words") and not any(w in title for w in F["housing_words"]):
+    hw = topic.get("housing", True)
+    if hw and F.get("housing_words") and not any(w in (text if hw == "text" else title) for w in F["housing_words"]):
         return False
     if any(w in text for w in topic.get("not") or []):
         return False
