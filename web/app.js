@@ -864,18 +864,32 @@ function Sentiment() {
     Tile("급매 검색", sChg === null ? "–" : (sChg > 0 ? "+" : "") + sChg + "%", "최근 4주 vs 3개월 전", sChg === null ? "" : sChg > 0 ? "dn" : "up"),
     Tile("유튜브 새 영상", yLast === null ? "–" : yLast.toLocaleString() + "개", yAvg ? `전날 · 30일 평균 ${yAvg.toLocaleString()}개` : "전날 올라온 부동산 영상 (추정치) · 수집 시작", ""));
 
-  // 주요 글
+  // 주요 글 — 기간(오늘/7일) · 종류(뉴스/카페/유튜브) · 주제 8개로 거름
   const F = S.feed || {}, fk = ["news", "cafe", "yt"].includes(state.feedKind) ? state.feedKind : "news";
-  const list = F[fk] || [];
+  const fp = state.feedPeriod === "7" ? "7" : "1", ftag = state.feedTag || "all";
+  const inPeriod = (x) => fp === "7" || !F.latest_day || !x.day || x.day === F.latest_day;
+  const byKind = (k) => (F[k] || []).filter(inPeriod);
+  const tagOk = (x) => fk === "yt" || ftag === "all" || x.g === ftag;
+  const list = byKind(fk).filter(tagOk);
+  const periodChips = h("div", { class: "chips" }, [["1", "오늘"], ["7", "최근 7일"]].map(([v, t]) =>
+    h("button", { "aria-pressed": String(fp === v), onclick: () => { state.feedPeriod = v; state.feedShow = 15; render(); } }, t)));
   const feedChips = h("div", { class: "chips" }, [["news", "뉴스"], ["cafe", "카페"], ["yt", "유튜브"]].map(([v, t]) =>
-    h("button", { "aria-pressed": String(fk === v), onclick: () => { state.feedKind = v; render(); } }, `${t} ${(F[v] || []).length}`)));
-  const items = list.length ? h("ul", { class: "flist" }, list.map((x) => h("li", {},
+    h("button", { "aria-pressed": String(fk === v), onclick: () => { state.feedKind = v; state.feedShow = 15; render(); } }, `${t} ${byKind(v).length}`)));
+  const tagsHere = (F.tags || []).filter((t) => byKind(fk).some((x) => x.g === t));
+  const tagChips = fk !== "yt" && tagsHere.length > 1 ? h("div", { class: "chips wrap" }, [["all", "전체"], ...tagsHere.map((t) => [t, t])].map(([v, t]) =>
+    h("button", { "aria-pressed": String(ftag === v), onclick: () => { state.feedTag = v; state.feedShow = 15; render(); } },
+      v === "all" ? t : `${t} ${byKind(fk).filter((x) => x.g === v).length}`))) : null;
+  const fshow = state.feedShow || 15;
+  const items = list.length ? h("ul", { class: "flist" }, list.slice(0, fshow).map((x) => h("li", {},
     h("a", { href: x.u, class: "ft", target: "_blank", rel: "noopener noreferrer" }, x.t),
-    h("div", { class: "fm" }, x.g ? h("span", { class: "tag" }, x.g) : null, x.s ? h("span", {}, x.s) : null, x.d ? h("span", {}, x.d) : null,
+    h("div", { class: "fm" }, x.g ? h("span", { class: "tag" }, x.g) : null, x.s ? h("span", {}, x.s) : null,
+      x.d ? h("span", {}, x.d) : (fp === "7" && x.day ? h("span", {}, md(x.day)) : null),
       x.v ? h("span", {}, "조회 " + (x.v >= 10000 ? (x.v / 10000).toFixed(1) + "만" : x.v.toLocaleString())) : null),
-    x.x ? h("p", { class: "fx" }, x.x) : null))) : h("div", { class: "empty" }, "아직 모은 글이 없습니다");
+    x.x ? h("p", { class: "fx" }, x.x) : null))) : h("div", { class: "empty" }, ftag !== "all" ? "이 주제의 글이 없습니다" : "아직 모은 글이 없습니다");
+  const feedMore = list.length > fshow ? h("button", { class: "more", onclick: () => { state.feedShow = fshow + 20; render(); } }, `더 보기 (${list.length - fshow}건 더)`) : null;
   const feedSec = wide(Section("주요 글", `네이버 뉴스·카페 검색과 유튜브에서 매일 아침 고른 글${F.generated_at ? " · " + F.generated_at.replace("T", " ").slice(5) + " 기준" : ""} · ` +
-    "제목을 누르면 원문으로 이동 · 요약은 각 서비스가 주는 미리보기 문구 · 유튜브는 전날 올라온 영상 중 조회수 상위", feedChips, items));
+    "주제: 정책·대출 · 금리 · 현장(호가·문의) · 경매 · 공급 · 교통 · 단지(후보 단지 생활정보) · 하락 근거 · " +
+    "제목을 누르면 원문으로 이동 · 요약은 각 서비스가 주는 미리보기 문구 · 유튜브는 전날 올라온 영상 중 조회수 상위", periodChips, feedChips, tagChips, items, feedMore));
 
   // 심리와 가격
   const rb = (arr) => { const b = arr.find((p) => p.v !== null && p.v !== undefined); return arr.map((p) => ({ t: p.t, v: b && p.v !== null && p.v !== undefined ? Math.round(p.v / b.v * 1000) / 10 : null })); };

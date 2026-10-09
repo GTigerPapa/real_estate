@@ -102,23 +102,47 @@ sentiment:
     - {id: news_rate,   source: news, query: 주담대 금리}
     - {id: news_house,  source: news, query: 집값}
   feed:
+    # 주제(tag) 8개: 정책·대출 / 금리 / 현장 / 경매 / 공급 / 교통 / 단지 / 하락 근거 — 매수 결정의 변수를 움직이는 글 중심 (2026-10-09 재편)
     news:
-      - {tag: 정책,   query: 부동산 대책}
-      - {tag: 금리,   query: 주담대 금리}
-      - {tag: 급매,   query: 아파트 급매}
-      - {tag: 토허제, query: 토지거래허가 아파트}
-      - {tag: 강동,   query: 강동구 아파트}
-      - {tag: 분당,   query: 분당 아파트}
-      - {tag: 하남,   query: 하남 미사 아파트}
-    cafe:   # must: 제목+요약에 모두 있어야 하는 단어 (검색 잡음 거르기)
-      - {tag: 고덕,   query: 고덕 아파트, must: [고덕], not: [평택]}
-      - {tag: 미사,   query: 미사강변 아파트, must: [미사]}
-      - {tag: 분당,   query: 분당 야탑 아파트, must: [야탑]}
-      - {tag: 세안고, query: 세안고 매매, must: [세안고]}
-      - {tag: 급매,   query: 아파트 급매, must: [급매], any: [강동, 고덕, 명일, 상일, 미사, 하남, 분당, 야탑, 서울]}
-    per_topic: 3
-    max_items: 12
+      - {tag: 정책·대출, query: 부동산 대책}
+      - {tag: 정책·대출, query: 주담대 규제}
+      - {tag: 정책·대출, query: 토지거래허가구역}
+      - {tag: 정책·대출, query: 종부세 양도세 개편}
+      - {tag: 금리, query: 기준금리 한국은행, housing: false, must: [금리], allow: [미국, 중국, 일본]}
+      - {tag: 금리, query: 주담대 금리, allow: [미국]}
+      - {tag: 현장, query: 아파트 호가 하락, any: [서울, 강동, 하남, 미사, 분당, 수도권, 송파]}
+      - {tag: 현장, query: 아파트 매수 문의 중개업소, any: [서울, 강동, 하남, 미사, 분당, 수도권, 송파]}
+      - {tag: 현장, query: 강동구 아파트}
+      - {tag: 현장, query: 하남 미사 아파트}
+      - {tag: 경매, query: 아파트 경매 낙찰가율, housing: false, must: [경매]}
+      - {tag: 공급, query: 하남 교산 신도시, housing: false, must: [교산], allow: [분양]}
+      - {tag: 공급, query: 수도권 입주 물량, allow: [분양]}
+      - {tag: 공급, query: 3기 신도시 분양 일정, allow: [분양]}
+      - {tag: 교통, query: 9호선 연장 강동, housing: false, must: [9호선]}
+      - {tag: 교통, query: 강동하남남양주선, housing: false, must_in: text, must: [강동하남남양주]}
+      - {tag: 교통, query: 위례신사선, housing: false, must: [위례신사]}
+      - {tag: 하락 근거, query: 집값 하락 전망}
+      - {tag: 하락 근거, query: 아파트 거래량 급감}
+      - {tag: 하락 근거, query: 아파트 매물 적체}
+    cafe:   # must: 필수 단어 (기본은 제목, must_in: text 면 제목+요약)
+      - {tag: 현장, query: 고덕 아파트, must: [고덕], not: [평택]}
+      - {tag: 현장, query: 미사강변 아파트, must: [미사]}
+      - {tag: 현장, query: 분당 야탑 아파트, must: [야탑]}
+      - {tag: 현장, query: 세안고 매매, must: [세안고]}
+      - {tag: 현장, query: 아파트 급매, must: [급매], any: [강동, 고덕, 명일, 상일, 미사, 하남, 분당, 야탑, 서울]}
+      - {tag: 단지, query: 미사강변더샵센트럴포레스트, housing: false, must_in: text, must: [더샵센트럴포레]}
+      - {tag: 단지, query: 미사강변골든센트로, housing: false, must_in: text, must: [골든센트로]}
+      - {tag: 단지, query: 여수동 센트럴타운, housing: false, must_in: text, must: [센트럴타운]}
+      - {tag: 단지, query: 미사강변센트럴자이, housing: false, must_in: text, must: [센트럴자이]}
+      - {tag: 교통, query: 9호선 연장 미사, housing: false, must_in: text, must: [9호선]}
+      - {tag: 공급, query: 교산 신도시, housing: false, must: [교산], allow: [분양]}
+      - {tag: 하락 근거, query: 집값 하락 이유}
+    per_topic: 4
+    max_items: 40     # 뉴스
+    max_cafe: 30
     news_hours: 48
+    keep_days: 7      # 웹앱 '주요 글'에 싣는 기간 (날짜별 목록을 합침)
+    tag_map: {정책: 정책·대출, 토허제: 정책·대출, 급매: 현장, 강동: 현장, 분당: 현장, 하남: 현장, 고덕: 현장, 미사: 현장, 세안고: 현장}   # 예전 주제 이름 → 새 주제
     ad_words: [분양, 모델하우스, 홍보관, 상담, 특별공급, 선착순, 무료, 이벤트, 견본주택, 시공, 인테리어, 줄눈, 입주청소, 이사업체, 촬영]
     housing_words: [아파트, 집값, 부동산, 주택, 전세, 매매, 매물, 청약, 주담대, 대출금리, 시세, 급매, 실거래, 갭투자, 재건축, 신고가, 호가, 분양권, 입주, 세안고, 토허, 토지거래허가]
     exclude_cafes: [사진, 작가, 인테리어, 맘카페 중고, 동탄, 세종, 평택]
@@ -127,4 +151,4 @@ sentiment:
     query: "집값|부동산 시장|아파트값|부동산 전망|급매|청약"
     title_words: [집값, 부동산, 아파트값, 매매, 전세, 청약, 금리, 시세, 급매, 갭투자, 영끌, 하락, 상승, 폭락, 폭등]
     exclude_words: [전원주택, 펜션, 토지, 땅, 상가, 귀촌, 시골집, 농가, 빌라 경매, 원룸]
-    top: 5
+    top: 10

@@ -164,23 +164,33 @@ def _is_ad(text: str, words: list[str]) -> bool:
 
 def relevant(title: str, desc: str, topic: dict, F: dict) -> bool:
     """제목+요약에 부동산 단어가 하나 이상, 주제의 필수 단어(must)는 모두, 제외 단어는 하나도 없어야 함.
-    네이버 카페·뉴스 검색은 '미사' → '터미사진', '고덕' → 평택 고덕 인테리어 같은 잡음이 많아서."""
+    네이버 카페·뉴스 검색은 '미사' → '터미사진', '고덕' → 평택 고덕 인테리어 같은 잡음이 많아서.
+
+    주제별 옵션:
+      housing: false     — 제목의 부동산 단어 검사를 건너뜀 (교통·단지 생활정보처럼 제목에 '아파트'가 없는 글)
+      must_in: text      — must 단어를 제목 대신 제목+요약에서 찾음 (단지 이름이 본문 미리보기에만 나오는 카페 글)
+      allow: [단어]       — 이 주제에서는 광고·제외 단어 중 이 단어들을 허용 (공급의 '분양', 금리의 '미국')
+    """
     text = f"{title} {desc}"
-    if _is_ad(text, F.get("ad_words") or []) or any(w in text for w in F.get("exclude_words") or []):
+    allow = topic.get("allow") or []
+    ads = [w for w in F.get("ad_words") or [] if w not in allow]
+    if _is_ad(text, ads) or any(w in text for w in F.get("exclude_words") or [] if w not in allow):
         return False
-    # 부동산 단어와 주제 필수 단어는 '제목'에 있어야 함 (요약에만 스치듯 나오는 글은 대부분 다른 주제)
-    if F.get("housing_words") and not any(w in title for w in F["housing_words"]):
+    # 부동산 단어와 주제 필수 단어는 기본적으로 '제목'에 있어야 함 (요약에만 스치듯 나오는 글은 대부분 다른 주제)
+    if topic.get("housing", True) and F.get("housing_words") and not any(w in title for w in F["housing_words"]):
         return False
     if any(w in text for w in topic.get("not") or []):
         return False
     if topic.get("any") and not any(w in text for w in topic["any"]):   # 지역 단어 중 하나는 있어야 (전국 급매 글 거르기)
         return False
-    return all(m in title for m in topic.get("must") or [])
+    where = text if topic.get("must_in") == "text" else title
+    return all(m in where for m in topic.get("must") or [])
 
 
 def collect_feed(nv: Naver, yt: YouTube | None, cfg: dict, now: datetime, log=print) -> dict:
     F = cfg.get("feed") or {}
     per, cap = int(F.get("per_topic", 3)), int(F.get("max_items", 12))
+    cap_cafe = int(F.get("max_cafe", cap))
     cutoff = now - timedelta(hours=int(F.get("news_hours", 48)))
     out = {"generated_at": now.isoformat(timespec="minutes"), "news": [], "cafe": [], "yt": []}
 
@@ -204,7 +214,7 @@ def collect_feed(nv: Naver, yt: YouTube | None, cfg: dict, now: datetime, log=pr
             out["news"].append({"t": title, "x": desc[:160], "u": it.get("link") or link, "s": host,
                                 "d": pub.astimezone(KST).strftime("%m.%d %H:%M"), "ts": pub.isoformat(), "g": t["tag"]})
             n += 1
-            if n >= per:
+            if n >= int(t.get("per", per)):
                 break
     out["news"].sort(key=lambda x: x["ts"], reverse=True)
     out["news"] = out["news"][:cap]
@@ -224,9 +234,9 @@ def collect_feed(nv: Naver, yt: YouTube | None, cfg: dict, now: datetime, log=pr
                 continue
             out["cafe"].append({"t": title, "x": desc[:160], "u": it.get("link") or "", "s": cafename, "g": t["tag"]})
             n += 1
-            if n >= per:
+            if n >= int(t.get("per", per)):
                 break
-    out["cafe"] = out["cafe"][:cap]
+    out["cafe"] = out["cafe"][:cap_cafe]
 
     if yt:
         Y = cfg.get("youtube") or {}

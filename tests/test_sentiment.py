@@ -115,3 +115,34 @@ def test_youtube_backfill_plan():
     assert weekly[-1] >= today - timedelta(days=366)
     done = ytb.plan(today, {d.isoformat() for d in daily}, {w.isoformat() for w in weekly})
     assert done == []
+
+
+def test_relevant_topic_options():
+    F = {"housing_words": ["아파트"], "ad_words": ["분양"], "exclude_words": ["미국"]}
+    # housing: false — 교통 글은 제목에 '아파트'가 없어도 통과
+    assert st.relevant("9호선 4단계 개통 지연", "", {"housing": False, "must": ["9호선"]}, F)
+    assert not st.relevant("9호선 4단계 개통 지연", "", {"must": ["9호선"]}, F)
+    # must_in: text — 단지 이름이 요약에만 있어도 통과
+    t = {"housing": False, "must_in": "text", "must": ["골든센트로"]}
+    assert st.relevant("주차 너무 힘드네요", "골든센트로 지하주차장", t, F)
+    assert not st.relevant("주차 너무 힘드네요", "다른 단지", t, F)
+    # allow — 주제별로 광고·제외 단어 허용
+    assert st.relevant("교산 아파트 분양 일정", "", {"allow": ["분양"]}, F)
+    assert not st.relevant("교산 아파트 분양 일정", "", {}, F)
+    assert st.relevant("미국 금리 인하에 아파트 대출", "", {"allow": ["미국"]}, F)
+
+
+def test_load_feed_merges_days(tmp_path):
+    d = tmp_path / "feed"
+    d.mkdir()
+    a = {"news": [{"t": "A", "u": "u1", "g": "정책", "ts": "x"}], "cafe": [], "yt": []}
+    b = {"generated_at": "2026-10-09T07:00+09:00", "news": [{"t": "A", "u": "u1", "g": "정책"}, {"t": "B", "u": "u2", "g": "금리"}],
+         "cafe": [{"t": "C", "u": "u3", "g": "미사"}], "yt": []}
+    (d / "2026-10-08.json").write_text(json.dumps(a), encoding="utf-8")
+    (d / "2026-10-09.json").write_text(json.dumps(b), encoding="utf-8")
+    f = mood.load_feed(d, {"keep_days": 7, "tag_map": {"정책": "정책·대출", "미사": "현장"}})
+    assert f["latest_day"] == "2026-10-09"
+    days = {x["u"]: x["day"] for x in f["news"]}
+    assert days == {"u1": "2026-10-08", "u2": "2026-10-09"}       # 같은 글은 처음 실린 날로
+    assert f["news"][0]["g"] == "정책·대출" and f["cafe"][0]["g"] == "현장" and "ts" not in f["news"][0]
+    assert f["tags"] == ["정책·대출", "금리", "현장"]

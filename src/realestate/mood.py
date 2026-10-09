@@ -75,6 +75,51 @@ def lead_lags(W: pd.DataFrame, macro_W: pd.DataFrame) -> list[dict]:
     return out
 
 
+def load_feed(feed_dir: Path, F: dict) -> dict:
+    """최근 keep_days 일의 날짜별 '주요 글'(feed/YYYY-MM-DD.json)을 합친다. 같은 링크는 처음 실린 날 하나로.
+    글마다 day(실린 날)를 붙이고, 예전 주제 이름은 tag_map 으로 새 주제에 맞춘다. 화면에서 '오늘/7일'로 거른다."""
+    feed_dir = Path(feed_dir)
+    files = sorted(p for p in feed_dir.glob("????-??-??.json")) if feed_dir.exists() else []
+    if not files and (feed_dir / "latest.json").exists():
+        files = [feed_dir / "latest.json"]
+    files = files[-int(F.get("keep_days", 7)):]
+    tmap = F.get("tag_map") or {}
+    out = {"news": [], "cafe": [], "yt": []}
+    seen = set()
+    latest = {}
+    for fp in reversed(files):   # 최신 날짜부터 → 같은 글은 최신 목록 기준으로 남기되 day 는 가장 이른 날로
+        try:
+            d = json.loads(fp.read_text(encoding="utf-8"))
+        except ValueError:
+            continue
+        latest = latest or d
+        day = fp.stem if fp.stem[:4].isdigit() else str(d.get("generated_at", ""))[:10]
+        for kind in ("news", "cafe", "yt"):
+            for it in d.get(kind, []):
+                key = it.get("u") or it.get("t")
+                it = {k: v for k, v in it.items() if k != "ts"}
+                if it.get("g") in tmap:
+                    it["g"] = tmap[it["g"]]
+                if kind != "yt" and it.get("x"):
+                    it["x"] = it["x"][:110]
+                if key in seen:
+                    for x in out[kind]:   # 더 이른 날에도 실렸던 글 → 처음 실린 날로
+                        if (x.get("u") or x.get("t")) == key:
+                            x["day"] = day
+                            break
+                    continue
+                seen.add(key)
+                it["day"] = day
+                out[kind].append(it)
+    if not latest:
+        return {}
+    out["generated_at"] = latest.get("generated_at")
+    out["latest_day"] = files[-1].stem if files[-1].stem[:4].isdigit() else str(latest.get("generated_at", ""))[:10]
+    order = {k: i for i, k in enumerate(["정책·대출", "금리", "현장", "경매", "공급", "교통", "단지", "하락 근거"])}
+    out["tags"] = sorted({it["g"] for k in ("news", "cafe") for it in out[k] if it.get("g")}, key=lambda t: order.get(t, 99))
+    return out
+
+
 def build(base: Path, settings: dict, ecos_csv: Path) -> dict:
     cfg = settings.get("sentiment") or {}
     groups = cfg.get("groups") or {}
@@ -87,12 +132,7 @@ def build(base: Path, settings: dict, ecos_csv: Path) -> dict:
         yt = yt.sort_values("date")
     if not ytw.empty:
         ytw = ytw.sort_values("week")
-    feed = {}
-    fp = base / "feed" / "latest.json"
-    if fp.exists():
-        feed = json.loads(fp.read_text(encoding="utf-8"))
-        for it in feed.get("news", []):
-            it.pop("ts", None)
+    feed = load_feed(base / "feed", cfg.get("feed") or {})
     if W.empty and not feed and not daily["d"]:
         return {}
     wk = {"d": list(W.index)} if not W.empty else {"d": []}
