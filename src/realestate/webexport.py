@@ -105,10 +105,12 @@ def offer_band_counts(path=OFFERS_CSV, size_bands=None) -> dict:
     # 같은 물건(key)의 설명을 모두 모아 세안고 여부를 정한다
     kinds = {k: tenant_kind(*g["desc"]) for k, g in df.groupby("key")}
     df["ten"] = df["key"].map(kinds)
+    start = df.groupby("complex_id")["first_seen"].min()   # 단지마다 추적을 시작한 날 (나중에 추가한 단지는 그날부터)
     out = {}
     for (cid, band), g in df.groupby(["complex_id", "band"]):
-        ser = {"d": days, "s": [], "j": [], "w": [], "st": [], "sm": []}
-        for day in days:
+        cdays = [x for x in days if x >= start[cid]]
+        ser = {"d": cdays, "s": [], "j": [], "w": [], "st": [], "sm": []}
+        for day in cdays:
             on = g[(g["first_seen"] <= day) & (g["last_seen"] >= day)]
             for deal, k in (("sale", "s"), ("jeonse", "j"), ("wolse", "w")):
                 ser[k].append(int(on.loc[on["deal"] == deal, "key"].nunique()))
