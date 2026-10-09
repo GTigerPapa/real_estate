@@ -145,6 +145,12 @@
   });
   var stamp = dump.captured_at.slice(0, 16).replace(/[-:T]/g, "").replace(/(\d{8})(\d{4})/, "$1_$2");
   var name = "naver_listings_" + stamp + ".json";
+  if (AUTO) {   /* 자동 실행: 다운로드 폴더를 거치지 않고 결과를 페이지에 두면 iMac 스크립트가 직접 읽어 간다 */
+    window.__RE_JSON = JSON.stringify(dump).replace(/[\uD800-\uDFFF]/g, "");   /* 이모지 제거: 조각으로 읽을 때 글자가 갈라지지 않게 */
+    window.__RE_DONE = name;
+    box.remove();
+    return;
+  }
   var blob = new Blob([JSON.stringify(dump)], { type: "application/json" });
   var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -154,7 +160,6 @@
   setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); box.remove(); }, 3000);
   var nArt = 0; dump.complexes.forEach(function (c) { nArt += c.articles ? c.articles.items.length : 0; });
   window.__RE_DONE = name;
-  if (AUTO) { return; }
   alert("저장: " + name + "\n매물 " + nArt + "건" + "\n성공 " + okCount + " / 실패 " + failCount +
     (failCount ? "\n(실패가 많으면 네이버페이 부동산 페이지를 새로고침한 뒤 다시 눌러 보세요)" : "") +
     "\n\n다음: 터미널에서  python3 scripts/save_listings.py");

@@ -4,7 +4,8 @@
     python3 scripts/naver_auto.py --push     # 커밋 후 push 까지
 
 - 네이버페이 부동산은 자동화 브라우저·서버 요청을 막는다. 그래서 평소 쓰는 크롬 창 하나를 열어
-  fin.land.naver.com 에서 북마클릿 코드(tools/bookmarklet.txt)를 실행하고, 내려받은 파일을 처리한 뒤 창을 닫는다.
+  fin.land.naver.com 에서 북마클릿 코드(tools/bookmarklet.txt)를 실행하고, 결과를 페이지에서 직접 읽어
+  (예약 작업은 macOS가 다운로드 폴더 접근을 막으므로) 처리한 뒤 창을 닫는다.
 - 처음 한 번 필요한 설정:
   1) 크롬 메뉴 보기 → 개발자 정보 → 'Apple Events의 자바스크립트 허용' 체크
   2) 처음 실행 때 macOS가 '…이(가) Google Chrome을 제어하려고 합니다' 를 물으면 '허용'
@@ -12,6 +13,7 @@
 """
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 import tempfile
@@ -19,7 +21,6 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DOWNLOADS = Path.home() / "Downloads"
 URL = "https://fin.land.naver.com/"
 TIMEOUT = 15 * 60
 
@@ -28,7 +29,7 @@ class AutoError(RuntimeError):
     pass
 
 
-def osa(script: str, timeout: float = 60) -> str:
+def osa(script: str, timeout: float = 60, raw: bool = False) -> str:
     p = subprocess.run(["osascript", "-e", script], capture_output=True, text=True, timeout=timeout)
     if p.returncode:
         err = (p.stderr or p.stdout).strip()
@@ -36,6 +37,8 @@ def osa(script: str, timeout: float = 60) -> str:
             raise AutoError("크롬 설정 필요: 보기 → 개발자 정보 → 'Apple Events의 자바스크립트 허용' 체크, "
                             "macOS 제어 허용 창이 뜨면 '허용' (" + err[:160] + ")")
         raise AutoError(err[:300])
+    if raw:   # 결과 조각: 앞뒤 공백도 데이터이므로 osascript가 붙인 마지막 줄바꿈만 뗀다
+        return p.stdout[:-1] if p.stdout.endswith("\n") else p.stdout
     return p.stdout.strip()
 
 
@@ -74,14 +77,23 @@ tell application "Google Chrome" to execute {tab} javascript js''')
             raise AutoError("시간 초과 (15분)")
         if not name.startswith("naver_listings_"):
             raise AutoError(f"수집 실패: {name}")
-        # 다운로드 완료 대기 (.crdownload 가 사라질 때까지)
-        for _ in range(60):
-            hits = sorted(DOWNLOADS.glob(name.replace(".json", "*.json")), key=lambda p: p.stat().st_mtime)
-            if hits and not list(DOWNLOADS.glob("*.crdownload")):
-                log(f"수집 완료: {hits[-1].name} ({int(time.time() - started)}초)")
-                return hits[-1]
-            time.sleep(2)
-        raise AutoError(f"다운로드 파일을 찾지 못함: {name}")
+        # 결과 JSON 을 페이지에서 조각조각 읽어 임시 파일로 (예약 작업은 macOS가 다운로드 폴더 접근을 막음)
+        n = int(osa(f'tell application "Google Chrome" to execute {tab} javascript "String((window.__RE_JSON || \'\').length)"') or 0)
+        if not n:
+            raise AutoError("수집 결과가 비어 있음")
+        parts, step = [], 400_000
+        for i in range(0, n, step):
+            parts.append(osa(f'tell application "Google Chrome" to execute {tab} javascript '
+                             f'"window.__RE_JSON.substring({i}, {i + step})"', timeout=120, raw=True))
+        text = "".join(parts)
+        try:
+            json.loads(text)
+        except ValueError:
+            raise AutoError(f"결과를 온전히 읽지 못함 ({len(text):,}/{n:,}자)") from None
+        out = Path(tempfile.gettempdir()) / name
+        out.write_text(text, encoding="utf-8")
+        log(f"수집 완료: {name} ({n:,}자, {int(time.time() - started)}초)")
+        return out
     finally:
         try:
             osa(f'tell application "Google Chrome" to close (first window whose id is {win})')
