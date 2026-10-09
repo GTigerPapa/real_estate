@@ -136,7 +136,7 @@ sentiment:
       - {tag: 단지, query: 미사강변센트럴자이, housing: text, must_in: text, must: [미사강변센트럴자이]}
       - {tag: 교통, query: 9호선 연장 미사, housing: false, must_in: text, must: [9호선]}
       - {tag: 공급, query: 교산 신도시, housing: false, must: [교산], allow: [분양]}
-      - {tag: 하락 근거, query: 집값 하락 이유, any: [서울, 수도권, 강동, 하남, 경기], not: [대구, 부산, 안동, 광주, 대전, 울산]}
+      - {tag: 하락 근거, query: 집값 하락 이유, must_in: text, must: [하락], any: [서울, 수도권, 강동, 하남, 경기], not: [대구, 부산, 안동, 광주, 대전, 울산, 상승폭 확대, 연속 상승]}
     per_topic: 4
     max_items: 40     # 뉴스
     max_cafe: 30
@@ -150,5 +150,5 @@ sentiment:
   youtube:
     query: "집값|부동산 시장|아파트값|부동산 전망|급매|청약"
     title_words: [집값, 부동산, 아파트값, 매매, 전세, 청약, 금리, 시세, 급매, 갭투자, 영끌, 하락, 상승, 폭락, 폭등]
-    exclude_words: [전원주택, 펜션, 토지, 땅, 상가, 귀촌, 시골집, 농가, 빌라 경매, 원룸, 다가구, 부산, 대구, 청주, 대전, 광주, 울산, 창원, 천안, 세종]
+    exclude_words: [전원주택, 펜션, 토지, 땅, 상가, 귀촌, 시골집, 농가, 빌라 경매, 원룸, 다가구, 주가, 상속세, 동탄, 부산, 대구, 청주, 대전, 광주, 울산, 창원, 천안, 세종]
     top: 10
