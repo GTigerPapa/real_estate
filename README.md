@@ -64,21 +64,25 @@ streamlit run dashboard/app.py          # http://localhost:8501  (?band=74 처�
 - 전세가율 기본 창은 3개월 (같은 월 선택 가능), 표본 수(n) 표시, 매수 상한선(settings.yaml `buy_cap_manwon`)
 - 3개월 이동중앙값 = 해당 월 포함 직전 3개월 개별 거래를 모아 계산 (월 중앙값의 중앙값 아님)
 
-## 네이버 매물 (북마클릿, 국내 PC)
+## 네이버 매물 (북마클릿 / iMac 자동, 국내 PC)
 
-네이버페이 부동산은 자동화 브라우저·서버 요청을 거절하므로, **사용자의 크롬에서 즐겨찾기 버튼 한 번**으로
-페이지가 쓰는 같은 출처 API를 호출해 파일로 내려받고, 그 파일을 저장소에 쌓는다.
+네이버페이 부동산은 자동화 브라우저·서버 요청을 거절하므로, **사용자의 크롬에서** 페이지가 쓰는 같은 출처 API를 호출한다.
+단지마다 호가·시세·매물 통계와 **매물 목록 전체**(매매·전세·월세, 끝 페이지까지)를 받는다.
 
-설치 (한 번): `tools/bookmarklet.html` 을 크롬으로 열고 파란 버튼을 즐겨찾기 막대로 드래그.
+- 매물 목록은 `data/listings/naver/naver_offers.csv` 에 매물 단위로 추적(신규·가격 변경·내려감)하고,
+  웹앱의 매물 표에서 아실 목록과 합친다 (같은 물건 1줄, 출처 아실/네이버/아실+네이버 표시).
+  **매물 수 추이 차트는 아실만** 쓴다 (출처를 섞으면 추세가 끊김). 네이버 목록이 7일 넘게 안 들어오면 표에서 뺀다.
+- 원본 덤프(`data/listings/raw/`)에는 매물 목록을 빼고 요약만 남긴다 (저장소 용량).
 
-매일:
-1. 크롬에서 https://fin.land.naver.com/ 을 연다.
-2. 즐겨찾기의 **📥 네이버 매물 덤프** 클릭 → `~/Downloads/naver_listings_YYYYMMDD_HHMM.json`
-3. `cd ~/real_estate && python3 scripts/save_listings.py` → `data/listings/raw/` 에 저장, 커밋, push
+**자동 (iMac 매일 작업 `scripts/mac_daily.py` 가 실행)**: `scripts/naver_auto.py` 가 AppleScript로 크롬 창을 열어
+같은 코드를 실행하고, 내려받은 파일을 반영한 뒤 창을 닫는다. 처음 한 번:
+1. 크롬 메뉴 **보기 → 개발자 정보 → Apple Events의 자바스크립트 허용** 체크
+2. `python3 scripts/naver_auto.py` 를 한 번 실행해, macOS가 크롬 제어를 물으면 **허용**
+끄려면 `config/settings.yaml` 에 `naver_auto: false`.
 
-대시보드 ⑦이 `data/listings/raw/*.json` 을 자동 적재한다 (`listing_raw` 원문 + `listing_metric` 숫자 값 전부).
-어떤 JSON 경로가 매물 수·최저 호가인지는 `config/settings.yaml` 의 `listing_metrics` 정규식으로 정한다 —
-첫 실제 덤프를 보고 확정하며, 규칙만 고치면 이미 쌓인 덤프에 소급 적용된다.
+**수동 (북마클릿)**: `tools/bookmarklet.txt` 내용을 즐겨찾기 URL로 붙여넣어 설치 →
+https://fin.land.naver.com/ 에서 클릭 → `python3 scripts/save_listings.py`.
+
 단지 목록(`config/complexes.yaml` 의 `naver_id`)이 바뀌면 `python3 tools/build_bookmarklet.py` 로 다시 빌드.
 
 ## 아실 일별 매물 수 (자동, 매일)

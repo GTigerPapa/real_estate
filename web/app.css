@@ -344,3 +344,6 @@ button { font: inherit; color: inherit; }
 /* 가격 차트 바로 아래 붙는 거래량 패널 */
 .volpane { border-top: 1px dashed var(--grid); margin-top: 2px; padding-top: 2px; }
 .volpane .legend { margin: 2px 0 0; font-size: 11px; }
+/* 매물 출처 */
+.tag.src-n { color: var(--s3); border-color: color-mix(in srgb, var(--s3) 40%, transparent); }
+.tag.src-an { color: var(--ink2); }

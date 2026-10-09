@@ -9,16 +9,18 @@
 """
 from __future__ import annotations
 
-import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
-from realestate import listings  # noqa: E402
+import json  # noqa: E402
+
+from realestate import listings, naver_offers  # noqa: E402
 
 RAW_DIR = ROOT / "data" / "listings" / "raw"
+NAVER_CSV = ROOT / "data" / "listings" / "naver" / "naver_offers.csv"
 DOWNLOADS = Path.home() / "Downloads"
 
 
@@ -43,12 +45,18 @@ def main(argv: list) -> int:
     except listings.DumpError as e:
         print(f"형식 오류: {e}")
         return 1
-    dst = RAW_DIR / src.name
+    name = src.name.replace(" ", "").replace("(", "_").replace(")", "")   # 'naver_listings_..(1).json' 같은 이름 정리
+    dst = RAW_DIR / name
     RAW_DIR.mkdir(parents=True, exist_ok=True)
-    if dst.exists() and dst.read_bytes() == src.read_bytes():
+    # 매물 목록(articles)은 추적 CSV로 옮기고, 원본 덤프에서는 빼서 저장 (저장소 용량)
+    if naver_offers.has_articles(d):
+        print("── 네이버 매물 목록")
+        naver_offers.update(NAVER_CSV, d)
+    text = json.dumps(naver_offers.strip_articles(d), ensure_ascii=False, separators=(",", ":"))
+    if dst.exists() and dst.read_text(encoding="utf-8") == text:
         print(f"이미 저장된 파일입니다: {dst.name}")
     else:
-        shutil.copy2(src, dst)
+        dst.write_text(text, encoding="utf-8")
         print(f"저장: data/listings/raw/{dst.name}  (수집 시각 {d['captured_at']})")
 
     ok = sum(1 for c in d["complexes"] for r in c.get("responses", []) if r.get("ok"))
@@ -70,8 +78,9 @@ def main(argv: list) -> int:
         except Exception as e:  # noqa: BLE001 — DB 적재는 부가 기능, 실패해도 파일 커밋은 진행
             print(f"(로컬 DB 적재 건너뜀: {type(e).__name__}: {e})")
 
-    git("add", str(dst.relative_to(ROOT)))
-    if not git("status", "--porcelain", "--", str(dst.relative_to(ROOT))):
+    paths = [str(dst.relative_to(ROOT))] + ([str(NAVER_CSV.relative_to(ROOT))] if NAVER_CSV.exists() else [])
+    git("add", *paths)
+    if not git("status", "--porcelain", "--", *paths):
         print("커밋할 변경이 없습니다.")
         return 0
     git("commit", "-q", "-m", f"네이버 매물 덤프 {d['captured_at'][:16]}")

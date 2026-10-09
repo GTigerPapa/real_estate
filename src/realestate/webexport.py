@@ -47,8 +47,10 @@ REGION_CSV = config.DATA_DIR / "listings" / "asil" / "asil_region_counts.csv"
 ECOS_CSV = config.DATA_DIR / "macro" / "ecos_monthly.csv"
 SENTIMENT_DIR = config.DATA_DIR / "sentiment"
 OFFERS_CSV = config.DATA_DIR / "listings" / "asil" / "asil_offers.csv"
+NAVER_OFFERS_CSV = config.DATA_DIR / "listings" / "naver" / "naver_offers.csv"
+NAVER_STALE_DAYS = 7  # 네이버 목록이 이보다 오래되면(북마클릿·자동 실행이 멈춤) 매물 표에서 뺀다
 RECENT_TRADES = 600   # 홈 '최근 실거래' 표에 싣는 건수 (전체 단지·전체 면적, 앱에서 평형으로 거름)
-OFFERS_MAX = 400      # 홈 '매물' 표에 싣는 물건 수
+OFFERS_MAX = 800      # 홈 '매물' 표에 싣는 물건 수
 
 
 def band_of(ar, size_bands) -> str | None:
@@ -117,41 +119,81 @@ def offer_band_counts(path=OFFERS_CSV, size_bands=None) -> dict:
     return out
 
 
-def load_offers(path=OFFERS_CSV, size_bands=None) -> dict:
-    """아실 매물 추적 파일 → 현재 게시 중인 물건 목록.
-
-    같은 물건(단지·유형·동·층·전용면적·가격)을 여러 중개사가 올린 건 1줄로 묶는다.
-    reg: 가장 이른 게시일(=등록일에 가장 가까운 값), upd: 가장 최근 게시일(광고 갱신),
-    seen: 이 추적에서 처음 본 날, chg/prev: 가격이 바뀐 날과 이전 가격.
-    """
+def _offer_frame(path, src: str) -> pd.DataFrame:
     from pathlib import Path
-    p = Path(path)
-    empty = {"items": [], "since": None, "through": None}
-    if not p.exists():
-        return empty
+    p = Path(path) if path else None
+    if not p or not p.exists():
+        return pd.DataFrame()
     df = pd.read_csv(p, dtype=str).fillna("")
     if df.empty:
+        return df
+    df["src"] = src
+    df["dong"] = df["dong"].str.replace("동", "", regex=False).str.strip()
+    df["ar1"] = pd.to_numeric(df["excl_area"], errors="coerce").round(1).astype(str)
+    return df
+
+
+def _floor_clusters(g: pd.DataFrame) -> list:
+    """같은 단지·유형·동·면적·가격 묶음을 층으로 나눈다. 숫자 층이 다르면 다른 물건,
+    '저/중/고'만 적힌 광고는 숫자 층 물건이 하나뿐이면 거기에 붙이고 아니면 따로 둔다."""
+    num = g[g["floor"].str.fullmatch(r"\d+")]
+    word = g[~g.index.isin(num.index)]
+    groups = [x for _, x in num.groupby("floor", sort=False)]
+    if not groups:
+        return [x for _, x in word.groupby("floor", sort=False)] or [g]
+    if len(groups) == 1 and not word.empty:
+        return [pd.concat([groups[0], word])]
+    return groups + ([x for _, x in word.groupby("floor", sort=False)] if not word.empty else [])
+
+
+def load_offers(path=OFFERS_CSV, size_bands=None, naver_path=NAVER_OFFERS_CSV) -> dict:
+    """아실 + 네이버 매물 추적 파일 → 현재 게시 중인 물건 목록 (매물 수 통계는 아실만 쓰고, 이 목록만 두 출처를 합친다).
+
+    같은 물건(단지·유형·동·전용면적·가격, 층이 맞으면)을 여러 중개사·두 출처가 올린 건 1줄로 묶는다.
+    src: 'a' 아실만 · 'n' 네이버만 · 'an' 둘 다. reg: 가장 이른 게시일, upd: 가장 최근 게시일,
+    seen: 이 추적에서 처음 본 날, nw: 그 출처 추적 시작 뒤 처음 나타난 물건(=실제 신규), chg/prev: 가격 변경.
+    """
+    empty = {"items": [], "since": None, "through": None, "naver_through": None, "naver_since": None}
+    A = _offer_frame(path, "a")
+    N = _offer_frame(naver_path, "n")
+    since = {s: (F["first_seen"].min() if not F.empty else None) for s, F in (("a", A), ("n", N))}
+    through = {s: (F["last_seen"].max() if not F.empty else None) for s, F in (("a", A), ("n", N))}
+    if not N.empty and through["a"] and through["n"] and \
+            (pd.Timestamp(through["a"]) - pd.Timestamp(through["n"])).days > NAVER_STALE_DAYS:
+        N = pd.DataFrame()          # 네이버 목록이 오래됨 → 아실만
+    frames = [F for F in (A, N) if not F.empty]
+    if not frames:
         return empty
-    since, through = df["first_seen"].min(), df["last_seen"].max()
-    act = df[df["active"] == "1"].copy()
+    df = pd.concat(frames, ignore_index=True)
+    act = df[df["active"] == "1"]
     items = []
-    for key, g in act.groupby(["complex_id", "deal", "dong", "floor", "excl_area", "price", "rent"], sort=False):
-        cid, deal, dong, floor, ar, price, rent = key
-        posted = sorted(x for x in g["posted"] if x)
-        chg = g[g["price_changed"] != ""].sort_values("price_changed")
-        desc = next((x for x in g["desc"] if x), "")
-        items.append({
-            "c": cid, "t": deal, "p": int(price or 0), "r": int(rent) if rent else None, "b": band_of(ar, size_bands),
-            "dong": dong, "f": floor, "ar": _num(ar, 2) if ar else None,
-            "reg": posted[0] if posted else g["first_seen"].min(), "upd": posted[-1] if posted else None,
-            "seen": g["first_seen"].min(), "n": int(len(g)),
-            "chg": chg["price_changed"].iloc[-1] if not chg.empty else None,
-            "prev": int(chg["prev_price"].iloc[-1]) if not chg.empty and chg["prev_price"].iloc[-1] else None,
-            "desc": desc[:60],
-            "ten": tenant_kind(*g["desc"]),   # t 세안고 · m 입주 가능 · None 언급 없음 (설명 문구 기준)
-        })
+    for key, g0 in act.groupby(["complex_id", "deal", "dong", "ar1", "price", "rent"], sort=False):
+        cid, deal, dong, _, price, rent = key
+        for g in _floor_clusters(g0):
+            posted = sorted(x for x in g["posted"] if x)
+            chg = g[g["price_changed"] != ""].sort_values("price_changed")
+            floors = [f for f in g["floor"] if f]
+            floor = next((f for f in floors if f.isdigit()), floors[0] if floors else "")
+            srcs = "".join(s for s in ("a", "n") if (g["src"] == s).any())
+            first = g.sort_values("first_seen").iloc[0]
+            nw = bool(since.get(first["src"]) and first["first_seen"] > since[first["src"]])
+            desc = next((x for x in g.sort_values("src")["desc"] if x), "")
+            ar = pd.to_numeric(g["excl_area"], errors="coerce").dropna()
+            items.append({
+                "c": cid, "t": deal, "p": int(price or 0), "r": int(rent) if rent else None,
+                "b": band_of(ar.iloc[0] if not ar.empty else None, size_bands),
+                "dong": dong, "f": floor, "ar": _num(ar.iloc[0], 2) if not ar.empty else None,
+                "reg": posted[0] if posted else g["first_seen"].min(), "upd": posted[-1] if posted else None,
+                "seen": g["first_seen"].min(), "nw": 1 if nw else 0, "src": srcs,
+                "n": int(g.groupby("src").size().max()),   # 중개사 수: 두 출처에 같은 중개사가 겹치므로 큰 쪽
+                "chg": chg["price_changed"].iloc[-1] if not chg.empty else None,
+                "prev": int(chg["prev_price"].iloc[-1]) if not chg.empty and chg["prev_price"].iloc[-1] else None,
+                "desc": desc[:60],
+                "ten": tenant_kind(*g["desc"]),   # t 세안고 · m 입주 가능 · None 언급 없음 (설명 문구 기준)
+            })
     items.sort(key=lambda x: (x["reg"] or "", x["upd"] or "", x["seen"] or ""), reverse=True)
-    return {"items": items[:OFFERS_MAX], "since": since, "through": through}
+    return {"items": items[:OFFERS_MAX], "since": since["a"], "through": through["a"],
+            "naver_since": since["n"] if not N.empty else None, "naver_through": through["n"] if not N.empty else None}
 
 
 def recent_trades(conn, complexes: list[dict], limit: int = RECENT_TRADES) -> list:
@@ -184,10 +226,12 @@ def load_asil(path=ASIL_CSV) -> dict:
 
 def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | None = None,
                   asil_csv=ASIL_CSV, offers_csv=OFFERS_CSV, region_csv=REGION_CSV, ecos_csv=ECOS_CSV,
-                  sentiment_dir=SENTIMENT_DIR) -> dict:
+                  sentiment_dir=SENTIMENT_DIR, naver_offers_csv=None) -> dict:
     now = now or config.now_kst()
     asil = load_asil(asil_csv)
-    offers = load_offers(offers_csv, settings.get("size_bands"))
+    if naver_offers_csv is None:   # 기본 경로로 부를 때만 네이버 목록을 합친다 (테스트는 넘긴 파일만)
+        naver_offers_csv = NAVER_OFFERS_CSV if offers_csv == OFFERS_CSV else ""
+    offers = load_offers(offers_csv, settings.get("size_bands"), naver_offers_csv)
     band_counts = offer_band_counts(offers_csv, settings.get("size_bands"))
     cap = int(settings.get("buy_cap_manwon", 140000))
     trades = metrics.load_trades(conn, include_canceled=True)
@@ -316,6 +360,8 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
         "offers": offers["items"],
         "offers_since": offers["since"],
         "offers_through": offers["through"],
+        "offers_naver_since": offers.get("naver_since"),
+        "offers_naver_through": offers.get("naver_through"),
     }
 
 

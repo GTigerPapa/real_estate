@@ -378,6 +378,7 @@ function TradeFeed(band) {
     [{ t: "단지" }, { t: "계약일" }, { t: "동·층·전용" }, { t: "금액", r: 1 }], rows, T.length, true);
 }
 const OFFER_T = { sale: "매매", jeonse: "전세", wolse: "월세" };
+const SRC_T = { a: "아실", n: "네이버", an: "아실+네이버" };
 function offerPrice(o) { return o.t === "wolse" ? `${eok(o.p)}/${o.r ?? "–"}` : eok(o.p); }
 // fixedId 가 있으면 그 단지 상세 화면용: 단지 필터·단지 열을 빼고 매물 특징을 함께 보여 준다
 function OfferFeed(fixedId, band) {
@@ -408,27 +409,30 @@ function OfferFeed(fixedId, band) {
     kindChips, tenChips);
   const rows = O.map((o) => {
     const down = o.prev && o.p < o.prev, up = o.prev && o.p > o.prev;
-    const fresh = since && o.seen > since;   // 추적 시작 뒤 처음 나타난 매물 = 실제 신규 등록
+    const fresh = o.nw === undefined ? since && o.seen > since : !!o.nw;   // 그 출처 추적 시작 뒤 처음 나타난 매물 = 실제 신규 등록
     return h("tr", { onclick: fixedId ? null : () => goCx(o.c), class: fixedId ? "static" : "", title: o.desc || "" },
       fixedId ? null : h("td", {}, cxShort(o.c)),
       h("td", { class: "nw" }, h("span", { class: `kind k-${o.t}` }, OFFER_T[o.t] || o.t), " ", h("b", {}, offerPrice(o)),
         o.chg ? h("span", { class: `badge ${down ? "dn" : up ? "upb" : ""}` }, `${down ? "▼" : up ? "▲" : "변경"} ${md(o.chg)}`) : null),
       h("td", {}, h("span", { class: "sub2" }, `${o.dong ? o.dong + "동 " : ""}${o.f ? o.f + "층" : ""}${o.ar ? " · " + o.ar + "㎡" : ""}`),
         o.n > 1 ? h("span", { class: "tag" }, `${o.n}곳`) : null,
+        o.src ? h("span", { class: `tag src-${o.src}` }, SRC_T[o.src] || o.src) : null,
         o.t === "sale" && o.ten === "t" ? h("span", { class: "tag ten-t" }, "세안고") : null,
         o.t === "sale" && o.ten === "m" ? h("span", { class: "tag ten-m" }, "입주 가능") : null,
         fixedId && o.desc ? h("div", { class: "desc" }, o.desc) : null),
       h("td", { class: "nw" }, fresh ? h("span", {}, md(o.seen), h("span", { class: "badge new" }, "신규")) : md(o.reg)));
   });
-  const note = (fixedId ? `이 단지 아실 매물 · ${band}형 · ` : `아실 매물 목록 · ${band}형 · `) +
-    `최근 날짜순 · 같은 물건을 여러 중개사가 올리면 1줄(N곳) · ▼▲ 가격 변경일. ` +
-    `날짜: '신규'는 ${md(since)} 추적 시작 뒤 처음 나타난 날(실제 등록일), 그 외는 아실 게시일(중개사가 광고를 다시 올린 날이라 최근 날짜에 몰림) · ` +
+  const nv = d.offers_naver_through;
+  const note = (fixedId ? `이 단지 매물 · ${band}형 · ` : `매물 목록 · ${band}형 · `) +
+    `아실(매일)${nv ? ` + 네이버(${md(nv)} 수집분)` : ""}을 합친 목록 · 매물 수 추이 차트는 아실만 · ` +
+    `최근 날짜순 · 같은 물건을 여러 중개사·두 출처가 올리면 1줄(N곳, 출처 표시) · ▼▲ 가격 변경일. ` +
+    `날짜: '신규'는 추적 시작(아실 ${md(since)}${d.offers_naver_since ? ` · 네이버 ${md(d.offers_naver_since)}` : ""}) 뒤 처음 나타난 날(실제 등록일), 그 외는 게시일(광고를 다시 올린 날이라 최근 날짜에 몰림) · ` +
     `세안고·입주 가능은 중개사 설명 문구로 가린 것(언급 없는 매물이 절반 넘음)`;
   const head = [{ t: "가격" }, { t: fixedId ? "동·층·전용 · 특징" : "동·층·전용" }, { t: "게시일" }];
   const anyOffers = (d.offers || []).length > 0;
   return Feed(fixedId ? "offers-" + fixedId : "offers", `최근 매물 · ${band}형`,
     all.length ? note : !anyOffers ? "아직 매물 목록이 없습니다. Mac의 매일 자동 수집(install_asil_offers.py)을 켜면 쌓입니다."
-      : `지금 올라온 ${band}형 아실 매물이 없습니다.`,
+      : `지금 올라온 ${band}형 매물이 없습니다.`,
     all.length ? chips : null, fixedId ? head : [{ t: "단지" }, ...head], rows, O.length, true);
 }
 function Card(c, band) {

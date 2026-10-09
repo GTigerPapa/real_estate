@@ -29,6 +29,7 @@ from realestate import asil_offers, config  # noqa: E402  (둘 다 표준 라이
 DB_REL = "data/realestate.db"
 APP_REL = "web/data/app.json"
 OFFERS_REL = "data/listings/asil/asil_offers.csv"
+NAVER_REL = "data/listings/naver/naver_offers.csv"
 LOG_REL = "data/logs/mac_daily_last.log"   # 마지막 실행 기록 (원격에서 문제 확인용, 키는 로그에 남지 않음)
 _LOG: list[str] = []
 
@@ -80,6 +81,17 @@ def main(argv=None) -> int:
     if failed:
         problems.append("아실 매물 목록: " + ", ".join(failed))
 
+    # 2-1) 네이버 매물 (크롬 자동 실행, settings.yaml naver_auto: false 면 건너뜀). 실패해도 나머지는 진행·종료 코드에 반영 안 함
+    naver_note = "꺼짐"
+    try:
+        naver_on = bool(config.load_settings().get("naver_auto", True))
+    except Exception:  # noqa: BLE001 — 설정을 못 읽으면 기본값(켜짐)
+        naver_on = True
+    if naver_on and sys.platform == "darwin":
+        say("── 네이버 매물 (크롬 자동)")
+        rc_nv, out_nv = run_py(str(ROOT / "scripts" / "naver_auto.py"))
+        naver_note = "성공" if rc_nv == 0 else "실패"
+
     # 3) 웹앱 데이터
     say("── 웹앱 데이터")
     rc_web, _ = run_py(str(ROOT / "scripts" / "export_web.py"))
@@ -89,14 +101,14 @@ def main(argv=None) -> int:
     # DB는 실거래 수집이 성공했을 때만: 백필한 날·매월 1일, 또는 웹앱 데이터를 못 만들어 Actions 가 대신 만들어야 할 때
     commit_db = rc == 0 and (tasks > BACKFILL_TASKS or now.day == 1 or rc_web != 0)
     say(f"요약: 실거래 {'성공' if rc == 0 else '실패'}(대상 {tasks}건) · 매물 실패 {len(failed)}곳 · "
-        f"웹앱 {'성공' if rc_web == 0 else '실패'} · DB 커밋 {commit_db}" + (f" · 문제: {' · '.join(problems)}" if problems else ""))
+        f"네이버 {naver_note} · 웹앱 {'성공' if rc_web == 0 else '실패'} · DB 커밋 {commit_db}" + (f" · 문제: {' · '.join(problems)}" if problems else ""))
     log_path = ROOT / LOG_REL
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_path.write_text("\n".join(_LOG)[-20000:] + "\n", encoding="utf-8")
     if a.no_push:
         print(f"커밋 생략 (--no-push) · DB 커밋 대상이었는지: {commit_db}")
     else:
-        paths = [APP_REL, OFFERS_REL, LOG_REL] + ([DB_REL] if commit_db else [])
+        paths = [APP_REL, OFFERS_REL, LOG_REL] + ([NAVER_REL] if (ROOT / NAVER_REL).exists() else []) + ([DB_REL] if commit_db else [])
         git("add", *paths, check=False)
         if git("diff", "--cached", "--quiet", check=False).returncode == 0:
             print("변경 없음")

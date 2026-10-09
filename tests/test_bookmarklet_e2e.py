@@ -39,6 +39,27 @@ def _fake_api(route):
         body = {"result": {"minPrice": base + int(q.get("pyeongTypeNumber", 0)) * 1000, "maxPrice": base * 1.1}}
     elif path == "complex/marketPrice/recent":
         body = {"result": {"kb": 1950000000}}
+    elif path == "complex/article/list" and route.request.method == "POST":
+        b = json.loads(route.request.post_data)
+        tr, n = b["tradeTypes"][0], b["complexNumber"]
+        page = 1 if b.get("seed") == "S" and b.get("lastInfo") == [1] else 0   # 다음 쪽은 seed·lastInfo 로
+        pages = {"A1": 2, "B1": 1, "B2": 1}[tr]
+        groups = [] if tr == "B2" else [f"{n}{tr}{page}{i}" for i in range(2)]
+
+        def art(no, price):
+            return {"articleNumber": no, "tradeType": tr, "dongName": "101",
+                    "spaceInfo": {"exclusiveSpace": 84.97, "supplySpace": 112.1},
+                    "articleDetail": {"articleFeatureDescription": "세안고  급매", "floorDetailInfo": {"targetFloor": "중", "totalFloor": "25"}},
+                    "priceInfo": {"dealPrice": price if tr == "A1" else 0, "warrantyPrice": 0 if tr == "A1" else price, "rentPrice": 0},
+                    "verificationInfo": {"exposureStartDate": "2026-10-08"}, "brokerInfo": {"brokerageName": "B"}}
+        lst = []
+        for g in groups:   # 첫 묶음은 중개사 2곳(대표+중복), 둘째는 1곳(중복 정보 없음)
+            if g.endswith("0"):
+                lst.append({"representativeArticleInfo": art(g, 1_400_000_000),
+                            "duplicatedArticleInfo": {"realtorCount": 2, "articleInfoList": [art(g, 1_400_000_000), art(g + "d", 1_400_000_000)]}})
+            else:
+                lst.append({"representativeArticleInfo": art(g, 1_500_000_000)})
+        body = {"result": {"seed": "S", "lastInfo": [page + 1], "hasNextPage": page + 1 < pages, "totalCount": pages * 2, "list": lst}}
     if body is None:
         route.fulfill(status=404, content_type="application/json", body='{"detailCode":"NOT_FOUND"}')
     else:
@@ -75,8 +96,15 @@ def test_bookmarklet_runs_in_real_chromium(tmp_path, conn):
     # pyeongList, stats, asking-price × (A1,B1) × (3,5), marketPrice × (3,5)
     assert keys.count("asking_price") == 4 and keys.count("market_price_recent") == 2
     assert {"pyeong_list", "article_stats"} <= set(keys)
-    assert len(d["discovery"]) == 5 and all(not r["ok"] for r in d["discovery"])
-    assert sum(1 for u in calls if "front-api" in u) == len(expected) * 8 + 5
+    A = d["complexes"][0]["articles"]
+    assert A["ok"] and A["trades"]["A1"] == {"pages": 2, "total": 4, "groups": 4, "stop": "end"}
+    assert A["trades"]["B2"]["groups"] == 0
+    # A1: 2쪽 × (2곳 묶음 2건 + 1곳 1건) = 6, B1: 1쪽 3건
+    assert len(A["items"]) == 9 and {x["t"] for x in A["items"]} == {"A1", "B1"}
+    it = next(x for x in A["items"] if x["a"].endswith("A100"))
+    assert it["fl"] == "중" and it["p"] == 1_400_000_000 and it["rc"] == 2 and it["d"] == "세안고 급매"
+    assert any(f"매물 {9 * len(expected)}건" in m for m in dialogs), dialogs
+    assert sum(1 for u in calls if "front-api" in u) == len(expected) * (8 + 4)
 
     r = listings.ingest_file(conn, path)
     assert r["loaded"] and r["metrics"] > 0
