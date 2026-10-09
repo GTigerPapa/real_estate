@@ -10,6 +10,7 @@ on:
     paths:
       - "data/listings/raw/**"
       - "data/listings/asil/asil_offers.csv"   # Mac이 매일 올리는 아실 매물 목록 → 웹앱 데이터 재생성
+      - "data/listings/naver/naver_offers.csv" # Mac이 올리는 네이버 매물 목록
       - "data/realestate.db"                   # Mac이 올리는 DB (매월·백필)
       - "config/**"
       - "src/realestate/**"
