@@ -87,7 +87,14 @@ def main(argv: list) -> int:
     print("커밋 완료" + (", push 중..." if push else ""))
     if push:
         try:
-            git("push")
+            for attempt in range(3):   # 그사이 Actions 가 먼저 올렸으면 받아서 다시 push
+                try:
+                    git("push")
+                    break
+                except subprocess.CalledProcessError:
+                    if attempt == 2:
+                        raise
+                    git("pull", "--rebase", "--autostash", "-q")
             print("push 완료")
         except subprocess.CalledProcessError as e:
             print(f"push 실패:\n{e.stderr.strip()}\n나중에 `git push` 를 다시 실행하세요.")
