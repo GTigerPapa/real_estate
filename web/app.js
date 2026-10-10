@@ -656,13 +656,17 @@ function OfferTrend(list, band) {
     const pad = Math.max(2, (t1 - t0) / 864e5 * 0.02) * 864e5;
     xDom = [t0 - pad, t1 + pad];
   }
-  const legendItems = [...have.map((c) => ({ name: c.short, kind: "line", color: colorOf(c) })), { sep: true },
-    ...(deal !== "rent" ? [{ name: "매매", kind: "line", color: "var(--ink2)" }] : []),
-    ...(deal !== "sale" ? [{ name: "전월세", kind: "line", dash: true, color: "var(--ink2)" }] : [])];
-  const chart = Chart({
-    label: title, xDomain: xDom, height: 230, yMin: 0, yFmt: (v) => String(v), tipFmt: (v) => (smooth ? String(Math.round(v)) : v) + "건",
-    xTicks, xFmt, tipDate: fmtYMD, series, legendItems,
-    tipNote: (deal === "both" ? "매매 / 전월세" : deal === "sale" ? "매매" : "전월세") + (smooth ? " · 7일 평균" : ""),
+  const yTop = Math.max(0, ...series.flatMap((se) => se.pts.filter((p) => p.t >= xDom[0] && p.t <= xDom[1]).map((p) => p.v || 0)));
+  const chart = panels(have, (L) => {
+    const names = new Set(L.map((c) => c.short));
+    return Chart({
+      label: title, xDomain: xDom, height: 210, yMin: 0, yMax: yTop, yFmt: (v) => String(v), tipFmt: (v) => (smooth ? String(Math.round(v)) : v) + "건",
+      xTicks, xFmt, tipDate: fmtYMD, series: series.filter((se) => names.has(se.group)),
+      legendItems: [...L.map((c) => ({ name: c.short, kind: "line", color: colorOf(c) })), { sep: true },
+        ...(deal !== "rent" ? [{ name: "매매", kind: "line", color: "var(--ink2)" }] : []),
+        ...(deal !== "sale" ? [{ name: "전월세", kind: "line", dash: true, color: "var(--ink2)" }] : [])],
+      tipNote: (deal === "both" ? "매매 / 전월세" : deal === "sale" ? "매매" : "전월세") + (smooth ? " · 7일 평균" : ""),
+    });
   });
   // 최근일 · 1주 전 대비 한 줄 요약 (색 대신 이름으로도 읽히게)
   const rows = have.map((c) => {
@@ -675,21 +679,42 @@ function OfferTrend(list, band) {
   const table = h("table", { class: "cmp otr" },
     h("thead", {}, h("tr", {}, h("th", {}, "단지"), h("th", {}, "매매 (1주)"), h("th", {}, "전월세 (1주)"), h("th", {}, "기준일"))),
     h("tbody", {}, rows));
-  return Section(title, note, chips, chart, table);
+  return Section(title, note + " · 지역별 패널(세로 눈금 같음)", chips, ...chart, table);
 }
 
+// 단지 색은 8개뿐 → 비교 차트는 지역(group)별 작은 패널로 나눠 그린다. 같은 지표의 패널끼리는 세로 범위를 맞춘다
+function groupsOf(list) {
+  const out = [];
+  for (const c of list) {
+    const k = c.group || "기타";
+    let g = out.find((x) => x.k === k);
+    if (!g) out.push(g = { k, list: [] });
+    g.list.push(c);
+  }
+  return out;
+}
+function panels(list, make) {   // make(groupList, yRange) → Chart. yRange 는 전체 단지 값의 [최소, 최대]
+  const gs = groupsOf(list);
+  return gs.length < 2 ? [make(list)] : gs.map((g) => h("div", { class: "gpanel" }, h("div", { class: "gtitle" }, g.k), make(g.list)));
+}
 function Compare() {
   const d = state.data, band = d.bands.includes(state.band) ? state.band : "84";
   const list = d.complexes.filter((c) => c.bands.includes(band)), months = monthsView(), X = xDomain(months);
-  const med = Chart({
-    label: "단지별 3개월 중앙값", xDomain: X, height: 230, yFmt: (v) => eok(v, 0), tipFmt: (v) => eok(v),
+  const inX = (p) => p.t >= X[0] && p.t <= X[1] && p.v !== null && p.v !== undefined;
+  const rangeOf = (ptsOf) => { const v = list.flatMap((c) => ptsOf(c).filter(inX).map((p) => p.v)); return v.length ? [Math.min(...v), Math.max(...v)] : [undefined, undefined]; };
+  const medPts = (c) => seriesPts(c.b[band].trade_3m, months, d.months), ratioPts = (c) => seriesPts(c.b[band].ratio_3m, months, d.months);
+  const [mLo, mHi] = rangeOf(medPts), [rLo, rHi] = rangeOf(ratioPts);
+  const med = panels(list, (L) => Chart({
+    label: "단지별 3개월 중앙값", xDomain: X, height: 210, yFmt: (v) => eok(v, 0), tipFmt: (v) => eok(v),
+    yMin: mLo === undefined ? undefined : Math.min(mLo, d.cap) * 0.95, yMax: mHi,
     refs: [{ v: d.cap, label: `상한 ${eok(d.cap)}`, left: true }],
-    series: list.map((c) => ({ name: c.short, kind: "line", color: colorOf(c), pts: seriesPts(c.b[band].trade_3m, months, d.months) })),
-  });
-  const ratio = Chart({
-    label: "단지별 전세가율", xDomain: X, height: 190, yFmt: (v) => v + "%", tipFmt: (v) => v.toFixed(1) + "%",
-    series: list.map((c) => ({ name: c.short, kind: "line", color: colorOf(c), pts: seriesPts(c.b[band].ratio_3m, months, d.months) })),
-  });
+    series: L.map((c) => ({ name: c.short, kind: "line", color: colorOf(c), pts: medPts(c) })),
+  }));
+  const ratio = panels(list, (L) => Chart({
+    label: "단지별 전세가율", xDomain: X, height: 170, yFmt: (v) => v + "%", tipFmt: (v) => v.toFixed(1) + "%",
+    yMin: rLo === undefined ? undefined : rLo * 0.95, yMax: rHi,
+    series: L.map((c) => ({ name: c.short, kind: "line", color: colorOf(c), pts: ratioPts(c) })),
+  }));
   const offers = OfferTrend(list, band);
   const table = h("table", { class: "cmp" },
     h("thead", {}, h("tr", {}, h("th", {}, "단지"), h("th", {}, "중앙값"), h("th", {}, "1년"), h("th", {}, "전세율"),
@@ -705,8 +730,8 @@ function Compare() {
     bandSeg(d.bands, band, (b) => { state.band = b; store.set("band", b); render(); }),
     rangeChips(),
     h("div", { class: "sections" },
-      Section(`${band}형 매매 3개월 중앙값`, null, med),
-      Section(`${band}형 전세가율`, "전세 3개월 중앙값 ÷ 매매 3개월 중앙값", ratio),
+      Section(`${band}형 매매 3개월 중앙값`, "지역별 패널 · 두 패널의 세로 눈금은 같음", ...med),
+      Section(`${band}형 전세가율`, "전세 3개월 중앙값 ÷ 매매 3개월 중앙값 · 지역별 패널", ...ratio),
       wide(offers),
       wide(Section("요약", `중앙값 = 3개월 매매 중앙값 · 전세율 = 전세가율 · 매물 = ${band}형 아실 매매 매물 수(최근일) · 1주 = 1주 전 대비`, table))));
 }

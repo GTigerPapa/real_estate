@@ -6,6 +6,7 @@
 complexes:
   - id: godeok_xi
     name: 고덕자이
+    group: 강동
     short: 고덕자이
     naver_id: 121977
     asil_id: "1500060907"
@@ -17,6 +18,7 @@ complexes:
 
   - id: godeok_central_ipark
     name: 고덕센트럴아이파크
+    group: 강동
     short: 고덕아이파크
     naver_id: 118210
     asil_id: "1500059984"
@@ -28,6 +30,7 @@ complexes:
 
   - id: yeosu_central_town
     name: 센트럴타운
+    group: 하남·성남
     short: 센트럴타운
     naver_id: 102283
     asil_id: "20171106"
@@ -39,6 +42,7 @@ complexes:
 
   - id: misa_thesharp_central_forest
     name: 미사강변더샵센트럴포레스트
+    group: 하남·성남
     short: 미사더샵
     naver_id: 111028
     asil_id: "20357534"
@@ -50,6 +54,7 @@ complexes:
 
   - id: godeok_lotte_castle_venezia
     name: 고덕롯데캐슬베네루체
+    group: 강동
     short: 베네루체
     naver_id: 117309
     asil_id: "1500059822"
@@ -64,6 +69,7 @@ complexes:
   # 실거래 전용: 59.4 / 74.61·75.19 / 84.79·84.97 / 101.99 (41.76·133.45 는 평형 구간 밖)
   - id: yatap_jangmi8_hyundai
     name: 장미마을8단지현대
+    group: 하남·성남
     short: 장미8현대
     naver_id: 2229
     # asil_id: "6334"  — 아실 지도·단지 번호는 6334 가 맞지만(다른 단지와 같은 체계), 매물 목록 서버가 빈 목록을 준다
@@ -78,6 +84,7 @@ complexes:
   # 2026-10-04 추가 (실거래·아실로 확인). slot = 단지 색 번호(0~7). 8색을 넘으면 같은 평형에 함께 나오지 않는 단지와 색을 나눈다
   - id: myeongil_samik_green2
     name: 삼익그린2차
+    group: 강동
     short: 삼익그린2
     naver_id: 1308
     asil_id: "1538"
@@ -90,6 +97,7 @@ complexes:
 
   - id: misa_golden_centro
     name: 미사강변골든센트로
+    group: 하남·성남
     short: 골든센트로
     naver_id: 105286
     asil_id: "20305302"
@@ -102,6 +110,7 @@ complexes:
 
   - id: misa_central_xi
     name: 미사강변센트럴자이
+    group: 하남·성남
     short: 미사센트럴자이
     naver_id: 109215
     asil_id: "20348388"
@@ -111,3 +120,17 @@ complexes:
     fallback: [{jibun: "480", apt_nm: 미사강변센트럴자이}]
     bands: [93, 101]           # 실거래 전용 91.45 · 96.39~96.99 · 101.79 (84형 없음, 1,222세대)
     slot: 4                    # 베네루체(59·84형)와 같은 평형에 함께 나오지 않아 색을 나눠 씀
+
+  # 2026-10-10 추가 (실거래 41135-144 · 아실 단지 6339 · 네이버 2875 확인, 1994년 준공 646세대)
+  - id: yatap_top_byeoksan
+    name: 탑마을벽산
+    group: 하남·성남
+    short: 탑벽산
+    naver_id: 2875
+    asil_id: "6339"            # 장미8현대(6334)처럼 매물 목록이 비어 있으면 Mac 로그에 '빈 목록'으로 남는다 → 그때 끔
+    sgg_cd: "41135"
+    umd_nm: 야탑동
+    apt_seq: ["41135-144"]
+    fallback: [{jibun: "517", apt_nm: 탑마을(벽산)}]
+    bands: [59, 67, 84, 101, 118]   # 실거래 전용 59.91 · 69.87 · 84.91 · 101.97 · 114.93 · 134.79
+    slot: 0                    # 단지 색 8개 소진 → 비교 차트를 지역(강동 / 하남·성남)으로 나눠 그리고, 강동의 고덕자이와 색을 나눠 씀

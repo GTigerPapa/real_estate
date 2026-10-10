@@ -347,3 +347,6 @@ button { font: inherit; color: inherit; }
 /* 매물 출처 */
 .tag.src-n { color: var(--s3); border-color: color-mix(in srgb, var(--s3) 40%, transparent); }
 .tag.src-an { color: var(--ink2); }
+/* 비교 탭: 지역별 작은 패널 */
+.gpanel + .gpanel { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--grid); }
+.gtitle { font-size: 12px; font-weight: 600; color: var(--ink2); margin: 2px 0 2px; }

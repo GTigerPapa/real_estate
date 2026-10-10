@@ -331,7 +331,7 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
                             "sale_min": g("sale_min_ask", True), "sale_max": g("sale_max_ask", True),
                             "lease_min": g("lease_min_ask", True)})
 
-        out_complexes.append({"id": cid, "name": c["name"], "short": c.get("short") or c["name"], "slot": int(c.get("slot", idx)), "bands": [str(b) for b in c.get("bands", [])],
+        out_complexes.append({"id": cid, "name": c["name"], "short": c.get("short") or c["name"], "slot": int(c.get("slot", idx)), "group": c.get("group") or "", "bands": [str(b) for b in c.get("bands", [])],
                               "area": f"{c['umd_nm']}", "b": bands_out, "listings": lst,
                               "asil": asil.get(cid, {"d": [], "s": [], "j": [], "w": []}),
                               # 평형별 일별 매물 수 (아실 매물 목록 추적에서 계산, 추적 시작일부터)
