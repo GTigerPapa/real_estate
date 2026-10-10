@@ -266,13 +266,21 @@ async function loadData(force) {
     if (!res.ok || !ct.includes("json")) throw new Error(res.status === 200 ? "login" : "HTTP " + res.status);
     const d = await res.json();
     if (d.format !== 1) throw new Error("데이터 형식이 맞지 않습니다");
-    state.data = d; state.error = null;
+    state.data = d; state.error = null; applyComplexColors(d.complexes || []);
   } catch (e) {
     state.error = e.message === "login" ? "로그인이 만료됐을 수 있습니다. 새로고침해 주세요." : "데이터를 불러오지 못했습니다 (" + e.message + ")";
   }
 }
 const cx = (id) => state.data.complexes.find((c) => c.id === id);
-const colorOf = (c) => SLOT[c.slot % SLOT.length];
+// 단지 색: complexes.yaml 의 color(라이트/다크) → CSS 변수 --c-<id>. 같은 지역은 비슷한 색 계열 (없으면 기본 팔레트)
+const colorOf = (c) => c.color ? `var(--c-${c.id})` : SLOT[(c.slot || 0) % SLOT.length];
+function applyComplexColors(list) {
+  const L = [], D = [];
+  for (const c of list) if (c.color) { L.push(`--c-${c.id}:${c.color.light}`); D.push(`--c-${c.id}:${c.color.dark}`); }
+  let el = document.getElementById("cx-colors");
+  if (!el) { el = document.createElement("style"); el.id = "cx-colors"; document.head.append(el); }
+  el.textContent = `:root{${L.join(";")}}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){${D.join(";")}}}:root[data-theme="dark"]{${D.join(";")}}`;
+}
 function monthsView() {
   const m = state.data.months, n = state.range === "12" ? 12 : m.length;
   return m.slice(m.length - n);
@@ -682,7 +690,7 @@ function OfferTrend(list, band) {
   return Section(title, note + " · 지역별 패널(세로 눈금 같음)", chips, ...chart, table);
 }
 
-// 단지 색은 8개뿐 → 비교 차트는 지역(group)별 작은 패널로 나눠 그린다. 같은 지표의 패널끼리는 세로 범위를 맞춘다
+// 비교 차트는 지역(group: 성남·하남·서울)별 작은 패널로 나눠 그린다 — 같은 지역 단지는 비슷한 색 계열이라 패널 안에서 구별. 패널끼리 세로 범위를 맞춘다
 function groupsOf(list) {
   const out = [];
   for (const c of list) {

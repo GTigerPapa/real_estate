@@ -1,6 +1,6 @@
 /* 오프라인 대비 서비스워커: 온라인이면 항상 네트워크 우선(최신), 실패하면 마지막으로 받은 사본.
    로그인(Cloudflare Access) 리다이렉트는 캐시하지 않고 그대로 브라우저에 넘긴다. */
-const CACHE = "re-v3";
+const CACHE = "re-v4";
 const SHELL = ["./", "index.html", "app.css", "app.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-32.png"];
 

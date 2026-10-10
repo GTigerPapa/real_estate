@@ -226,6 +226,13 @@ def load_asil(path=ASIL_CSV) -> dict:
     return out
 
 
+def _color(v) -> dict | None:
+    """complexes.yaml 의 color: {light, dark} → 앱 단지 색. 없으면 None (앱이 기본 팔레트 slot 색을 씀)."""
+    if not isinstance(v, dict) or not v.get("light"):
+        return None
+    return {"light": str(v["light"]), "dark": str(v.get("dark") or v["light"])}
+
+
 def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | None = None,
                   asil_csv=ASIL_CSV, offers_csv=OFFERS_CSV, region_csv=REGION_CSV, ecos_csv=ECOS_CSV,
                   sentiment_dir=SENTIMENT_DIR, naver_offers_csv=None) -> dict:
@@ -331,7 +338,7 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
                             "sale_min": g("sale_min_ask", True), "sale_max": g("sale_max_ask", True),
                             "lease_min": g("lease_min_ask", True)})
 
-        out_complexes.append({"id": cid, "name": c["name"], "short": c.get("short") or c["name"], "slot": int(c.get("slot", idx)), "group": c.get("group") or "", "bands": [str(b) for b in c.get("bands", [])],
+        out_complexes.append({"id": cid, "name": c["name"], "short": c.get("short") or c["name"], "slot": int(c.get("slot", idx)), "color": _color(c.get("color")), "group": c.get("group") or "", "bands": [str(b) for b in c.get("bands", [])],
                               "area": f"{c['umd_nm']}", "b": bands_out, "listings": lst,
                               "asil": asil.get(cid, {"d": [], "s": [], "j": [], "w": []}),
                               # 평형별 일별 매물 수 (아실 매물 목록 추적에서 계산, 추적 시작일부터)
