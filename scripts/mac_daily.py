@@ -62,7 +62,9 @@ def main(argv=None) -> int:
     problems = []
 
     if not a.no_push:  # 먼저 최신을 받아 두어야 Actions 가 만든 커밋과 충돌하지 않는다
-        r = git("pull", "--rebase", "--autostash", "-q", check=False)
+        if (ROOT / ".git" / "rebase-merge").exists() or (ROOT / ".git" / "rebase-apply").exists():
+            git("rebase", "--abort", check=False)   # 지난번 push 재시도가 충돌로 멈춰 있으면 풀고 시작
+        r = git("pull", "--rebase", "-X", "theirs", "--autostash", "-q", check=False)
         if r.returncode:
             print(f"git pull 실패: {(r.stderr or r.stdout).strip()}")
             return 1
@@ -119,7 +121,9 @@ def main(argv=None) -> int:
                 if git("push", "-q", check=False).returncode == 0:
                     print("push 완료" + (" (DB 포함)" if commit_db else ""))
                     break
-                git("pull", "--rebase", "--autostash", "-q", check=False)
+                # 그사이 Actions 가 app.json 등을 먼저 올렸으면 받아서 다시 push. 생성 파일 충돌은 Mac 쪽(방금 만든 것)을 쓴다
+                if git("pull", "--rebase", "-X", "theirs", "--autostash", "-q", check=False).returncode != 0:
+                    git("rebase", "--abort", check=False)
             else:
                 problems.append("push (나중에 git push 실행)")
 

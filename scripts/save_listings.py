@@ -94,7 +94,8 @@ def main(argv: list) -> int:
                 except subprocess.CalledProcessError:
                     if attempt == 2:
                         raise
-                    git("pull", "--rebase", "--autostash", "-q")
+                    if subprocess.run(["git", "pull", "--rebase", "-X", "theirs", "--autostash", "-q"], cwd=ROOT).returncode != 0:
+                        subprocess.run(["git", "rebase", "--abort"], cwd=ROOT)   # 충돌이 남으면 원래 상태로
             print("push 완료")
         except subprocess.CalledProcessError as e:
             print(f"push 실패:\n{e.stderr.strip()}\n나중에 `git push` 를 다시 실행하세요.")
