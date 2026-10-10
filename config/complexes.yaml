@@ -5,7 +5,7 @@
 # fallback 의 apt_nm 을 비우면 법정동+지번만으로 매칭한다 (실거래 단지명 표기를 아직 모를 때)
 # 순서 = 앱 표시 순서 (2026-10-10 사용자 지정)
 # group = 지역(성남/하남/서울) — 비교 차트는 지역별 패널로 나눠 그린다
-# color = 단지 색 (라이트/다크). 같은 지역은 비슷한 색 계열(성남 파랑·하남 주황·서울 보라), 패널 안에서는 서로 구별되게
+# color = 단지 색 (라이트/다크). 같은 지역은 비슷한 색 계열(성남 붉은 계열·하남 초록 계열·서울 파랑 계열, 2026-10-10 사용자 지정), 패널 안에서는 서로 구별되게
 #   dataviz validate_palette 로 지역별(패널 단위) 검증. 단지를 추가하면 같은 계열에서 골라 다시 검증할 것
 complexes:
   - id: yeosu_central_town
@@ -19,7 +19,7 @@ complexes:
     apt_seq: ["41133-2813"]
     fallback: [{jibun: "600", apt_nm: 센트럴타운(3단지)}]
     bands: [74, 84]
-    color: {light: "#04568f", dark: "#1f659d"}
+    color: {light: "#93271e", dark: "#ad3a2a"}
 
   # 2026-09-29 추가. 아실 기준: 야탑동 334, 1993.04 사용승인, 2,136세대, 전용 41·59·74·84·101·133㎡
   # 실거래 확인(2026-09-30 첫 수집): aptSeq 41135-139, 단지명 '장미마을(현대)', 지번 334 — 매매 263건·전월세 727건 (2023-10~)
@@ -37,7 +37,7 @@ complexes:
     apt_seq: ["41135-139"]
     fallback: [{jibun: "334", apt_nm: 장미마을(현대)}]
     bands: [59, 74, 84, 101]
-    color: {light: "#5474f3", dark: "#5e7cfe"}
+    color: {light: "#e139a5", dark: "#d24a9f"}
 
   # 2026-10-10 추가 (실거래 41135-144 · 아실 단지 6339 · 네이버 2875 확인, 1994년 준공 646세대)
   - id: yatap_top_byeoksan
@@ -51,7 +51,7 @@ complexes:
     apt_seq: ["41135-144"]
     fallback: [{jibun: "517", apt_nm: 탑마을(벽산)}]
     bands: [59, 67, 84, 101, 118]   # 실거래 전용 59.91 · 69.87 · 84.91 · 101.97 · 114.93 · 134.79
-    color: {light: "#37b2cb", dark: "#12a3bf"}
+    color: {light: "#fa801b", dark: "#cf7a10"}
 
   - id: misa_central_xi
     name: 미사강변센트럴자이
@@ -64,7 +64,7 @@ complexes:
     apt_seq: ["41450-344"]
     fallback: [{jibun: "480", apt_nm: 미사강변센트럴자이}]
     bands: [93, 101]           # 실거래 전용 91.45 · 96.39~96.99 · 101.79 (84형 없음, 1,222세대)
-    color: {light: "#e65b58", dark: "#d0736d"}
+    color: {light: "#405e04", dark: "#52711c"}
 
   - id: misa_thesharp_central_forest
     name: 미사강변더샵센트럴포레스트
@@ -77,7 +77,7 @@ complexes:
     apt_seq: ["41450-360"]
     fallback: [{jibun: "486", apt_nm: 미사강변더샵센트럴포레}]
     bands: [74, 84, 93, 101]
-    color: {light: "#893700", dark: "#994a24"}
+    color: {light: "#50d124", dark: "#26b01a"}
 
   - id: misa_golden_centro
     name: 미사강변골든센트로
@@ -90,7 +90,7 @@ complexes:
     apt_seq: ["41450-298"]
     fallback: [{jibun: "1162", apt_nm: 미사강변 골든 센트로}]
     bands: [59, 74, 84]        # 실거래 전용 59.59~59.96 · 74.96 · 84.62~84.98 (1,541세대)
-    color: {light: "#c8b123", dark: "#978507"}
+    color: {light: "#00a599", dark: "#009d90"}
 
   - id: godeok_xi
     name: 고덕자이
@@ -103,7 +103,7 @@ complexes:
     apt_seq: ["11740-4799"]
     fallback: [{jibun: "521", apt_nm: 고덕자이}]
     bands: [59, 74, 84, 101, 118]
-    color: {light: "#5237d4", dark: "#623fdd"}
+    color: {light: "#5e38cd", dark: "#5d43df"}
 
   - id: godeok_central_ipark
     name: 고덕센트럴아이파크
@@ -116,7 +116,7 @@ complexes:
     apt_seq: ["11740-4675"]
     fallback: [{jibun: "513", apt_nm: 고덕센트럴IPARK}]
     bands: [59, 74, 84, 101]
-    color: {light: "#b85ffb", dark: "#a868f2"}
+    color: {light: "#6791f7", dark: "#3985fa"}
 
   # 2026-10-04 추가 (실거래·아실로 확인)
   - id: myeongil_samik_green2
@@ -130,7 +130,7 @@ complexes:
     apt_seq: ["11740-7"]
     fallback: [{jibun: "15", apt_nm: 삼익그린2차}]
     bands: [55, 67, 84, 107]   # 실거래 전용 42.93 · 54.81 · 66.87 · 84.75 · 107.56 · 128.16 (2,400세대)
-    color: {light: "#9a0082", dark: "#9c219d"}
+    color: {light: "#036fa1", dark: "#02679f"}
 
   - id: godeok_lotte_castle_venezia
     name: 고덕롯데캐슬베네루체
@@ -143,4 +143,4 @@ complexes:
     apt_seq: ["11740-4672"]
     fallback: [{jibun: "514", apt_nm: 고덕롯데캐슬베네루체}]
     bands: [59, 84]
-    color: {light: "#f34397", dark: "#e95195"}
+    color: {light: "#15c6d1", dark: "#00a3a8"}
