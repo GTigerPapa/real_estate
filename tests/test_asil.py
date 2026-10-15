@@ -50,3 +50,23 @@ def test_collect_merges_overwrites_and_reports_failures(tmp_path):
     rows = asil.read_csv(out)
     assert len(rows) == 3 and rows[("2026-09-03", "godeok_xi")]["sale"] == "60"
     assert out.read_text(encoding="utf-8").splitlines()[0] == ",".join(asil.FIELDS)
+
+
+def test_collect_retries_network_errors(tmp_path):
+    from datetime import date as _d
+    from realestate import asil as _a
+    calls = {"n": 0}
+    body = 'listData[0] = {"Date":"26/10/14","VM":"3","VJ":"1","VW":"0"}'
+
+    def flaky(nid, s, e):
+        calls["n"] += 1
+        if calls["n"] < 3:   # 두 번 연결 끊김 → 세 번째 성공
+            raise OSError("reset")
+        return body
+    out = tmp_path / "c.csv"
+    failed = _a.collect([{"id": "x", "naver_id": 1}], out, _d(2026, 10, 1), _d(2026, 10, 1), fetcher=flaky, pause=0, log=lambda m: None)
+    assert failed == [] and calls["n"] == 3 and "2026-10-14" in out.read_text()
+
+    def dead(nid, s, e):
+        raise OSError("down")
+    assert _a.collect([{"id": "y", "naver_id": 2}], out, _d(2026, 10, 1), _d(2026, 10, 1), fetcher=dead, pause=0, log=lambda m: None) == ["y"]

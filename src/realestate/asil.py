@@ -97,6 +97,20 @@ def merge(rows: dict, complex_id: str, naver_id: int, parsed: list[dict]) -> tup
     return added, changed
 
 
+RETRY_WAITS = (5, 20, 60)   # 네트워크 오류(연결 끊김·시간 초과)만 다시 시도. 빈 응답·형식 오류는 바로 실패 처리
+
+
+def _retry(call, name: str, pause: float, log):
+    """아실 서버가 가끔 연결을 끊거나 늦게 응답한다 (2026-10-15 정기 실행 실패). 5·20·60초 간격으로 최대 3번 더."""
+    for wait in RETRY_WAITS:
+        try:
+            return call()
+        except (TimeoutError, OSError) as e:
+            log(f"{name}: {type(e).__name__} → {wait}초 뒤 재시도")
+            time.sleep(wait if pause else 0)
+    return call()
+
+
 def collect(complexes: list[dict], out: Path, start: date, end: date,
             fetcher=fetch, pause: float = 2.0, log=print) -> list[str]:
     """단지마다 1회 요청해 CSV에 병합. 실패한 단지 id 목록 반환."""
@@ -110,13 +124,7 @@ def collect(complexes: list[dict], out: Path, start: date, end: date,
         if i:
             time.sleep(pause)
         try:
-            try:
-                text = fetcher(int(nid), start, end)
-            except (TimeoutError, OSError) as e:   # 가끔 응답이 늦음 → 한 번만 다시
-                log(f"{cid}: {type(e).__name__} → 5초 뒤 재시도")
-                time.sleep(pause and 5)
-                text = fetcher(int(nid), start, end)
-            parsed = parse(text)
+            parsed = parse(_retry(lambda: fetcher(int(nid), start, end), cid, pause, log))
             if not parsed:
                 raise AsilError("빈 응답 (형식 변경 또는 차단 가능성)")
         except Exception as e:  # noqa: BLE001 — 한 단지 실패가 나머지를 막지 않게
@@ -169,7 +177,7 @@ def collect_regions(regions: list[dict], out: Path, start: date, end: date,
         if i:
             time.sleep(pause)
         try:
-            parsed = parse(fetcher(area, start, end))
+            parsed = parse(_retry(lambda: fetcher(area, start, end), rid, pause, log))
             if not parsed:
                 raise AsilError("빈 응답 (형식 변경 또는 차단 가능성)")
         except Exception as e:  # noqa: BLE001
