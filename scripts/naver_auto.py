@@ -109,11 +109,16 @@ tell application "Google Chrome" to execute {tab} javascript js''')
 
 def main(argv=None) -> int:
     argv = sys.argv[1:] if argv is None else argv
-    try:
-        path = collect()
-    except (AutoError, subprocess.TimeoutExpired) as e:
-        print(f"네이버 자동 수집 실패: {e}")
-        return 1
+    path = None
+    for attempt in (1, 2):   # 수집 중 창이 닫히거나 크롬이 잠깐 응답하지 않으면 한 번 더
+        try:
+            path = collect()
+            break
+        except (AutoError, subprocess.TimeoutExpired) as e:
+            print(f"네이버 자동 수집 실패{' (다시 시도)' if attempt == 1 else ''}: {e}", flush=True)
+            if attempt == 2 or "크롬 설정 필요" in str(e):
+                return 1
+            time.sleep(10)
     sys.path.insert(0, str(ROOT / "scripts"))
     import save_listings  # noqa: E402
     return save_listings.main([str(path)] + ([] if "--push" in argv else ["--no-push"]))
