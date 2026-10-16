@@ -80,7 +80,7 @@ def write_csv(path: Path, rows: dict) -> None:
     tmp.replace(path)
 
 
-def merge(rows: dict, complex_id: str, naver_id: int, parsed: list[dict]) -> tuple:
+def merge(rows: dict, complex_id: str, naver_id, parsed: list[dict]) -> tuple:
     """새로 받은 값으로 덮어쓴다 (아실이 과거 값을 고치면 반영). (추가 수, 변경 수) 반환."""
     added = changed = 0
     for p in parsed:
@@ -118,20 +118,34 @@ def collect(complexes: list[dict], out: Path, start: date, end: date,
     failed = []
     for i, c in enumerate(complexes):
         cid, nid = c["id"], c.get("naver_id")
-        if not nid:
+        parts = [int(p["naver_id"]) for p in c.get("naver_parts") or []] or ([int(nid)] if nid else [])
+        if not parts:
             log(f"{cid}: naver_id 없음 → 건너뜀")
             continue
         if i:
             time.sleep(pause)
         try:
-            parsed = parse(_retry(lambda: fetcher(int(nid), start, end), cid, pause, log))
+            parsed = None
+            for k, pn in enumerate(parts):   # 여러 단지를 묶은 경우 단지별로 받아 날짜마다 더한다 (모든 단지에 있는 날짜만)
+                if k:
+                    time.sleep(pause)
+                one = parse(_retry(lambda pn=pn: fetcher(pn, start, end), cid, pause, log))
+                if not one:
+                    parsed = []
+                    break
+                if parsed is None:
+                    parsed = one
+                else:
+                    m = {p["date"]: p for p in one}
+                    parsed = [{"date": p["date"], **{f: p[f] + m[p["date"]][f] for f in ("sale", "jeonse", "wolse")}}
+                              for p in parsed if p["date"] in m]
             if not parsed:
                 raise AsilError("빈 응답 (형식 변경 또는 차단 가능성)")
         except Exception as e:  # noqa: BLE001 — 한 단지 실패가 나머지를 막지 않게
             log(f"{cid}: 실패 — {type(e).__name__}: {e}")
             failed.append(cid)
             continue
-        a, ch = merge(rows, cid, int(nid), parsed)
+        a, ch = merge(rows, cid, "+".join(str(p) for p in parts), parsed)
         last = parsed[-1]
         log(f"{c.get('name', cid)}: {len(parsed)}일 ({parsed[0]['date']}~{last['date']}) · 추가 {a} · 수정 {ch} · "
             f"최근 매매 {last['sale']} 전세 {last['jeonse']} 월세 {last['wolse']}")

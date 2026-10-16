@@ -70,3 +70,16 @@ def test_collect_retries_network_errors(tmp_path):
     def dead(nid, s, e):
         raise OSError("down")
     assert _a.collect([{"id": "y", "naver_id": 2}], out, _d(2026, 10, 1), _d(2026, 10, 1), fetcher=dead, pause=0, log=lambda m: None) == ["y"]
+
+
+def test_collect_sums_naver_parts(tmp_path):
+    from datetime import date as _d
+    from realestate import asil as _a
+    bodies = {1: 'listData[0] = {"Date":"26/10/14","VM":"3","VJ":"1","VW":"0"}listData[1] = {"Date":"26/10/15","VM":"4","VJ":"1","VW":"0"}',
+              2: 'listData[0] = {"Date":"26/10/14","VM":"5","VJ":"2","VW":"1"}'}
+    out = tmp_path / "c.csv"
+    c = {"id": "jd", "naver_id": 1, "naver_parts": [{"naver_id": 1, "label": "동부"}, {"naver_id": 2, "label": "코오롱"}]}
+    assert _a.collect([c], out, _d(2026, 10, 1), _d(2026, 10, 1), fetcher=lambda n, s, e: bodies[n], pause=0, log=lambda m: None) == []
+    rows = _a.read_csv(out)
+    vals = list(rows.values())
+    assert len(vals) == 1 and vals[0]["sale"] == "8" and vals[0]["jeonse"] == "3" and vals[0]["naver_id"] == "1+2"

@@ -26,7 +26,7 @@ def _man(won) -> int:
         return 0
 
 
-def normalize(a: dict, complex_id: str) -> dict | None:
+def normalize(a: dict, complex_id: str, sub: str = "") -> dict | None:
     deal = DEALS.get(a.get("t"))
     if not deal or not a.get("a"):
         return None
@@ -34,7 +34,7 @@ def normalize(a: dict, complex_id: str) -> dict | None:
     return {
         "uid": str(a["a"]), "grp": str(a.get("g") or a["a"]), "complex_id": complex_id, "deal": deal,
         "price": str(price), "rent": str(_man(a.get("r"))) if deal == "wolse" else "",
-        "dong": str(a.get("dong") or "").removesuffix("동").strip(), "floor": str(a.get("fl") or "").strip(),
+        "dong": ((sub + " ") if sub else "") + str(a.get("dong") or "").removesuffix("동").strip(), "floor": str(a.get("fl") or "").strip(),
         "excl_area": "" if a.get("ex") in (None, "") else f"{float(a['ex']):.2f}",
         "supply_area": "" if a.get("sp") in (None, "") else f"{float(a['sp']):.2f}",
         "desc": " ".join(str(a.get("d") or "").split())[:120], "broker": str(a.get("bk") or "").strip(),
@@ -64,11 +64,11 @@ def write_csv(path: Path, rows: dict) -> None:
     tmp.replace(path)
 
 
-def merge(rows: dict, complex_id: str, items: list, today: str, complete: bool) -> dict:
+def merge(rows: dict, complex_id: str, items: list, today: str, complete: bool, sub: str = "") -> dict:
     seen = set()
     st = {"new": 0, "changed": 0, "gone": 0, "active": 0}
     for a in items:
-        n = normalize(a, complex_id)
+        n = normalize(a, complex_id, sub)
         if n is None or n["uid"] in seen:
             continue
         seen.add(n["uid"])
@@ -87,6 +87,9 @@ def merge(rows: dict, complex_id: str, items: list, today: str, complete: bool) 
         rows[n["uid"]] = n
     if complete:
         for uid, r in rows.items():
+            # 여러 단지를 묶은 단지는 같은 구분(sub, 동 앞에 붙음)의 매물만 내려감 판정
+            if sub and not r.get("dong", "").startswith(sub + " "):
+                continue
             if r["complex_id"] == complex_id and uid not in seen and r.get("active") == "1" and r.get("last_seen", "") < today:
                 r["active"] = "0"
                 st["gone"] += 1
@@ -118,8 +121,8 @@ def update(path: Path, dump: dict, log=print) -> dict:
             continue
         items = A.get("items") or []
         complete = bool(A.get("ok")) and bool(items)
-        st = merge(rows, c["id"], items, today, complete)
-        out[c["id"]] = st
+        st = merge(rows, c["id"], items, today, complete, str(c.get("sub") or ""))
+        out[c["id"] + (f"/{c['sub']}" if c.get("sub") else "")] = st
         log(f"{c.get('name', c['id'])}: 네이버 매물 {st['active']}건 · 신규 {st['new']} · 가격변경 {st['changed']} · 내려감 {st['gone']}"
             + ("" if complete else " (목록을 끝까지 못 받아 내려감 판정 생략)"))
     prune(rows, today)

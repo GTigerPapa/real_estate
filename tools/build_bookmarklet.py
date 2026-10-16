@@ -19,7 +19,14 @@ SRC = ROOT / "tools" / "bookmarklet_src.js"
 def build_source() -> str:
     """단지 목록을 끼워 넣은 읽기 쉬운 여러 줄 소스 (DevTools 콘솔에 붙여넣기용)."""
     complexes = yaml.safe_load((ROOT / "config" / "complexes.yaml").read_text(encoding="utf-8"))["complexes"]
-    embed = [{"id": c["id"], "naver_id": int(c["naver_id"]), "name": c["name"]} for c in complexes]
+    embed = []
+    for c in complexes:   # 여러 단지를 묶은 단지는 네이버 단지마다 따로 받는다 (같은 id, sub = 구분 이름)
+        parts = c.get("naver_parts") or [{"naver_id": c["naver_id"], "label": ""}]
+        for p in parts:
+            e = {"id": c["id"], "naver_id": int(p["naver_id"]), "name": c["name"] + (f"({p['label']})" if p.get("label") else "")}
+            if p.get("label"):
+                e["sub"] = p["label"]
+            embed.append(e)
     src = SRC.read_text(encoding="utf-8")
     src = re.sub(r"/\*.*?\*/", "", src, flags=re.S)  # 머리말 블록 주석 제거
     return src.replace("__COMPLEXES__", json.dumps(embed, ensure_ascii=False, separators=(",", ":"))).strip() + "\n"

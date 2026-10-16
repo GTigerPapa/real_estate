@@ -44,6 +44,16 @@ def load_complexes(path: Path | None = None) -> list[dict]:
         return (yaml.safe_load(f) or {}).get("complexes", [])
 
 
+def naver_parts(c: dict) -> list[tuple[int, str]]:
+    """단지의 네이버 단지 번호 목록 [(번호, 구분 이름)].
+    여러 단지를 한 단지로 묶은 경우(예: 장미마을 동부+코오롱) complexes.yaml 의 naver_parts 를 쓰고,
+    아니면 naver_id 하나 (구분 이름은 빈 문자열)."""
+    parts = c.get("naver_parts")
+    if parts:
+        return [(int(p["naver_id"]), str(p.get("label") or "")) for p in parts]
+    return [(int(c["naver_id"]), "")] if c.get("naver_id") else []
+
+
 def db_path() -> Path:
     return Path(os.environ.get("REALESTATE_DB", DEFAULT_DB))
 

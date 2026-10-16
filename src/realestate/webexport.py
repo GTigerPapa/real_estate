@@ -329,7 +329,12 @@ def build_payload(conn, settings: dict, complexes: list[dict], now: datetime | N
         lst = []
         if not L.empty:
             L = L[L["pyeong_type"].isna() | (L["pyeong_type"] == 0)]
-            piv = L.pivot_table(index="snap_date", columns="metric", values="value", aggfunc="last").sort_index()
+            # 여러 네이버 단지를 묶은 단지: 단지별 값을 합친다 (매물 수는 합, 최저 호가는 최소, 최고 호가는 최대)
+            per = L.groupby(["snap_date", "metric", L["nid"].fillna(0)])["value"].last().reset_index()
+            per["how"] = per["metric"].map(lambda m: "min" if "_min" in m else "max" if "_max" in m else "sum")
+            comb = per.groupby(["snap_date", "metric", "how"])["value"].agg(["sum", "min", "max"]).reset_index()
+            comb["value"] = [r[r["how"]] for _, r in comb.iterrows()]
+            piv = comb.pivot_table(index="snap_date", columns="metric", values="value", aggfunc="last").sort_index()
             for d, row in piv.iterrows():
                 def g(k, won=False):
                     v = row.get(k)

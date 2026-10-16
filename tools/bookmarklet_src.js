@@ -120,6 +120,7 @@
     var c = COMPLEXES[i];
     var n = c.naver_id;
     var out = { id: c.id, naver_id: n, name: c.name, responses: [] };
+    if (c.sub) out.sub = c.sub;
     say("매물 수집 중 " + (i + 1) + "/" + total + " " + c.name);
     var pl = await api("pyeong_list", "complex/pyeongList", { complexNumber: n });
     out.responses.push(pl);

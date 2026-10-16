@@ -1,6 +1,6 @@
 (async function () {
   try {
-  var COMPLEXES = [{"id":"yeosu_central_town","naver_id":102283,"name":"센트럴타운"},{"id":"yatap_jangmi8_hyundai","naver_id":2229,"name":"장미마을8단지현대"},{"id":"yatap_top_byeoksan","naver_id":2875,"name":"탑마을벽산"},{"id":"misa_central_xi","naver_id":109215,"name":"미사강변센트럴자이"},{"id":"misa_thesharp_central_forest","naver_id":111028,"name":"미사강변더샵센트럴포레스트"},{"id":"misa_golden_centro","naver_id":105286,"name":"미사강변골든센트로"},{"id":"godeok_xi","naver_id":121977,"name":"고덕자이"},{"id":"godeok_central_ipark","naver_id":118210,"name":"고덕센트럴아이파크"},{"id":"myeongil_samik_green2","naver_id":1308,"name":"삼익그린2차"},{"id":"godeok_lotte_castle_venezia","naver_id":117309,"name":"고덕롯데캐슬베네루체"}];
+  var COMPLEXES = [{"id":"yatap_jangmi_dongbu_kolon","naver_id":2198,"name":"장미마을동부·코오롱(동부)","sub":"동부"},{"id":"yatap_jangmi_dongbu_kolon","naver_id":2217,"name":"장미마을동부·코오롱(코오롱)","sub":"코오롱"},{"id":"yatap_jangmi8_hyundai","naver_id":2229,"name":"장미마을8단지현대"},{"id":"yatap_top_byeoksan","naver_id":2875,"name":"탑마을벽산"},{"id":"yeosu_central_town","naver_id":102283,"name":"센트럴타운"},{"id":"misa_central_xi","naver_id":109215,"name":"미사강변센트럴자이"},{"id":"misa_thesharp_central_forest","naver_id":111028,"name":"미사강변더샵센트럴포레스트"},{"id":"misa_golden_centro","naver_id":105286,"name":"미사강변골든센트로"},{"id":"godeok_xi","naver_id":121977,"name":"고덕자이"},{"id":"godeok_central_ipark","naver_id":118210,"name":"고덕센트럴아이파크"},{"id":"myeongil_samik_green2","naver_id":1308,"name":"삼익그린2차"},{"id":"godeok_lotte_castle_venezia","naver_id":117309,"name":"고덕롯데캐슬베네루체"}];
   var GAP = 400;
   var host = "fin.land.naver.com";
   var AUTO = !!window.__RE_AUTO;   
@@ -113,6 +113,7 @@
     var c = COMPLEXES[i];
     var n = c.naver_id;
     var out = { id: c.id, naver_id: n, name: c.name, responses: [] };
+    if (c.sub) out.sub = c.sub;
     say("매물 수집 중 " + (i + 1) + "/" + total + " " + c.name);
     var pl = await api("pyeong_list", "complex/pyeongList", { complexNumber: n });
     out.responses.push(pl);

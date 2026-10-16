@@ -90,8 +90,14 @@ def test_bookmarklet_runs_in_real_chromium(tmp_path, conn):
     assert any("성공" in m for m in dialogs), dialogs
     d = listings.load_dump(path)
     import yaml
-    expected = [int(c["naver_id"]) for c in yaml.safe_load((ROOT / "config" / "complexes.yaml").read_text(encoding="utf-8"))["complexes"]]
+    from realestate.config import naver_parts
+    cxs = yaml.safe_load((ROOT / "config" / "complexes.yaml").read_text(encoding="utf-8"))["complexes"]
+    expected = [n for c in cxs for n, _ in naver_parts(c)]   # 묶은 단지는 네이버 단지마다 한 항목
     assert [c["naver_id"] for c in d["complexes"]] == expected
+    subs = {c["naver_id"]: c.get("sub") for c in d["complexes"]}
+    for c in cxs:
+        for n, label in naver_parts(c):
+            assert subs[n] == (label or None)
     keys = [r["key"] for r in d["complexes"][0]["responses"]]
     # pyeongList, stats, asking-price × (A1,B1) × (3,5), marketPrice × (3,5)
     assert keys.count("asking_price") == 4 and keys.count("market_price_recent") == 2

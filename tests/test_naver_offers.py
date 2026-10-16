@@ -60,3 +60,23 @@ def test_load_offers_merges_sources(tmp_path):
     # 네이버 목록이 오래되면 빠진다
     no.update(n, dump("2026-10-09", []), log=lambda *_: None)
     assert all(i["src"] != "n" for i in webexport.load_offers(a, bands, Path(tmp_path / "none.csv"))["items"])
+
+
+def test_merged_complex_parts_keep_each_other(tmp_path):
+    """묶은 단지(동부+코오롱): 같은 id 두 항목이 서로의 매물을 '내려감'으로 만들지 않고, 동 앞에 구분이 붙는다."""
+    from realestate import naver_offers as no
+    path = tmp_path / "n.csv"
+    def art(a, dong):
+        return {"a": a, "t": "A1", "p": 1_390_000_000, "dong": dong, "fl": "10", "ex": 59.76}
+    dump = {"captured_at": "2026-10-17T07:13:00+09:00", "complexes": [
+        {"id": "jd", "sub": "동부", "articles": {"ok": True, "items": [art("1", "127동")]}},
+        {"id": "jd", "sub": "코오롱", "articles": {"ok": True, "items": [art("2", "127동")]}}]}
+    no.update(path, dump, log=lambda m: None)
+    rows = no.read_csv(path)
+    assert rows["1"]["dong"] == "동부 127" and rows["2"]["dong"] == "코오롱 127"
+    dump2 = {"captured_at": "2026-10-18T07:13:00+09:00", "complexes": [
+        {"id": "jd", "sub": "동부", "articles": {"ok": True, "items": [art("3", "112동")]}},
+        {"id": "jd", "sub": "코오롱", "articles": {"ok": True, "items": [art("2", "127동")]}}]}
+    no.update(path, dump2, log=lambda m: None)
+    rows = no.read_csv(path)
+    assert rows["1"]["active"] == "0" and rows["2"]["active"] == "1" and rows["3"]["active"] == "1"

@@ -130,12 +130,13 @@ def snapshot(conn, settings: dict):
 
     rules = settings.get("listing_metrics") or {}
     df = pd.read_sql_query("SELECT snap_date, complex_id, endpoint, params, path, value FROM listing_metric", conn)
-    cols = ["snap_date", "complex_id", "metric", "pyeong_type", "value"]
+    cols = ["snap_date", "complex_id", "metric", "pyeong_type", "value", "nid"]
     if df.empty or not rules:
         return pd.DataFrame(columns=cols)
     df["params_d"] = df["params"].map(lambda s: json.loads(s) if s else {})
     df["trade"] = df["params_d"].map(lambda p: p.get("tradeType"))
     df["pyeong_type"] = df["params_d"].map(lambda p: p.get("pyeongTypeNumber"))
+    df["nid"] = df["params_d"].map(lambda p: p.get("complexNumber"))
     out = []
     for metric, rule in rules.items():
         sub = df[df["endpoint"] == rule["endpoint"]]
@@ -149,7 +150,7 @@ def snapshot(conn, settings: dict):
             continue
         hit = sub[sub["path"] == path]
         for r in hit.itertuples():
-            out.append((r.snap_date, r.complex_id, metric, r.pyeong_type, r.value))
+            out.append((r.snap_date, r.complex_id, metric, r.pyeong_type, r.value, r.nid))
     return pd.DataFrame(out, columns=cols)
 
 
