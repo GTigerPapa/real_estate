@@ -21,7 +21,7 @@
   box.style.cssText = "position:fixed;top:12px;right:12px;z-index:2147483647;background:#111;color:#fff;" +
     "padding:10px 14px;border-radius:8px;font:13px/1.5 system-ui,sans-serif;max-width:360px;white-space:pre-wrap";
   document.body.appendChild(box);
-  var say = function (t) { box.textContent = t; };
+  var say = function (t) { box.textContent = t; window.__RE_MSG = t; };
   var sleep = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
   var nowKst = function () {
     var d = new Date(Date.now() + 9 * 3600 * 1000);

@@ -35,7 +35,7 @@ _LOG: list[str] = []
 
 
 def say(msg: str = "") -> None:
-    print(msg)
+    print(msg, flush=True)
     _LOG.append(msg)
 BACKFILL_TASKS = 40   # 수집 대상이 이보다 많으면(평소 3개 시군구 이상 × 3개월 × 2 = 24건 안팎) 백필로 보고 DB 커밋
 
@@ -47,10 +47,15 @@ def git(*args: str, check: bool = True) -> subprocess.CompletedProcess:
 def run_py(*args: str) -> tuple[int, str]:
     """이 저장소의 src 를 경로에 넣고 파이썬 실행 (pip install -e 없이도 동작). 출력은 그대로 보여 주고 반환."""
     env = dict(os.environ, PYTHONPATH=str(ROOT / "src"), PYTHONUNBUFFERED="1")
-    p = subprocess.run([sys.executable, *args], cwd=ROOT, env=env, capture_output=True, text=True)
-    out = (p.stdout or "") + (p.stderr or "")
-    say(out.rstrip())
-    return p.returncode, out
+    # 한 줄씩 바로 보여 준다 (터미널에서 직접 돌릴 때 오래 걸리는 단계도 진행 상황이 보이게)
+    p = subprocess.Popen([sys.executable, *args], cwd=ROOT, env=env, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT, text=True, bufsize=1)
+    lines = []
+    for line in p.stdout:
+        lines.append(line)
+        say(line.rstrip("\n"))
+    p.wait()
+    return p.returncode, "".join(lines)
 
 
 def main(argv=None) -> int:

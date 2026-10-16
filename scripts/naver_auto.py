@@ -42,7 +42,7 @@ def osa(script: str, timeout: float = 60, raw: bool = False) -> str:
     return p.stdout.strip()
 
 
-def collect(log=print) -> Path:
+def collect(log=lambda m: print(m, flush=True)) -> Path:
     if sys.platform != "darwin":
         raise AutoError("macOS 에서만 실행")
     js = (ROOT / "tools" / "bookmarklet.txt").read_text(encoding="utf-8").strip()
@@ -51,6 +51,7 @@ def collect(log=print) -> Path:
         f.write(js)
         js_path = f.name
     started = time.time()
+    log("크롬 새 창 여는 중 (처음 실행이면 macOS '…이(가) Google Chrome을 제어하려고 합니다' 창에서 '허용')")
     # 새 창을 열어 네이버 부동산으로 → 로딩 대기
     win = osa(f'''tell application "Google Chrome"
   set w to make new window
@@ -73,6 +74,10 @@ tell application "Google Chrome" to execute {tab} javascript js''')
             name = osa(f'tell application "Google Chrome" to execute {tab} javascript "String(window.__RE_DONE || \'\')"')
             if name:
                 break
+            el = int(time.time() - started)
+            if el // 60 != (el - 10) // 60:   # 1분마다 진행 표시
+                prog = osa(f'tell application "Google Chrome" to execute {tab} javascript "String(window.__RE_MSG || document.title || \'\')"')
+                log(f"  수집 중 {el // 60}분 경과 · {prog[:60]}")
         if not name:
             raise AutoError("시간 초과 (15분)")
         if not name.startswith("naver_listings_"):
