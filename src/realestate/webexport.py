@@ -130,7 +130,7 @@ def _offer_frame(path, src: str) -> pd.DataFrame:
     if df.empty:
         return df
     df["src"] = src
-    df["dong"] = df["dong"].str.replace("동", "", regex=False).str.strip()
+    df["dong"] = df["dong"].str.replace(r"동$", "", regex=True).str.replace(r"동(?= )", "", regex=True).str.strip()   # "127동"→"127", "동부 127동"→"동부 127" (단지 구분 이름은 그대로)
     df["ar1"] = pd.to_numeric(df["excl_area"], errors="coerce").round(1).astype(str)
     return df
 
