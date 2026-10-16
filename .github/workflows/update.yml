@@ -48,12 +48,14 @@ jobs:
       # 저장소의 DB가 더 오래됐으면 기존 app.json 의 실거래 부분을 그대로 둔다.
 
       - name: 아실 일별 매물 수 수집 (최근 3개월 재수집, 단지당 1회 요청)
+        timeout-minutes: 6   # 외부 서버가 응답 없이 붙잡고 있어도 웹앱 데이터 생성·커밋까지 가도록 (2026-10-17 ECOS 단계 멈춤)
         id: asil
         # 실패해도 나머지(실거래·웹앱 데이터) 커밋은 진행하고, 마지막 단계에서 작업을 실패로 표시해 알림을 받는다
         continue-on-error: true
         run: python scripts/asil_collect.py
 
       - name: 한국은행 ECOS 지표 (월별, 키 = ECOS_KEY)
+        timeout-minutes: 3   # 외부 서버가 응답 없이 붙잡고 있어도 웹앱 데이터 생성·커밋까지 가도록 (2026-10-17 ECOS 단계 멈춤)
         continue-on-error: true
         env:
           ECOS_KEY: ${{ secrets.ECOS_KEY }}
@@ -62,6 +64,7 @@ jobs:
           python scripts/ecos_collect.py
 
       - name: 심리 지표 (네이버 검색량·카페/뉴스·주요 글, 유튜브)
+        timeout-minutes: 6   # 외부 서버가 응답 없이 붙잡고 있어도 웹앱 데이터 생성·커밋까지 가도록 (2026-10-17 ECOS 단계 멈춤)
         continue-on-error: true
         env:
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
