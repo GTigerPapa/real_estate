@@ -825,6 +825,7 @@ month,series_id,value
 2026-07,kb_seoul_apt,106.913
 2026-08,kb_seoul_apt,108.134
 2026-09,kb_seoul_apt,109.352
+2026-10,kb_seoul_apt,110.019
 2013-01,kb_seoul_apt_jeonse,62.069
 2013-02,kb_seoul_apt_jeonse,62.347
 2013-03,kb_seoul_apt_jeonse,62.675
@@ -990,6 +991,7 @@ month,series_id,value
 2026-07,kb_seoul_apt_jeonse,105.93
 2026-08,kb_seoul_apt_jeonse,107.09
 2026-09,kb_seoul_apt_jeonse,108.164
+2026-10,kb_seoul_apt_jeonse,108.701
 2013-01,ktb3,2.75
 2013-02,ktb3,2.7
 2013-03,ktb3,2.6
