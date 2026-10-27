@@ -329,6 +329,7 @@ month,series_id,value
 2026-07,csi_house,127
 2026-08,csi_house,125
 2026-09,csi_house,125
+2026-10,csi_house,124
 2013-01,csi_rate,92
 2013-02,csi_rate,90
 2013-03,csi_rate,94
@@ -494,6 +495,7 @@ month,series_id,value
 2026-07,csi_rate,126
 2026-08,csi_rate,125
 2026-09,csi_rate,128
+2026-10,csi_rate,127
 2013-01,house_loan,395255.1
 2013-02,house_loan,394072.4
 2013-03,house_loan,394484.8
