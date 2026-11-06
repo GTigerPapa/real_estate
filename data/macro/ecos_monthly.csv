@@ -1487,6 +1487,7 @@ month,series_id,value
 2026-06,permit_gyeonggi,39493
 2026-07,permit_gyeonggi,42760
 2026-08,permit_gyeonggi,46060
+2026-09,permit_gyeonggi,55062
 2013-01,permit_seoul,3789
 2013-02,permit_seoul,6879
 2013-03,permit_seoul,11006
@@ -1651,6 +1652,7 @@ month,series_id,value
 2026-06,permit_seoul,20655
 2026-07,permit_seoul,28634
 2026-08,permit_seoul,39940
+2026-09,permit_seoul,44371
 2013-01,unsold_capital,33784
 2013-02,unsold_capital,33674
 2013-03,unsold_capital,32759
