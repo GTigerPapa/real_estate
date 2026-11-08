@@ -1132,6 +1132,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-11-05,godeok_central_ipark,118210,52,11,8,71
 2026-11-06,godeok_central_ipark,118210,51,11,9,71
 2026-11-07,godeok_central_ipark,118210,52,12,9,73
+2026-11-08,godeok_central_ipark,118210,51,13,8,72
 2023-09-01,godeok_lotte_castle_venezia,117309,71,17,7,95
 2023-09-02,godeok_lotte_castle_venezia,117309,72,16,9,97
 2023-09-03,godeok_lotte_castle_venezia,117309,75,15,8,98
@@ -2265,6 +2266,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-11-05,godeok_lotte_castle_venezia,117309,64,13,7,84
 2026-11-06,godeok_lotte_castle_venezia,117309,62,14,7,83
 2026-11-07,godeok_lotte_castle_venezia,117309,61,14,7,82
+2026-11-08,godeok_lotte_castle_venezia,117309,60,13,7,80
 2023-09-01,godeok_xi,121977,73,21,10,104
 2023-09-02,godeok_xi,121977,78,24,12,114
 2023-09-03,godeok_xi,121977,78,23,12,113
@@ -3398,6 +3400,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-11-05,godeok_xi,121977,90,17,10,117
 2026-11-06,godeok_xi,121977,89,17,10,116
 2026-11-07,godeok_xi,121977,89,16,11,116
+2026-11-08,godeok_xi,121977,91,17,13,121
 2023-09-01,misa_central_xi,109215,70,18,9,97
 2023-09-02,misa_central_xi,109215,68,19,9,96
 2023-09-03,misa_central_xi,109215,68,19,9,96
@@ -7909,6 +7912,7 @@ date,complex_id,naver_id,sale,jeonse,wolse,total
 2026-11-05,myeongil_samik_green2,1308,103,8,15,126
 2026-11-06,myeongil_samik_green2,1308,95,9,16,120
 2026-11-07,myeongil_samik_green2,1308,101,10,18,129
+2026-11-08,myeongil_samik_green2,1308,99,9,17,125
 2023-09-01,yatap_jangmi8_hyundai,2229,67,29,5,101
 2023-09-02,yatap_jangmi8_hyundai,2229,69,29,5,103
 2023-09-03,yatap_jangmi8_hyundai,2229,69,30,4,103
