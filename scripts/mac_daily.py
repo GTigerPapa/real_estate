@@ -27,6 +27,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from realestate import asil_offers, config  # noqa: E402  (둘 다 표준 라이브러리만 사용)
 
 DB_REL = "data/realestate.db"
+DB_MAX_BYTES = 90_000_000
 APP_REL = "web/data/app.json"
 OFFERS_REL = "data/listings/asil/asil_offers.csv"
 NAVER_REL = "data/listings/naver/naver_offers.csv"
@@ -107,6 +108,12 @@ def main(argv=None) -> int:
 
     # DB는 실거래 수집이 성공했을 때만: 백필한 날·매월 1일, 또는 웹앱 데이터를 못 만들어 Actions 가 대신 만들어야 할 때
     commit_db = rc == 0 and (tasks > BACKFILL_TASKS or now.day == 1 or rc_web != 0)
+    # GitHub 는 100MB 넘는 파일을 거부한다 → push 전체가 막힌다 (2026-11-01 DB 140MB 로 9일간 push 실패).
+    # DB 는 Mac 에만 두고 커밋하지 않는다. 웹앱 데이터(app.json)는 Mac 이 매일 올리므로 Actions 는 DB 없이도 실거래를 유지한다.
+    db_size = (ROOT / DB_REL).stat().st_size if (ROOT / DB_REL).exists() else 0
+    if commit_db and db_size > DB_MAX_BYTES:
+        say(f"DB 커밋 생략: {db_size / 1e6:.0f}MB (GitHub 한도 100MB)")
+        commit_db = False
     say(f"요약: 실거래 {'성공' if rc == 0 else '실패'}(대상 {tasks}건) · 매물 실패 {len(failed)}곳 · "
         f"네이버 {naver_note} · 웹앱 {'성공' if rc_web == 0 else '실패'} · DB 커밋 {commit_db}" + (f" · 문제: {' · '.join(problems)}" if problems else ""))
     log_path = ROOT / LOG_REL
