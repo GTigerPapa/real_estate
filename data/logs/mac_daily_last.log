@@ -1,72 +1,193 @@
-[2026-11-27 07:13] Mac 매일 작업 · python 3.9.6 · .env 있음
+[2026-11-28 07:13] Mac 매일 작업 · python 3.9.6 · .env 있음
 ── 실거래 수집
 /Users/chan/Library/Python/3.9/lib/python/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
   warnings.warn(
-2026-11-27 07:13:13,587 INFO realestate.ingest: 대상 24건 (api=['trade', 'rent'], lawd=['11740', '41133', '41450', '41135'], 202310~202611)
-2026-11-27 07:13:13,951 INFO realestate.ingest: trade 11740 202609: total=152 rows=152 신규=1 갱신=151 원문변경=1/1
-2026-11-27 07:13:14,297 INFO realestate.ingest: trade 11740 202610: total=207 rows=207 신규=2 갱신=205 원문변경=1/1
-2026-11-27 07:13:14,719 INFO realestate.ingest: trade 11740 202611: total=85 rows=85 신규=4 갱신=81 원문변경=1/1
-2026-11-27 07:13:15,155 INFO realestate.ingest: trade 41133 202609: total=93 rows=93 신규=2 갱신=91 원문변경=1/1
-2026-11-27 07:13:15,567 INFO realestate.ingest: trade 41133 202610: total=97 rows=97 신규=0 갱신=97 원문변경=0/1
-2026-11-27 07:13:16,040 INFO realestate.ingest: trade 41133 202611: total=57 rows=57 신규=9 갱신=48 원문변경=1/1
-2026-11-27 07:13:16,476 INFO realestate.ingest: trade 41450 202609: total=188 rows=188 신규=4 갱신=184 원문변경=1/1
-2026-11-27 07:13:16,941 INFO realestate.ingest: trade 41450 202610: total=274 rows=274 신규=0 갱신=274 원문변경=0/1
-2026-11-27 07:13:17,353 INFO realestate.ingest: trade 41450 202611: total=93 rows=93 신규=5 갱신=88 원문변경=1/1
-2026-11-27 07:13:17,805 INFO realestate.ingest: trade 41135 202609: total=179 rows=179 신규=1 갱신=178 원문변경=1/1
-2026-11-27 07:13:18,156 INFO realestate.ingest: trade 41135 202610: total=280 rows=280 신규=7 갱신=273 원문변경=1/1
-2026-11-27 07:13:18,574 INFO realestate.ingest: trade 41135 202611: total=142 rows=142 신규=23 갱신=119 원문변경=1/1
-2026-11-27 07:13:19,391 INFO realestate.ingest: rent 11740 202609: total=892 rows=892 신규=0 갱신=892 원문변경=0/1
-2026-11-27 07:13:20,017 INFO realestate.ingest: rent 11740 202610: total=1126 rows=1126 신규=5 갱신=1121 원문변경=2/2
-2026-11-27 07:13:20,342 INFO realestate.ingest: rent 11740 202611: total=763 rows=763 신규=40 갱신=723 원문변경=1/1
-2026-11-27 07:13:20,750 INFO realestate.ingest: rent 41133 202609: total=260 rows=260 신규=1 갱신=259 원문변경=1/1
-2026-11-27 07:13:21,094 INFO realestate.ingest: rent 41133 202610: total=342 rows=342 신규=1 갱신=341 원문변경=1/1
-2026-11-27 07:13:21,534 INFO realestate.ingest: rent 41133 202611: total=192 rows=192 신규=14 갱신=178 원문변경=1/1
-2026-11-27 07:13:22,035 INFO realestate.ingest: rent 41450 202609: total=700 rows=700 신규=1 갱신=699 원문변경=1/1
-2026-11-27 07:13:22,506 INFO realestate.ingest: rent 41450 202610: total=800 rows=800 신규=5 갱신=795 원문변경=1/1
-2026-11-27 07:13:22,836 INFO realestate.ingest: rent 41450 202611: total=567 rows=567 신규=37 갱신=530 원문변경=1/1
-2026-11-27 07:13:23,432 INFO realestate.ingest: rent 41135 202609: total=966 rows=966 신규=4 갱신=962 원문변경=1/1
-2026-11-27 07:13:24,022 INFO realestate.ingest: rent 41135 202610: total=1180 rows=1180 신규=3 갱신=1177 원문변경=2/2
-2026-11-27 07:13:24,359 INFO realestate.ingest: rent 41135 202611: total=783 rows=783 신규=58 갱신=725 원문변경=1/1
-2026-11-27 07:13:24,359 INFO realestate.ingest: 완료: 호출 26회, 성공 24, 실패 0, 건너뜀 0
+2026-11-28 07:13:21,800 INFO realestate.ingest: 대상 24건 (api=['trade', 'rent'], lawd=['11740', '41133', '41450', '41135'], 202310~202611)
+2026-11-28 07:13:22,835 WARNING realestate.api.client: trade 11740 202609 p1 재시도 1/4 (1.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:13:24,872 WARNING realestate.api.client: trade 11740 202609 p1 재시도 2/4 (2.3s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:13:28,149 WARNING realestate.api.client: trade 11740 202609 p1 재시도 3/4 (4.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:13:33,244 WARNING realestate.api.client: trade 11740 202609 p1 재시도 4/4 (8.3s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:13:42,334 ERROR realestate.ingest: trade 11740 202609 실패: trade 11740 202609 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:13:42,990 WARNING realestate.api.client: trade 11740 202610 p1 재시도 1/4 (1.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:13:44,867 WARNING realestate.api.client: trade 11740 202610 p1 재시도 2/4 (2.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:13:48,026 WARNING realestate.api.client: trade 11740 202610 p1 재시도 3/4 (4.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:13:52,822 WARNING realestate.api.client: trade 11740 202610 p1 재시도 4/4 (8.5s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:14:01,993 ERROR realestate.ingest: trade 11740 202610 실패: trade 11740 202610 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:14:02,857 WARNING realestate.api.client: trade 11740 202611 p1 재시도 1/4 (1.3s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:14:04,978 WARNING realestate.api.client: trade 11740 202611 p1 재시도 2/4 (2.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:14:08,229 WARNING realestate.api.client: trade 11740 202611 p1 재시도 3/4 (4.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:14:13,266 WARNING realestate.api.client: trade 11740 202611 p1 재시도 4/4 (8.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:14:22,597 ERROR realestate.ingest: trade 11740 202611 실패: trade 11740 202611 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:14:23,152 WARNING realestate.api.client: trade 41133 202609 p1 재시도 1/4 (1.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:14:25,251 WARNING realestate.api.client: trade 41133 202609 p1 재시도 2/4 (2.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:14:28,443 WARNING realestate.api.client: trade 41133 202609 p1 재시도 3/4 (4.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:14:33,631 WARNING realestate.api.client: trade 41133 202609 p1 재시도 4/4 (8.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:14:42,885 ERROR realestate.ingest: trade 41133 202609 실패: trade 41133 202609 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:14:43,639 WARNING realestate.api.client: trade 41133 202610 p1 재시도 1/4 (1.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:14:45,767 WARNING realestate.api.client: trade 41133 202610 p1 재시도 2/4 (2.5s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:14:49,220 WARNING realestate.api.client: trade 41133 202610 p1 재시도 3/4 (4.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:14:54,198 WARNING realestate.api.client: trade 41133 202610 p1 재시도 4/4 (8.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:15:03,355 ERROR realestate.ingest: trade 41133 202610 실패: trade 41133 202610 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:15:04,046 WARNING realestate.api.client: trade 41133 202611 p1 재시도 1/4 (1.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:15:06,073 WARNING realestate.api.client: trade 41133 202611 p1 재시도 2/4 (2.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:15:08,980 WARNING realestate.api.client: trade 41133 202611 p1 재시도 3/4 (4.0s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:15:13,972 WARNING realestate.api.client: trade 41133 202611 p1 재시도 4/4 (8.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:15:23,002 ERROR realestate.ingest: trade 41133 202611 실패: trade 41133 202611 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:15:23,859 WARNING realestate.api.client: trade 41450 202609 p1 재시도 1/4 (1.0s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:15:25,521 WARNING realestate.api.client: trade 41450 202609 p1 재시도 2/4 (2.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:15:28,790 WARNING realestate.api.client: trade 41450 202609 p1 재시도 3/4 (4.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:15:33,618 WARNING realestate.api.client: trade 41450 202609 p1 재시도 4/4 (8.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:15:42,452 ERROR realestate.ingest: trade 41450 202609 실패: trade 41450 202609 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:15:43,206 WARNING realestate.api.client: trade 41450 202610 p1 재시도 1/4 (1.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:15:45,488 WARNING realestate.api.client: trade 41450 202610 p1 재시도 2/4 (2.5s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:15:48,935 WARNING realestate.api.client: trade 41450 202610 p1 재시도 3/4 (4.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:15:54,058 WARNING realestate.api.client: trade 41450 202610 p1 재시도 4/4 (8.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:16:03,094 ERROR realestate.ingest: trade 41450 202610 실패: trade 41450 202610 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:16:03,959 WARNING realestate.api.client: trade 41450 202611 p1 재시도 1/4 (1.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:16:06,268 WARNING realestate.api.client: trade 41450 202611 p1 재시도 2/4 (2.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:16:09,554 WARNING realestate.api.client: trade 41450 202611 p1 재시도 3/4 (4.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:16:14,793 WARNING realestate.api.client: trade 41450 202611 p1 재시도 4/4 (8.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:16:24,020 ERROR realestate.ingest: trade 41450 202611 실패: trade 41450 202611 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:16:24,577 WARNING realestate.api.client: trade 41135 202609 p1 재시도 1/4 (1.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:16:26,313 WARNING realestate.api.client: trade 41135 202609 p1 재시도 2/4 (2.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:16:29,267 WARNING realestate.api.client: trade 41135 202609 p1 재시도 3/4 (4.3s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:16:34,446 WARNING realestate.api.client: trade 41135 202609 p1 재시도 4/4 (8.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:16:43,876 ERROR realestate.ingest: trade 41135 202609 실패: trade 41135 202609 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:16:44,631 WARNING realestate.api.client: trade 41135 202610 p1 재시도 1/4 (1.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:16:46,974 WARNING realestate.api.client: trade 41135 202610 p1 재시도 2/4 (2.3s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:16:50,210 WARNING realestate.api.client: trade 41135 202610 p1 재시도 3/4 (4.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:16:55,331 WARNING realestate.api.client: trade 41135 202610 p1 재시도 4/4 (8.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:17:04,204 ERROR realestate.ingest: trade 41135 202610 실패: trade 41135 202610 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:17:04,860 WARNING realestate.api.client: trade 41135 202611 p1 재시도 1/4 (1.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:17:06,865 WARNING realestate.api.client: trade 41135 202611 p1 재시도 2/4 (2.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:17:09,892 WARNING realestate.api.client: trade 41135 202611 p1 재시도 3/4 (4.5s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:17:15,032 WARNING realestate.api.client: trade 41135 202611 p1 재시도 4/4 (8.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:17:23,727 ERROR realestate.ingest: trade 41135 202611 실패: trade 41135 202611 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:17:24,391 WARNING realestate.api.client: rent 11740 202609 p1 재시도 1/4 (1.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:17:26,329 WARNING realestate.api.client: rent 11740 202609 p1 재시도 2/4 (2.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:17:29,195 WARNING realestate.api.client: rent 11740 202609 p1 재시도 3/4 (4.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:17:34,077 WARNING realestate.api.client: rent 11740 202609 p1 재시도 4/4 (8.5s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:17:43,257 ERROR realestate.ingest: rent 11740 202609 실패: rent 11740 202609 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:17:43,909 WARNING realestate.api.client: rent 11740 202610 p1 재시도 1/4 (1.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:17:46,131 WARNING realestate.api.client: rent 11740 202610 p1 재시도 2/4 (2.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:17:49,018 WARNING realestate.api.client: rent 11740 202610 p1 재시도 3/4 (4.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:17:54,053 WARNING realestate.api.client: rent 11740 202610 p1 재시도 4/4 (8.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:18:03,300 ERROR realestate.ingest: rent 11740 202610 실패: rent 11740 202610 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:18:03,758 WARNING realestate.api.client: rent 11740 202611 p1 재시도 1/4 (1.0s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:18:05,558 WARNING realestate.api.client: rent 11740 202611 p1 재시도 2/4 (2.3s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:18:08,761 WARNING realestate.api.client: rent 11740 202611 p1 재시도 3/4 (4.0s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:18:13,631 WARNING realestate.api.client: rent 11740 202611 p1 재시도 4/4 (8.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:18:23,074 ERROR realestate.ingest: rent 11740 202611 실패: rent 11740 202611 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:18:23,728 WARNING realestate.api.client: rent 41133 202609 p1 재시도 1/4 (1.0s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:18:25,502 WARNING realestate.api.client: rent 41133 202609 p1 재시도 2/4 (2.3s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:18:28,706 WARNING realestate.api.client: rent 41133 202609 p1 재시도 3/4 (4.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:18:33,645 WARNING realestate.api.client: rent 41133 202609 p1 재시도 4/4 (8.0s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:18:42,471 ERROR realestate.ingest: rent 41133 202609 실패: rent 41133 202609 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:18:43,128 WARNING realestate.api.client: rent 41133 202610 p1 재시도 1/4 (1.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:18:44,774 WARNING realestate.api.client: rent 41133 202610 p1 재시도 2/4 (2.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:18:47,836 WARNING realestate.api.client: rent 41133 202610 p1 재시도 3/4 (4.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:18:53,073 WARNING realestate.api.client: rent 41133 202610 p1 재시도 4/4 (8.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:19:01,910 ERROR realestate.ingest: rent 41133 202610 실패: rent 41133 202610 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:19:02,376 WARNING realestate.api.client: rent 41133 202611 p1 재시도 1/4 (1.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:19:04,065 WARNING realestate.api.client: rent 41133 202611 p1 재시도 2/4 (2.3s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:19:06,944 WARNING realestate.api.client: rent 41133 202611 p1 재시도 3/4 (4.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:19:12,068 WARNING realestate.api.client: rent 41133 202611 p1 재시도 4/4 (8.3s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:19:21,184 ERROR realestate.ingest: rent 41133 202611 실패: rent 41133 202611 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:19:21,937 WARNING realestate.api.client: rent 41450 202609 p1 재시도 1/4 (1.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:19:23,942 WARNING realestate.api.client: rent 41450 202609 p1 재시도 2/4 (2.3s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:19:27,081 WARNING realestate.api.client: rent 41450 202609 p1 재시도 3/4 (4.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:19:32,180 WARNING realestate.api.client: rent 41450 202609 p1 재시도 4/4 (8.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:19:41,389 ERROR realestate.ingest: rent 41450 202609 실패: rent 41450 202609 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:19:42,145 WARNING realestate.api.client: rent 41450 202610 p1 재시도 1/4 (1.3s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:19:44,378 WARNING realestate.api.client: rent 41450 202610 p1 재시도 2/4 (2.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:19:47,519 WARNING realestate.api.client: rent 41450 202610 p1 재시도 3/4 (4.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:19:52,471 WARNING realestate.api.client: rent 41450 202610 p1 재시도 4/4 (8.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:20:01,751 ERROR realestate.ingest: rent 41450 202610 실패: rent 41450 202610 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:20:02,514 WARNING realestate.api.client: rent 41450 202611 p1 재시도 1/4 (1.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:20:04,711 WARNING realestate.api.client: rent 41450 202611 p1 재시도 2/4 (2.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:20:07,960 WARNING realestate.api.client: rent 41450 202611 p1 재시도 3/4 (4.5s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:20:13,112 WARNING realestate.api.client: rent 41450 202611 p1 재시도 4/4 (8.0s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:20:22,147 ERROR realestate.ingest: rent 41450 202611 실패: rent 41450 202611 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:20:23,003 WARNING realestate.api.client: rent 41135 202609 p1 재시도 1/4 (1.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:20:24,770 WARNING realestate.api.client: rent 41135 202609 p1 재시도 2/4 (2.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:20:27,834 WARNING realestate.api.client: rent 41135 202609 p1 재시도 3/4 (4.0s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:20:32,483 WARNING realestate.api.client: rent 41135 202609 p1 재시도 4/4 (8.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:20:41,507 ERROR realestate.ingest: rent 41135 202609 실패: rent 41135 202609 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:20:42,160 WARNING realestate.api.client: rent 41135 202610 p1 재시도 1/4 (1.1s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:20:44,014 WARNING realestate.api.client: rent 41135 202610 p1 재시도 2/4 (2.3s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:20:47,046 WARNING realestate.api.client: rent 41135 202610 p1 재시도 3/4 (4.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:20:51,971 WARNING realestate.api.client: rent 41135 202610 p1 재시도 4/4 (8.0s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:21:00,871 ERROR realestate.ingest: rent 41135 202610 실패: rent 41135 202610 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:21:01,529 WARNING realestate.api.client: rent 41135 202611 p1 재시도 1/4 (1.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:21:03,577 WARNING realestate.api.client: rent 41135 202611 p1 재시도 2/4 (2.3s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:21:06,667 WARNING realestate.api.client: rent 41135 202611 p1 재시도 3/4 (4.2s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:21:11,720 WARNING realestate.api.client: rent 41135 202611 p1 재시도 4/4 (8.4s 후): API [04] HTTP_ERROR / HTTP 에러
+2026-11-28 07:21:20,931 ERROR realestate.ingest: rent 41135 202611 실패: rent 41135 202611 p1: 4회 재시도 후 실패 (API [04] HTTP_ERROR / HTTP 에러)
+2026-11-28 07:21:20,931 INFO realestate.ingest: 완료: 호출 120회, 성공 0, 실패 24, 건너뜀 0
+2026-11-28 07:21:20,931 WARNING realestate.ingest: 실패: trade 11740 202609
+2026-11-28 07:21:20,931 WARNING realestate.ingest: 실패: trade 11740 202610
+2026-11-28 07:21:20,931 WARNING realestate.ingest: 실패: trade 11740 202611
+2026-11-28 07:21:20,931 WARNING realestate.ingest: 실패: trade 41133 202609
+2026-11-28 07:21:20,931 WARNING realestate.ingest: 실패: trade 41133 202610
+2026-11-28 07:21:20,931 WARNING realestate.ingest: 실패: trade 41133 202611
+2026-11-28 07:21:20,931 WARNING realestate.ingest: 실패: trade 41450 202609
+2026-11-28 07:21:20,931 WARNING realestate.ingest: 실패: trade 41450 202610
+2026-11-28 07:21:20,931 WARNING realestate.ingest: 실패: trade 41450 202611
+2026-11-28 07:21:20,931 WARNING realestate.ingest: 실패: trade 41135 202609
+2026-11-28 07:21:20,931 WARNING realestate.ingest: 실패: trade 41135 202610
+2026-11-28 07:21:20,932 WARNING realestate.ingest: 실패: trade 41135 202611
+2026-11-28 07:21:20,932 WARNING realestate.ingest: 실패: rent 11740 202609
+2026-11-28 07:21:20,932 WARNING realestate.ingest: 실패: rent 11740 202610
+2026-11-28 07:21:20,932 WARNING realestate.ingest: 실패: rent 11740 202611
+2026-11-28 07:21:20,932 WARNING realestate.ingest: 실패: rent 41133 202609
+2026-11-28 07:21:20,932 WARNING realestate.ingest: 실패: rent 41133 202610
+2026-11-28 07:21:20,932 WARNING realestate.ingest: 실패: rent 41133 202611
+2026-11-28 07:21:20,932 WARNING realestate.ingest: 실패: rent 41450 202609
+2026-11-28 07:21:20,932 WARNING realestate.ingest: 실패: rent 41450 202610
+2026-11-28 07:21:20,932 WARNING realestate.ingest: 실패: rent 41450 202611
+2026-11-28 07:21:20,932 WARNING realestate.ingest: 실패: rent 41135 202609
+2026-11-28 07:21:20,932 WARNING realestate.ingest: 실패: rent 41135 202610
+2026-11-28 07:21:20,932 WARNING realestate.ingest: 실패: rent 41135 202611
 ── 아실 매물 목록
 yatap_jangmi_dongbu_kolon: asil_id 없음 → 건너뜀
 yatap_jangmi8_hyundai: asil_id 없음 → 건너뜀
 yatap_top_byeoksan: asil_id 없음 → 건너뜀
-센트럴타운: 매물 6건 · 신규 0 · 가격변경 0 · 내려감 0
-미사강변센트럴자이: 매물 49건 · 신규 18 · 가격변경 0 · 내려감 17
-미사강변더샵센트럴포레스트: 매물 12건 · 신규 2 · 가격변경 0 · 내려감 2
-미사강변골든센트로: 매물 58건 · 신규 13 · 가격변경 0 · 내려감 13
-고덕자이: 매물 310건 · 신규 57 · 가격변경 4 · 내려감 62
-고덕센트럴아이파크: 매물 218건 · 신규 54 · 가격변경 0 · 내려감 62
-삼익그린2차: 매물 143건 · 신규 18 · 가격변경 2 · 내려감 20
-고덕롯데캐슬베네루체: 매물 241건 · 신규 39 · 가격변경 1 · 내려감 47
+센트럴타운: 매물 5건 · 신규 0 · 가격변경 0 · 내려감 1
+미사강변센트럴자이: 매물 47건 · 신규 9 · 가격변경 0 · 내려감 11
+미사강변더샵센트럴포레스트: 매물 12건 · 신규 1 · 가격변경 0 · 내려감 1
+미사강변골든센트로: 매물 58건 · 신규 3 · 가격변경 0 · 내려감 3
+고덕자이: 매물 308건 · 신규 45 · 가격변경 0 · 내려감 47
+고덕센트럴아이파크: 매물 224건 · 신규 51 · 가격변경 0 · 내려감 45
+삼익그린2차: 매물 146건 · 신규 9 · 가격변경 0 · 내려감 6
+고덕롯데캐슬베네루체: 매물 242건 · 신규 20 · 가격변경 2 · 내려감 19
 ── 네이버 매물 (크롬 자동)
 크롬 새 창 여는 중 (처음 실행이면 macOS '…이(가) Google Chrome을 제어하려고 합니다' 창에서 '허용')
 크롬에서 수집 시작
-  수집 중 1분 경과 · 매물 목록 2/12 장미마을동부·코오롱(코오롱) · B2 · 1쪽
-  수집 중 2분 경과 · 매물 수집 중 4/12 탑마을벽산
-  수집 중 3분 경과 · 매물 수집 중 6/12 미사강변센트럴자이
+  수집 중 1분 경과 · 매물 수집 중 3/12 장미마을8단지현대
+  수집 중 2분 경과 · 매물 수집 중 5/12 센트럴타운
+  수집 중 3분 경과 · 매물 수집 중 7/12 미사강변더샵센트럴포레스트
   수집 중 4분 경과 · 매물 수집 중 8/12 미사강변골든센트로
-  수집 중 5분 경과 · 매물 수집 중 9/12 고덕자이
-  수집 중 6분 경과 · 매물 목록 10/12 고덕센트럴아이파크 · A1 · 3쪽
-수집 완료: naver_listings_20261127_0715.json (1,110,840자, 424초)
+  수집 중 5분 경과 · 매물 수집 중 10/12 고덕센트럴아이파크
+  수집 중 6분 경과 · 매물 목록 11/12 삼익그린2차 · B2 · 1쪽
+수집 완료: naver_listings_20261128_0723.json (1,109,311자, 401초)
 ── 네이버 매물 목록
-장미마을동부·코오롱(동부): 네이버 매물 153건 · 신규 9 · 가격변경 0 · 내려감 8
-장미마을동부·코오롱(코오롱): 네이버 매물 155건 · 신규 19 · 가격변경 4 · 내려감 3
-장미마을8단지현대: 네이버 매물 218건 · 신규 18 · 가격변경 8 · 내려감 18
-탑마을벽산: 네이버 매물 41건 · 신규 5 · 가격변경 0 · 내려감 6
-센트럴타운: 네이버 매물 55건 · 신규 4 · 가격변경 0 · 내려감 2
-미사강변센트럴자이: 네이버 매물 102건 · 신규 26 · 가격변경 0 · 내려감 26
-미사강변더샵센트럴포레스트: 네이버 매물 55건 · 신규 15 · 가격변경 0 · 내려감 12
-미사강변골든센트로: 네이버 매물 143건 · 신규 26 · 가격변경 1 · 내려감 23
-고덕자이: 네이버 매물 649건 · 신규 108 · 가격변경 5 · 내려감 118
-고덕센트럴아이파크: 네이버 매물 488건 · 신규 104 · 가격변경 0 · 내려감 103
-삼익그린2차: 네이버 매물 332건 · 신규 32 · 가격변경 7 · 내려감 29
-고덕롯데캐슬베네루체: 네이버 매물 603건 · 신규 82 · 가격변경 1 · 내려감 81
-저장: data/listings/raw/naver_listings_20261127_0715.json  (수집 시각 2026-11-27T07:15:13+09:00)
+장미마을동부·코오롱(동부): 네이버 매물 149건 · 신규 10 · 가격변경 0 · 내려감 14
+장미마을동부·코오롱(코오롱): 네이버 매물 149건 · 신규 12 · 가격변경 0 · 내려감 18
+장미마을8단지현대: 네이버 매물 220건 · 신규 15 · 가격변경 5 · 내려감 13
+탑마을벽산: 네이버 매물 44건 · 신규 6 · 가격변경 0 · 내려감 3
+센트럴타운: 네이버 매물 57건 · 신규 6 · 가격변경 1 · 내려감 4
+미사강변센트럴자이: 네이버 매물 98건 · 신규 20 · 가격변경 1 · 내려감 24
+미사강변더샵센트럴포레스트: 네이버 매물 57건 · 신규 4 · 가격변경 0 · 내려감 2
+미사강변골든센트로: 네이버 매물 145건 · 신규 15 · 가격변경 0 · 내려감 13
+고덕자이: 네이버 매물 649건 · 신규 106 · 가격변경 1 · 내려감 106
+고덕센트럴아이파크: 네이버 매물 504건 · 신규 115 · 가격변경 1 · 내려감 99
+삼익그린2차: 네이버 매물 325건 · 신규 41 · 가격변경 0 · 내려감 48
+고덕롯데캐슬베네루체: 네이버 매물 594건 · 신규 60 · 가격변경 4 · 내려감 69
+저장: data/listings/raw/naver_listings_20261128_0723.json  (수집 시각 2026-11-28T07:23:09+09:00)
 응답 성공 324 / 실패 0 · 단지 12개
-로컬 DB 적재: 2026-11-27 숫자 값 7,578개
+로컬 DB 적재: 2026-11-28 숫자 값 7,543개
 커밋 완료
 ── 웹앱 데이터
-저장: web/data/app.json (1,207,898 bytes) · 실거래 2026-11-17 · 매물 2026-11-27 · 덤프 적재 6개
-요약: 실거래 성공(대상 24건) · 매물 실패 0곳 · 네이버 성공 · 웹앱 성공 · DB 커밋 False
+실거래는 기존 app.json 이 더 새 것이라 유지 (2026-11-27T07:13:24+09:00 수집분)
+저장: web/data/app.json (1,207,849 bytes) · 실거래 2026-11-17 · 매물 2026-11-28 · 덤프 적재 6개
+요약: 실거래 실패(대상 24건) · 매물 실패 0곳 · 네이버 성공 · 웹앱 성공 · DB 커밋 False · 문제: 실거래 수집
